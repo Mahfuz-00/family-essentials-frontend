@@ -8,6 +8,7 @@ import { planFor } from '@/lib/plans';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
+import { useUiStore } from '@/stores/ui';
 
 interface NavItem {
   to: '/' | '/requests' | '/places' | '/members' | '/billing' | '/admin' | '/admin/tenants' | '/admin/audit-logs';
@@ -59,6 +60,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const memberships = useTenantStore((state) => state.memberships);
+  const openAddRequest = useUiStore((state) => state.openAddRequest);
   const active = useTenantStore((state) => state.active);
   const switchTo = useTenantStore((state) => state.switchTo);
 
@@ -68,6 +70,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const path = window.location.pathname;
   const routeLabel = routeLabels[path] ?? (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
+
+  /**
+   * The create modal lives on the requests page, so record the intent then make
+   * sure we are there. As a plain link this was a no-op when clicked from
+   * /requests itself, which is why "Add Request" appeared to do nothing.
+   */
+  const startAddRequest = () => {
+    openAddRequest();
+
+    if (path !== '/requests') {
+      void navigate({ to: '/requests' });
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -232,12 +247,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </span>
 
             {!isPlatformAdmin && (
-              <Link to="/requests" className="inline-flex">
-                <span className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-secondary px-4 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97]">
-                  <Icon name="add" className="text-[18px]" />
-                  Add Request
-                </span>
-              </Link>
+              <button
+                type="button"
+                onClick={startAddRequest}
+                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-secondary px-4 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97]"
+              >
+                <Icon name="add" className="text-[18px]" />
+                Add Request
+              </button>
             )}
 
             <span className="flex items-center gap-2">

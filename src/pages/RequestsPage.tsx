@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/select';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { useUiStore } from '@/stores/ui';
 import type {
   Place,
   RequestBoard,
@@ -26,7 +27,7 @@ import type {
   VoiceQuota,
 } from '@/types';
 
-type ColumnKey = 'overdue' | 'due_today' | 'assigned_to_me' | 'completed_today';
+type ColumnKey = 'overdue' | 'due_today' | 'assigned_to_me' | 'backlog' | 'completed_today';
 
 const columns: {
   key: ColumnKey;
@@ -57,6 +58,16 @@ const columns: {
     empty: 'No items assigned to you.',
   },
   {
+    // Catches everything open that the other columns do not: no due date, due
+    // later, or assigned to someone else. Without it a new request with no date
+    // and no assignee appeared in no column at all.
+    key: 'backlog',
+    title: 'Backlog',
+    dot: 'bg-outline',
+    pill: 'bg-surface-container-low text-on-surface-variant',
+    empty: 'Nothing waiting in the backlog.',
+  },
+  {
     key: 'completed_today',
     title: 'Completed Today',
     dot: 'bg-success',
@@ -78,6 +89,9 @@ const priorityChip: Record<RequestPriority, string> = {
 const emptyForm = {
   title: '',
   quantity: '',
+  store_name: '',
+  category: '',
+  notes: '',
   place_id: '',
   priority: 'normal' as RequestPriority,
   due_at: '',
@@ -117,7 +131,9 @@ export function RequestsPage() {
   const [assignee, setAssignee] = useState('all');
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
-  const [addOpen, setAddOpen] = useState(false);
+  const addOpen = useUiStore((state) => state.addRequestOpen);
+  const openAddRequest = useUiStore((state) => state.openAddRequest);
+  const closeAddRequest = useUiStore((state) => state.closeAddRequest);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -158,6 +174,9 @@ export function RequestsPage() {
       api.post('/v1/requests', {
         title: form.title,
         quantity: form.quantity || null,
+        store_name: form.store_name || null,
+        category: form.category || null,
+        notes: form.notes || null,
         place_id: form.place_id ? Number(form.place_id) : null,
         priority: form.priority,
         due_at: form.due_at || null,
@@ -165,7 +184,7 @@ export function RequestsPage() {
       }),
     onSuccess: async () => {
       setForm(emptyForm);
-      setAddOpen(false);
+      closeAddRequest();
       setError(null);
       setNotice('Request added. Your family has been notified.');
       await refresh();
@@ -285,6 +304,7 @@ export function RequestsPage() {
       overdue: board.data.overdue.filter(matches),
       due_today: board.data.due_today.filter(matches),
       assigned_to_me: board.data.assigned_to_me.filter(matches),
+      backlog: board.data.backlog.filter(matches),
       completed_today: board.data.completed_today.filter(matches),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,6 +319,7 @@ export function RequestsPage() {
       ...board.data.overdue,
       ...board.data.due_today,
       ...board.data.assigned_to_me,
+      ...board.data.backlog,
       ...board.data.completed_today,
     ];
 
@@ -308,22 +329,77 @@ export function RequestsPage() {
   const categories = useMemo(() => distinct((request) => request.category ?? 'uncategorised'), [board.data]);
   const stores = useMemo(() => distinct((request) => request.store_name), [board.data]);
 
-  const counts = board.data?.counts;
   const overdueList = filtered?.overdue ?? [];
-  const metrics = counts
+
+  const counts = board.data?.counts;
+
+  const filtersActive = query.trim() !== '' || assignee !== 'all' || category !== 'all' || store !== 'all';
+
+  /**
+   * Each tile matches its column exactly. The household-wide aggregate appears
+   * only when no filter is applied, because open items can appear in more than
+   * one column (overdue *and* assigned to me) — a sum would be a lie, and a
+   * filtered aggregate could not reconcile with what is on screen.
+   */
+  const metrics: { label: string; value: number; pill: string; dot: string; icon: boolean }[] = filtered
     ? [
-        { label: 'Total Items', value: counts.total, pill: 'bg-surface-container-low text-on-surface', dot: 'bg-primary' },
-        { label: 'Overdue', value: counts.overdue, pill: 'bg-coral-soft text-error', dot: 'bg-error' },
-        { label: 'Due Today', value: counts.due_today, pill: 'bg-tertiary-fixed/40 text-tertiary', dot: 'bg-warning' },
+        ...(filtersActive
+          ? []
+          : [
+              {
+                label: 'Open items',
+                value: counts?.open ?? 0,
+                pill: 'bg-surface-container-low text-on-surface',
+                dot: 'bg-primary',
+                icon: false,
+              },
+            ]),
+        {
+          label: 'Overdue',
+          value: filtered.overdue.length,
+          pill: 'bg-coral-soft text-error',
+          dot: 'bg-error',
+          icon: false,
+        },
+        {
+          label: 'Due Today',
+          value: filtered.due_today.length,
+          pill: 'bg-tertiary-fixed/40 text-tertiary',
+          dot: 'bg-warning',
+          icon: false,
+        },
         {
           label: `Assigned to ${firstName}`,
-          value: counts.assigned_to_me,
+          value: filtered.assigned_to_me.length,
           pill: 'bg-sage-soft text-secondary',
           dot: 'bg-secondary',
+          icon: false,
         },
-        { label: 'Completed', value: counts.completed_today, pill: 'bg-forest-soft text-secondary', icon: true },
+        {
+          label: 'Backlog',
+          value: filtered.backlog.length,
+          pill: 'bg-surface-container-low text-on-surface-variant',
+          dot: 'bg-outline',
+          icon: false,
+        },
+        {
+          label: 'Completed',
+          value: filtered.completed_today.length,
+          pill: 'bg-forest-soft text-secondary',
+          dot: 'bg-success',
+          icon: true,
+        },
       ]
     : [];
+
+  const hasAnyCard = filtered
+    ? filtered.overdue.length +
+        filtered.due_today.length +
+        filtered.assigned_to_me.length +
+        filtered.backlog.length +
+        filtered.completed_today.length >
+      0
+    : false;
 
   return (
     <AppLayout>
@@ -647,12 +723,12 @@ export function RequestsPage() {
           </Card>
         )}
 
-        {board.data && counts && counts.total === 0 && (
+        {board.data && filtered && !hasAnyCard && (
           <EmptyState
             title="All caught up"
             description="No pending requests for your family right now. Add one and the right person gets notified."
             action={
-              <Button size="lg" onClick={() => setAddOpen(true)}>
+              <Button size="lg" onClick={openAddRequest}>
                 <Icon name="add" className="text-[18px]" />
                 Add request
               </Button>
@@ -664,7 +740,7 @@ export function RequestsPage() {
       {/* Floating action button */}
       <button
         type="button"
-        onClick={() => setAddOpen(true)}
+        onClick={openAddRequest}
         title="Add request"
         aria-label="Add request"
         className="fixed bottom-6 right-8 z-40 flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl bg-secondary text-on-secondary shadow-e3 transition-all hover:bg-primary active:scale-95"
@@ -675,12 +751,12 @@ export function RequestsPage() {
       {/* Quick add */}
       <Modal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
+        onClose={closeAddRequest}
         title="Add a request"
         description="Capture what the family needs. The assignee gets notified."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>
+            <Button variant="ghost" onClick={closeAddRequest}>
               Cancel
             </Button>
             <Button
@@ -713,6 +789,26 @@ export function RequestsPage() {
                 value={form.quantity}
                 onChange={(event) => setForm({ ...form, quantity: event.target.value })}
                 placeholder="2 litres"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="store_name">Store</Label>
+              <Input
+                id="store_name"
+                value={form.store_name}
+                onChange={(event) => setForm({ ...form, store_name: event.target.value })}
+                placeholder="Whole Foods"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={form.category}
+                onChange={(event) => setForm({ ...form, category: event.target.value })}
+                placeholder="grocery"
               />
             </div>
 
@@ -760,6 +856,16 @@ export function RequestsPage() {
                   </option>
                 ))}
               </Select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                value={form.notes}
+                onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                placeholder="Anything the runner should know"
+              />
             </div>
 
             <div className="sm:col-span-2">

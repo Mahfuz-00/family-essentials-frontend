@@ -172,14 +172,17 @@ export interface ServiceRequest {
 export interface RequestBoard {
   counts: {
     total: number;
+    open: number;
     overdue: number;
     due_today: number;
     assigned_to_me: number;
+    backlog: number;
     completed_today: number;
   };
   overdue: ServiceRequest[];
   due_today: ServiceRequest[];
   assigned_to_me: ServiceRequest[];
+  backlog: ServiceRequest[];
   completed_today: ServiceRequest[];
 }
 

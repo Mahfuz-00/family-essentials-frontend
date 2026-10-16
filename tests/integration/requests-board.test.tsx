@@ -37,12 +37,29 @@ describe('household kanban', () => {
     installGetRoutes(apiMock, sessionRoutes());
   });
 
-  it('renders the four board columns once the board loads', async () => {
+  it('renders every board column once the board loads', async () => {
     await openBoard();
 
-    for (const column of ['Overdue', 'Due Today', 'Assigned to Me', 'Completed Today']) {
+    for (const column of ['Overdue', 'Due Today', 'Assigned to Me', 'Backlog', 'Completed Today']) {
       expect(screen.getByRole('heading', { name: column })).toBeInTheDocument();
     }
+  });
+
+  it('opens the create form from the shell header', async () => {
+    renderApp('/requests');
+
+    await screen.findByRole('heading', { name: 'Household Kanban & Errand Hub' });
+
+    // This button used to be a link to /requests — a no-op from /requests itself.
+    await userEvent.click(screen.getByRole('button', { name: 'Add Request' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Add a request' })).toBeInTheDocument();
+  });
+
+  it('shows an undated, unassigned request in the backlog rather than nowhere', async () => {
+    await openBoard();
+
+    expect(screen.getByRole('heading', { name: 'Bin bags' })).toBeInTheDocument();
   });
 
   it('raises an overdue banner for the item that needs attention', async () => {
@@ -59,9 +76,10 @@ describe('household kanban', () => {
     // Scoped: 'Overdue' and 'Due Today' are also kanban column headings.
     const summary = await screen.findByRole('region', { name: 'Board summary' });
 
-    expect(within(summary).getByText('Total Items').parentElement?.textContent).toContain('3');
+    expect(within(summary).getByText('Open items').parentElement?.textContent).toContain('4');
     expect(within(summary).getByText('Overdue').parentElement?.textContent).toContain('1');
     expect(within(summary).getByText('Due Today').parentElement?.textContent).toContain('1');
+    expect(within(summary).getByText('Backlog').parentElement?.textContent).toContain('1');
     expect(within(summary).getByText('Completed').parentElement?.textContent).toContain('0');
   });
 
@@ -71,6 +89,7 @@ describe('household kanban', () => {
     expect(screen.getByRole('heading', { name: 'Organic Whole Milk' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Nappies' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Coffee beans' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Bin bags' })).toBeInTheDocument();
   });
 
   it('switches between the kanban and list views', async () => {

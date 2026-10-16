@@ -72,7 +72,15 @@ export function serviceRequest(overrides: Partial<ServiceRequest> = {}): Service
 
 export function board(overrides: Partial<RequestBoard> = {}): RequestBoard {
   return {
-    counts: { total: 3, overdue: 1, due_today: 1, assigned_to_me: 1, completed_today: 0 },
+    counts: {
+      total: 4,
+      open: 4,
+      overdue: 1,
+      due_today: 1,
+      assigned_to_me: 1,
+      backlog: 1,
+      completed_today: 0,
+    },
     overdue: [serviceRequest({ id: 1, title: 'Organic Whole Milk' })],
     // Assigned to someone else, so an assignee filter has something to exclude.
     due_today: [
@@ -84,6 +92,16 @@ export function board(overrides: Partial<RequestBoard> = {}): RequestBoard {
       }),
     ],
     assigned_to_me: [serviceRequest({ id: 3, title: 'Coffee beans', priority: 'urgent' })],
+    // Open, undated, unassigned: the case that used to appear in no column at all.
+    backlog: [
+      serviceRequest({
+        id: 4,
+        title: 'Bin bags',
+        priority: 'low',
+        assignee: null,
+        due_at: null,
+      }),
+    ],
     completed_today: [],
     ...overrides,
   };
