@@ -9,9 +9,10 @@ import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
+import { useQuota } from '@/hooks/useQuota';
 import { plans, planFor } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
-import type { Place, UserRef, VoiceCall } from '@/types';
+import type { Place, UserRef } from '@/types';
 
 export function BillingPage() {
   const active = useTenantStore((state) => state.active);
@@ -27,47 +28,48 @@ export function BillingPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
-  const calls = useQuery({
-    queryKey: ['voice-calls'],
-    queryFn: async () => (await api.get<{ data: VoiceCall[] }>('/v1/voice-calls')).data.data,
-  });
+  // Caps and usage come from the API — the same numbers it enforces. The plan
+  // catalogue still supplies the label, price and feature list, which no backend
+  // owns.
+  const quota = useQuota();
 
-  const seatsUsed = members.data?.length ?? active?.member_count ?? 0;
-  const placesUsed = places.data?.length ?? 0;
-  const callsUsed = calls.data?.length ?? 0;
+  const seatsUsed = quota.data?.usage.members ?? members.data?.length ?? active?.member_count ?? 0;
+  const placesUsed = quota.data?.usage.places ?? places.data?.length ?? 0;
+  const seatCap = quota.capFor('seats', plan.seatCap);
+  const placeCap = quota.capFor('places', plan.placeCap);
 
   const usage = [
     {
       label: 'Family member seats',
       used: seatsUsed,
-      cap: plan.seatCap,
+      cap: seatCap,
       icon: 'group',
-      note: `${Math.max(0, plan.seatCap - seatsUsed)} seats remaining`,
+      note:
+        (quota.data?.usage.seats_reserved ?? 0) > 0
+          ? `${Math.max(0, seatCap - seatsUsed)} remaining · ${quota.data?.usage.seats_reserved} held by invitations`
+          : `${Math.max(0, seatCap - seatsUsed)} remaining`,
     },
     {
-      label: 'Geofenced places',
+      label: 'Saved places',
       used: placesUsed,
-      cap: plan.placeCap,
+      cap: placeCap,
       icon: 'pin_drop',
-      note: `${Math.max(0, plan.placeCap - placesUsed)} zones remaining`,
+      note: `${Math.max(0, placeCap - placesUsed)} remaining`,
     },
-    {
-      label: 'Voice escalations placed',
-      used: callsUsed,
-      cap: null,
-      icon: 'ring_volume',
-      note: 'Dispatched from this household',
-    },
-    {
-      label: 'Household members',
-      used: seatsUsed,
-      cap: null,
-      icon: 'verified_user',
-      note: 'All sharing one isolated tenant',
-    },
+    ...(quota.data?.meters ?? [])
+      .filter((meter) => meter.key === 'requests' || meter.key === 'voice')
+      .map((meter) => ({
+        label: meter.label,
+        used: meter.used,
+        cap: meter.cap,
+        icon: meter.icon,
+        note: meter.at_cap
+          ? 'At the plan limit — the API refuses the next one'
+          : `${meter.remaining} remaining`,
+      })),
   ];
 
-  const loading = members.isLoading || places.isLoading || calls.isLoading;
+  const loading = quota.isLoading || members.isLoading || places.isLoading;
 
   return (
     <AppLayout>

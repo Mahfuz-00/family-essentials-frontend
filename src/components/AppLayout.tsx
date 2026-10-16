@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
-import { planFor } from '@/lib/plans';
+import { useQuota } from '@/hooks/useQuota';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -21,10 +21,12 @@ type RoutePath =
   | '/members/invitations'
   | '/billing'
   | '/settings'
+  | '/feedback'
   | '/admin'
   | '/admin/tenants'
   | '/admin/health'
   | '/admin/backups'
+  | '/admin/feedback'
   | '/admin/audit-logs';
 
 interface NavItem {
@@ -72,6 +74,7 @@ const householdSections: NavSection[] = [
     items: [
       { to: '/billing', label: 'Billing & Subscription', icon: 'credit_card' },
       { to: '/settings', label: 'Settings', icon: 'tune' },
+      { to: '/feedback', label: 'Help & Feedback', icon: 'forum' },
     ],
   },
 ];
@@ -84,6 +87,7 @@ const platformSections: NavSection[] = [
       { to: '/admin/tenants', label: 'Tenants & Workspaces', icon: 'apartment' },
       { to: '/admin/health', label: 'System Health', icon: 'monitor_heart' },
       { to: '/admin/backups', label: 'Backups & Recovery', icon: 'cloud_sync' },
+      { to: '/admin/feedback', label: 'Feedback Inbox', icon: 'forum' },
       { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
     ],
   },
@@ -100,10 +104,12 @@ const routeLabels: Record<string, string> = {
   '/members/invitations': 'Invitations',
   '/billing': 'Billing & Subscription',
   '/settings': 'Settings',
+  '/feedback': 'Help & Feedback',
   '/admin': 'Global Analytics Overview',
   '/admin/tenants': 'Tenant Workspaces & Client Families',
   '/admin/health': 'System Health',
   '/admin/backups': 'Backups & Disaster Recovery',
+  '/admin/feedback': 'Feedback Inbox',
   '/admin/audit-logs': 'Global Audit & Security Log',
 };
 
@@ -130,8 +136,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const switchTo = useTenantStore((state) => state.switchTo);
 
   const isPlatformAdmin = user?.is_platform_admin === true;
-  const plan = planFor(active?.subscription_tier);
-  const seatsUsed = active?.member_count ?? 0;
+  // Seat caps come from the API now — the same numbers it enforces.
+  const quota = useQuota({ enabled: !isPlatformAdmin });
+  const plan = quota.plan;
+  const seatCap = quota.capFor('seats', plan.seatCap);
+  const seatsUsed = quota.seatsUsed;
 
   const path = window.location.pathname;
   const routeLabel = routeLabels[path] ?? (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
@@ -247,13 +256,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <span className="mb-1 flex items-center justify-between">
                   <span className="text-label-sm font-bold text-secondary">{plan.label}</span>
                   <span className="text-label-sm text-on-surface-variant">
-                    {seatsUsed}/{plan.seatCap} Members
+                    {seatsUsed}/{seatCap} Members
                   </span>
                 </span>
                 <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
                   <span
                     className="block h-1.5 rounded-full bg-secondary transition-all"
-                    style={{ width: `${Math.min(100, (seatsUsed / plan.seatCap) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
                   />
                 </span>
               </div>

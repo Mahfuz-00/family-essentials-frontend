@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
+import { useQuota } from '@/hooks/useQuota';
 import { planFor } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
 import type { MemberRole, TenantInvitation, TenantMember, TenantRoleCatalogue } from '@/types';
@@ -81,8 +82,11 @@ export function InvitationsPage() {
   const memberCount = members.data?.length ?? 0;
   const invitationList = invitations.data ?? [];
   const pending = invitationList.filter((invitation) => invitation.status === 'pending');
+  // The cap comes from the API, which is also what refuses the next invitation.
+  const quota = useQuota();
+  const seatCap = quota.capFor('seats', plan.seatCap);
   const seatsUsed = memberCount + pending.length;
-  const seatsLeft = Math.max(0, plan.seatCap - seatsUsed);
+  const seatsLeft = Math.max(0, seatCap - seatsUsed);
 
   const grantable = (catalogue.data?.roles ?? []).filter((entry) => entry.can_be_granted);
 
@@ -174,16 +178,17 @@ export function InvitationsPage() {
             <h2 className="text-headline-sm text-on-surface">Seats</h2>
             <span className="flex items-baseline gap-1.5">
               <span className="text-display-lg font-bold text-on-surface">{seatsUsed}</span>
-              <span className="text-body-md text-muted">of {plan.seatCap} used</span>
+              <span className="text-body-md text-muted">of {seatCap} used</span>
             </span>
             <span className="block h-2 w-full overflow-hidden rounded-full bg-surface-container">
               <span
                 className="block h-2 rounded-full bg-secondary transition-all"
-                style={{ width: `${Math.min(100, (seatsUsed / plan.seatCap) * 100)}%` }}
+                style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
               />
             </span>
             <span className="text-body-sm text-muted">
-              {seatsLeft} seat{seatsLeft === 1 ? '' : 's'} available on the {plan.label} catalogue plan.
+              {seatsLeft} seat{seatsLeft === 1 ? '' : 's'} available on the {plan.label} plan — the API
+              refuses an invitation past this.
             </span>
             <span className="text-body-sm text-muted">
               {memberCount} active {memberCount === 1 ? 'member' : 'members'} · {pending.length} pending

@@ -1,9 +1,12 @@
 import type {
   AuthUser,
   BackupsPayload,
+  FeedbackReport,
   Membership,
   OpsHealth,
   PlatformAuditEvent,
+  PlatformFeedbackReport,
+  QuotaReport,
   RequestBoard,
   ServiceRequest,
   Tenant,
@@ -353,6 +356,112 @@ export function backupsPayload(overrides: Partial<BackupsPayload> = {}): Backups
   };
 }
 
+export function quotaReport(overrides: Partial<QuotaReport> = {}): QuotaReport {
+  return {
+    plan: {
+      key: 'pilot',
+      label: 'Pilot Family Tier',
+      price: '$14.99',
+      cadence: 'per month',
+      seat_cap: 5,
+      place_cap: 10,
+      monthly_requests: 300,
+    },
+    enforced: true,
+    usage: {
+      members: 2,
+      seats_reserved: 0,
+      places: 0,
+      essentials: 0,
+      requests_this_month: 3,
+      voice_calls_today: 0,
+    },
+    meters: [
+      {
+        key: 'seats',
+        label: 'Family member seats',
+        icon: 'group',
+        used: 2,
+        cap: 5,
+        remaining: 3,
+        at_cap: false,
+        percent: 40,
+        detail: { members: 2, reserved_by_invitations: 0 },
+      },
+      {
+        key: 'places',
+        label: 'Saved places',
+        icon: 'pin_drop',
+        used: 0,
+        cap: 10,
+        remaining: 10,
+        at_cap: false,
+        percent: 0,
+        detail: {},
+      },
+      {
+        key: 'requests',
+        label: 'Requests this month',
+        icon: 'shopping_bag',
+        used: 3,
+        cap: 300,
+        remaining: 297,
+        at_cap: false,
+        percent: 1,
+        detail: {},
+      },
+      {
+        key: 'voice',
+        label: 'Voice calls today',
+        icon: 'ring_volume',
+        used: 0,
+        cap: 10,
+        remaining: 10,
+        at_cap: false,
+        percent: 0,
+        detail: {},
+      },
+    ],
+    at_cap: [],
+    period: {
+      requests_since: '2026-10-01T00:00:00.000Z',
+      voice_since: '2026-10-16T00:00:00.000Z',
+    },
+    ...overrides,
+  };
+}
+
+export function feedbackReport(overrides: Partial<FeedbackReport> = {}): FeedbackReport {
+  return {
+    id: 1,
+    type: 'bug',
+    priority: 'high',
+    status: 'new',
+    subject: 'Shopping list loses items',
+    body: 'Adding three items then reloading shows only two of them.',
+    context: { platform: 'web', screen: '/requests' },
+    resolution_note: null,
+    resolved_at: null,
+    reporter: { id: 9, name: 'Tanvir Ahmed' },
+    created_at: '2026-10-16T09:00:00.000Z',
+    updated_at: '2026-10-16T09:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export function platformFeedbackReport(
+  overrides: Partial<PlatformFeedbackReport> = {},
+): PlatformFeedbackReport {
+  return {
+    ...feedbackReport(),
+    age_hours: 6,
+    tenant: { id: 1, name: 'The Tanvir Household', subscription_tier: 'pilot', status: 'active' },
+    reporter: { id: 9, name: 'Tanvir Ahmed', email: 'tanvir@familyessentials.app' },
+    resolver: null,
+    ...overrides,
+  };
+}
+
 /** The GET routes the dashboard needs once signed in. */
 export function sessionRoutes() {
   return {
@@ -366,6 +475,9 @@ export function sessionRoutes() {
       ],
     },
     '/v1/tenant/roles': roleCatalogue(),
+    // AppLayout reads the seat cap from here on every page.
+    '/v1/tenant/quotas': quotaReport(),
+    '/v1/feedback': { data: [], summary: { total: 0, open: 0, last_sent_at: null } },
     '/v1/places': { data: [] },
     '/v1/voice-calls/quota': {
       used_today: 0,

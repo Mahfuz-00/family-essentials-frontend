@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
+import { useQuota } from '@/hooks/useQuota';
 import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -71,6 +72,9 @@ export function MembersPage() {
     catalogue.data?.roles.find((entry) => entry.key === role)?.label ?? role;
 
   const seatsUsed = memberList.length;
+  // The cap comes from the API, which is also what refuses the next invitation.
+  const quota = useQuota();
+  const seatCap = quota.capFor('seats', plan.seatCap);
 
   return (
     <AppLayout>
@@ -110,19 +114,19 @@ export function MembersPage() {
                 Household seats
               </span>
               <span className="text-label-sm text-on-surface">
-                {seatsUsed} of {plan.seatCap} used
+                {seatsUsed} of {seatCap} used
               </span>
             </span>
             <span className="block h-2 w-full overflow-hidden rounded-full bg-surface-container">
               <span
                 className="block h-2 rounded-full bg-secondary transition-all"
-                style={{ width: `${Math.min(100, (seatsUsed / plan.seatCap) * 100)}%` }}
+                style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
               />
             </span>
             <span className="flex items-center justify-between">
               <span className="text-label-sm text-muted">
-                {Math.max(0, plan.seatCap - seatsUsed)} seat
-                {plan.seatCap - seatsUsed === 1 ? '' : 's'} available in {plan.label}
+                {Math.max(0, seatCap - seatsUsed)} seat
+                {seatCap - seatsUsed === 1 ? '' : 's'} available in {plan.label}
               </span>
               <span className="text-label-sm text-muted">{plan.price}/mo catalogue</span>
             </span>

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
+import { useQuota } from '@/hooks/useQuota';
 import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -26,6 +27,7 @@ export function SettingsPage() {
   const setUser = useAuthStore((state) => state.setUser);
   const active = useTenantStore((state) => state.active);
   const plan = planFor(active?.subscription_tier);
+  const quota = useQuota();
   const [error, setError] = useState<string | null>(null);
 
   const tenant = useQuery({
@@ -156,7 +158,7 @@ export function SettingsPage() {
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Detail label="Household" value={active?.name ?? '—'} />
               <Detail label="Plan" value={`${plan.label} · ${plan.price}`} />
-              <Detail label="Members" value={`${active?.member_count ?? 0} of ${plan.seatCap} seats`} />
+              <Detail label="Members" value={`${quota.seatsUsed} of ${quota.capFor('seats', plan.seatCap)} seats`} />
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2.5">

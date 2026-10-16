@@ -257,6 +257,100 @@ export interface BackupsPayload {
   runbook: BackupRunbook;
 }
 
+/* -------------------------------------------------------------- feedback --- */
+
+export type FeedbackType = 'bug' | 'feedback' | 'feature_request';
+export type FeedbackPriority = 'low' | 'normal' | 'high' | 'critical';
+export type FeedbackStatus = 'new' | 'triaged' | 'in_progress' | 'resolved' | 'wont_fix';
+
+export interface FeedbackReport {
+  id: number;
+  type: FeedbackType;
+  priority: FeedbackPriority;
+  status: FeedbackStatus;
+  subject: string;
+  body: string;
+  context: Record<string, string> | null;
+  resolution_note: string | null;
+  resolved_at: string | null;
+  reporter?: { id: number; name: string } | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface FeedbackPayload {
+  data: FeedbackReport[];
+  summary: {
+    total: number;
+    open: number;
+    last_sent_at: string | null;
+  };
+}
+
+export interface PlatformFeedbackReport extends FeedbackReport {
+  age_hours: number | null;
+  tenant?: {
+    id: number;
+    name: string;
+    subscription_tier: string;
+    status: TenantStatus;
+  } | null;
+  reporter?: { id: number; name: string; email: string } | null;
+  resolver?: { id: number; name: string } | null;
+}
+
+export interface PlatformFeedbackPayload {
+  data: PlatformFeedbackReport[];
+  summary: {
+    open: number;
+    total: number;
+    critical_open: number;
+    unseen: number;
+    oldest_open_at: string | null;
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+  };
+}
+
+/* ----------------------------------------------------------------- quotas --- */
+
+export interface QuotaMeter {
+  key: 'seats' | 'places' | 'requests' | 'voice';
+  label: string;
+  icon: string;
+  used: number;
+  cap: number;
+  remaining: number;
+  at_cap: boolean;
+  percent: number;
+  detail: Record<string, number>;
+}
+
+export interface QuotaReport {
+  /** Limits the API enforces — not a presentation catalogue. */
+  plan: {
+    key: string;
+    label: string;
+    price: string;
+    cadence: string;
+    seat_cap: number;
+    place_cap: number;
+    monthly_requests: number;
+  };
+  enforced: boolean;
+  usage: {
+    members: number;
+    seats_reserved: number;
+    places: number;
+    essentials: number;
+    requests_this_month: number;
+    voice_calls_today: number;
+  };
+  meters: QuotaMeter[];
+  at_cap: string[];
+  period: { requests_since: string; voice_since: string };
+}
+
 export type RequestStatus =
   | 'pending'
   | 'accepted'

@@ -11,6 +11,7 @@ import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { VerifyPhonePage } from '@/pages/VerifyPhonePage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { FeedbackPage } from '@/pages/FeedbackPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { InvitationsPage } from '@/pages/members/InvitationsPage';
 import { RolesPage } from '@/pages/members/RolesPage';
@@ -19,6 +20,7 @@ import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 import { BackupsPage } from '@/pages/admin/BackupsPage';
+import { PlatformFeedbackPage } from '@/pages/admin/FeedbackInboxPage';
 import { HealthPage } from '@/pages/admin/HealthPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
@@ -100,6 +102,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const feedbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/feedback',
+  beforeLoad: requireTenant,
+  component: FeedbackPage,
+});
+
 const requestsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/requests',
@@ -169,6 +178,13 @@ const adminBackupsRoute = createRoute({
   component: BackupsPage,
 });
 
+const adminFeedbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/feedback',
+  beforeLoad: requirePlatformAdmin,
+  component: PlatformFeedbackPage,
+});
+
 const adminAuditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/audit-logs',
@@ -189,6 +205,7 @@ export const routeTree = rootRoute.addChildren([
   membersRolesRoute,
   membersInvitationsRoute,
   settingsRoute,
+  feedbackRoute,
   requestsRoute,
   escalationRoute,
   placesRoute,
@@ -199,6 +216,7 @@ export const routeTree = rootRoute.addChildren([
   adminTenantsRoute,
   adminHealthRoute,
   adminBackupsRoute,
+  adminFeedbackRoute,
   adminAuditRoute,
 ]);
 
