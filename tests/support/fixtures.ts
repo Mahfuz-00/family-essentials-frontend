@@ -1,6 +1,7 @@
 import type {
   AuthUser,
   Membership,
+  OpsHealth,
   PlatformAuditEvent,
   RequestBoard,
   ServiceRequest,
@@ -165,6 +166,102 @@ export function roleCatalogue(overrides: Partial<TenantRoleCatalogue> = {}): Ten
         label: 'Create & assign requests',
         detail: 'Dispatch work to another member',
         access: { tenant_admin: true, co_admin: true, member: true, junior: false },
+      },
+    ],
+    ...overrides,
+  };
+}
+
+export function opsHealth(overrides: Partial<OpsHealth> = {}): OpsHealth {
+  return {
+    report: {
+      status: 'fail',
+      checked_at: '2026-10-16T12:00:00.000Z',
+      checks: [
+        {
+          key: 'database',
+          label: 'Database',
+          status: 'fail',
+          message: 'Round trip 1200 ms',
+          value: 1200,
+          unit: 'ms',
+        },
+        {
+          key: 'migrations',
+          label: 'Schema',
+          status: 'ok',
+          message: 'All migrations applied',
+          value: 0,
+          unit: 'pending',
+        },
+        {
+          key: 'queue',
+          label: 'Queue',
+          status: 'warn',
+          message: '3 queued · 2 failed (database driver)',
+          value: 3,
+          unit: 'queued',
+        },
+        {
+          key: 'scheduler',
+          label: 'Scheduler',
+          status: 'ok',
+          message: 'Heartbeat just now',
+          value: 0,
+          unit: 'min',
+        },
+        {
+          key: 'cache',
+          label: 'Cache',
+          status: 'ok',
+          message: 'database store read and wrote in one round trip',
+        },
+        {
+          key: 'storage',
+          label: 'Storage',
+          status: 'ok',
+          message: '42% free (100 GB of 240 GB)',
+          value: 42,
+          unit: '% free',
+        },
+        {
+          key: 'runtime',
+          label: 'Runtime',
+          status: 'warn',
+          message: 'PHP 8.4.0 · Laravel 13.0.0',
+          details: { php: '8.4.0', laravel: '13.0.0', environment: 'local' },
+        },
+      ],
+    },
+    history: {
+      uptime_percent: 75,
+      samples: [
+        { checked_at: '2026-10-16T10:00:00.000Z', status: 'ok' },
+        { checked_at: '2026-10-16T10:05:00.000Z', status: 'ok' },
+        { checked_at: '2026-10-16T10:10:00.000Z', status: 'ok' },
+        { checked_at: '2026-10-16T10:15:00.000Z', status: 'fail' },
+      ],
+    },
+    failed_jobs: [
+      {
+        id: 7,
+        uuid: 'a1b2c3',
+        queue: 'default',
+        failed_at: '2026-10-16T11:00:00.000Z',
+        reason: 'Too many attempts',
+      },
+    ],
+    incidents: [
+      {
+        id: 1,
+        title: 'Queue worker restarted',
+        severity: 'major',
+        status: 'investigating',
+        body: 'Redis connection dropped for 3 minutes.',
+        started_at: '2026-10-16T11:30:00.000Z',
+        resolved_at: null,
+        duration_minutes: 12,
+        author: { id: 9, name: 'Alex Thorne' },
       },
     ],
     ...overrides,

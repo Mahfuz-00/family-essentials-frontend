@@ -18,6 +18,7 @@ import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
 import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
+import { HealthPage } from '@/pages/admin/HealthPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
@@ -153,6 +154,13 @@ const adminTenantsRoute = createRoute({
   component: TenantsPage,
 });
 
+const adminHealthRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/health',
+  beforeLoad: requirePlatformAdmin,
+  component: HealthPage,
+});
+
 const adminAuditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/audit-logs',
@@ -181,6 +189,7 @@ export const routeTree = rootRoute.addChildren([
   adminLoginRoute,
   adminOverviewRoute,
   adminTenantsRoute,
+  adminHealthRoute,
   adminAuditRoute,
 ]);
 

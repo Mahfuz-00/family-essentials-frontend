@@ -23,6 +23,7 @@ type RoutePath =
   | '/settings'
   | '/admin'
   | '/admin/tenants'
+  | '/admin/health'
   | '/admin/audit-logs';
 
 interface NavItem {
@@ -80,6 +81,7 @@ const platformSections: NavSection[] = [
     items: [
       { to: '/admin', label: 'Overview / Analytics', icon: 'analytics', exact: true },
       { to: '/admin/tenants', label: 'Tenants & Workspaces', icon: 'apartment' },
+      { to: '/admin/health', label: 'System Health', icon: 'monitor_heart' },
       { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
     ],
   },
@@ -98,6 +100,7 @@ const routeLabels: Record<string, string> = {
   '/settings': 'Settings',
   '/admin': 'Global Analytics Overview',
   '/admin/tenants': 'Tenant Workspaces & Client Families',
+  '/admin/health': 'System Health',
   '/admin/audit-logs': 'Global Audit & Security Log',
 };
 

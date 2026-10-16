@@ -139,6 +139,59 @@ export interface VoiceQuota {
   cooldown_minutes: number;
 }
 
+/* ------------------------------------------------------------------ ops --- */
+
+export type OpsStatus = 'ok' | 'warn' | 'fail';
+
+export interface OpsCheck {
+  key: string;
+  label: string;
+  status: OpsStatus;
+  message: string;
+  value?: number;
+  unit?: string;
+  details?: Record<string, unknown>;
+}
+
+export interface OpsReport {
+  status: OpsStatus;
+  checked_at: string;
+  checks: OpsCheck[];
+}
+
+export interface FailedJob {
+  id: number;
+  uuid: string;
+  queue: string;
+  failed_at: string;
+  reason: string;
+}
+
+export type IncidentSeverity = 'minor' | 'major' | 'critical';
+export type IncidentStatus = 'investigating' | 'identified' | 'monitoring' | 'resolved';
+
+export interface Incident {
+  id: number;
+  title: string;
+  severity: IncidentSeverity;
+  status: IncidentStatus;
+  body: string | null;
+  started_at: string;
+  resolved_at: string | null;
+  duration_minutes: number | null;
+  author?: { id: number; name: string } | null;
+}
+
+export interface OpsHealth {
+  report: OpsReport;
+  history: {
+    uptime_percent: number | null;
+    samples: { checked_at: string; status: OpsStatus }[];
+  };
+  failed_jobs: FailedJob[];
+  incidents: Incident[];
+}
+
 export type RequestStatus =
   | 'pending'
   | 'accepted'
