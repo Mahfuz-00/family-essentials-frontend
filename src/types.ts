@@ -192,6 +192,71 @@ export interface OpsHealth {
   incidents: Incident[];
 }
 
+/* --------------------------------------------------------------- backups --- */
+
+export type BackupStatus = 'running' | 'completed' | 'failed' | 'skipped';
+
+export interface BackupRecord {
+  id: number;
+  filename: string;
+  path: string;
+  disk: string;
+  driver: string;
+  type: 'manual' | 'scheduled' | 'pre_restore';
+  status: BackupStatus;
+  size_bytes: number | null;
+  checksum: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_seconds: number | null;
+  error: string | null;
+  verified_at: string | null;
+  verify_error: string | null;
+  /** Verified by re-checksumming the file, not merely created. */
+  restorable: boolean;
+  has_drifted: boolean;
+  created_by?: { id: number; name: string } | null;
+}
+
+export interface BackupReadiness {
+  ready: boolean;
+  gaps: string[];
+  driver: string;
+  dumper_available: boolean;
+  requirement: string;
+  connection: string;
+  connection_is_owner: boolean;
+  disk: string;
+  directory: string;
+  destination_writable: boolean;
+  retention_days: number;
+  rpo_hours: number;
+  rto_minutes: number;
+  latest_backup: {
+    id: number;
+    filename: string;
+    started_at: string | null;
+    age_hours: number | null;
+    size_bytes: number | null;
+    restorable: boolean;
+  } | null;
+  completed_count: number;
+}
+
+export interface BackupRunbook {
+  iaas: string;
+  rpo_hours: number;
+  rto_minutes: number;
+  retention_days: number;
+  steps: { label: string; command: string }[];
+}
+
+export interface BackupsPayload {
+  readiness: BackupReadiness;
+  backups: BackupRecord[];
+  runbook: BackupRunbook;
+}
+
 export type RequestStatus =
   | 'pending'
   | 'accepted'
