@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Family Essentials — "Warm Sage" design system
+   Source of truth: stitch_cross_platform_dashboard_ui/warm_sage/DESIGN.md
+   Palette, type scale, radii and elevation are the Stitch tokens verbatim.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces and ink */
+  --color-canvas: #fdfcf7;
+  --color-surface: #ffffff;
+  --color-surface-bright: #fbf8ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f2ff;
+  --color-surface-container: #edecff;
+  --color-surface-container-high: #e6e6ff;
+  --color-surface-container-highest: #e0e0fc;
+  --color-inverse-surface: #2d2f44;
+  --color-inverse-on-surface: #f1efff;
+  --color-on-surface: #181a2e;
+  --color-on-surface-variant: #434844;
+  --color-ink: #181a2e;
+  --color-muted: #6c757d;
+  --color-outline: #737873;
+  --color-outline-variant: #c3c8c2;
+
+  /* Brand roles */
+  --color-primary: #4d6054;
+  --color-primary-container: #66796c;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #f6fff6;
+  --color-primary-fixed: #d2e8d8;
+  --color-primary-fixed-dim: #b7ccbc;
+  --color-secondary: #376847;
+  --color-secondary-container: #b6edc2;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #3b6d4b;
+  --color-secondary-fixed: #b9efc5;
+  --color-secondary-fixed-dim: #9dd3aa;
+  --color-tertiary: #97422b;
+  --color-tertiary-container: #b65a41;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-fixed: #ffdbd2;
+  --color-tertiary-fixed-dim: #ffb4a1;
+
+  /* Semantic */
+  --color-error: #e76f51;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  --color-success: #81b29a;
+  --color-warning: #f4a261;
+
+  /* Tinted supports used across the mockups */
+  --color-sage-soft: #ebf0ed;
+  --color-forest-soft: #e4ede7;
+  --color-coral-soft: #fcece7;
+
+  /* Typography scale */
+  --text-display-lg: 2rem;
+  --text-display-lg--line-height: 2.5rem;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+
+  --text-headline-lg: 1.5rem;
+  --text-headline-lg--line-height: 2rem;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 1.25rem;
+  --text-headline-md--line-height: 1.75rem;
+  --text-headline-md--font-weight: 600;
+
+  --text-headline-sm: 1.125rem;
+  --text-headline-sm--line-height: 1.5rem;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5rem;
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-body-sm: 0.75rem;
+  --text-body-sm--line-height: 1.125rem;
+
+  --text-label-lg: 0.875rem;
+  --text-label-lg--line-height: 1.25rem;
+  --text-label-lg--font-weight: 600;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1rem;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 600;
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 0.875rem;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 700;
+
+  /* Shape.
+     Deliberately NOT overriding Tailwind's radius scale. The Stitch config's
+     rounded-md/lg/xl/2xl/3xl (6/8/12/16/24px) line up with Tailwind's defaults,
+     so `rounded-xl` here means the same 12px it means in the design exports.
+     Overriding these earlier made every pill and input render at 24px. */
+
+  /* Elevation — slate-tinted ambient shadows, never black */
+  --shadow-e1: 0 2px 8px -1px rgba(43, 45, 66, 0.04), 0 1px 3px 0 rgba(43, 45, 66, 0.02);
+  --shadow-e2: 0 6px 16px -2px rgba(43, 45, 66, 0.06), 0 2px 6px -1px rgba(43, 45, 66, 0.04);
+  --shadow-e3: 0 12px 28px -4px rgba(74, 124, 89, 0.18), 0 4px 10px -2px rgba(43, 45, 66, 0.06);
+  --shadow-e4: 0 -10px 30px 0 rgba(43, 45, 66, 0.08);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Self-hosted-by-Google variable icon font used by the Stitch mockups. */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Focus is architecture: visible, offset, consistent. */
+:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
