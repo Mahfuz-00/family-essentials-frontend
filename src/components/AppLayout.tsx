@@ -10,33 +10,92 @@ import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import { useUiStore } from '@/stores/ui';
 
+type RoutePath =
+  | '/'
+  | '/requests'
+  | '/requests/escalation'
+  | '/places'
+  | '/places/console'
+  | '/members'
+  | '/members/roles'
+  | '/members/invitations'
+  | '/billing'
+  | '/settings'
+  | '/admin'
+  | '/admin/tenants'
+  | '/admin/audit-logs';
+
 interface NavItem {
-  to: '/' | '/requests' | '/places' | '/members' | '/billing' | '/admin' | '/admin/tenants' | '/admin/audit-logs';
+  to: RoutePath;
   label: string;
   icon: string;
   exact?: boolean;
 }
 
-const householdNav: NavItem[] = [
-  { to: '/', label: 'Dashboard / Kanban', icon: 'view_kanban', exact: true },
-  { to: '/requests', label: 'Requests & Errands', icon: 'shopping_bag' },
-  { to: '/places', label: 'Saved Places & Geofences', icon: 'pin_drop' },
-  { to: '/members', label: 'Family Members', icon: 'group' },
-  { to: '/billing', label: 'Billing & Subscription', icon: 'credit_card' },
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+/**
+ * Grouped so each area of the product reads as an area. The household surface now
+ * has six modules rather than four over-stuffed pages.
+ */
+const householdSections: NavSection[] = [
+  {
+    title: 'Today',
+    items: [
+      { to: '/', label: 'Dashboard', icon: 'cottage', exact: true },
+      { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban' },
+      { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume' },
+    ],
+  },
+  {
+    title: 'Household',
+    items: [
+      { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
+      { to: '/places/console', label: 'Geofence Console', icon: 'map' },
+    ],
+  },
+  {
+    title: 'People',
+    items: [
+      { to: '/members', label: 'Family Members', icon: 'group', exact: true },
+      { to: '/members/roles', label: 'Roles & Permissions', icon: 'shield_person' },
+      { to: '/members/invitations', label: 'Invitations', icon: 'mark_email_unread' },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { to: '/billing', label: 'Billing & Subscription', icon: 'credit_card' },
+      { to: '/settings', label: 'Settings', icon: 'tune' },
+    ],
+  },
 ];
 
-const platformNav: NavItem[] = [
-  { to: '/admin', label: 'Overview / Analytics', icon: 'analytics', exact: true },
-  { to: '/admin/tenants', label: 'Tenants & Workspaces', icon: 'apartment' },
-  { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
+const platformSections: NavSection[] = [
+  {
+    title: 'Operations & Control',
+    items: [
+      { to: '/admin', label: 'Overview / Analytics', icon: 'analytics', exact: true },
+      { to: '/admin/tenants', label: 'Tenants & Workspaces', icon: 'apartment' },
+      { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
+    ],
+  },
 ];
 
 const routeLabels: Record<string, string> = {
-  '/': 'Household Kanban Overview',
+  '/': 'Dashboard',
   '/requests': 'Requests & Errands',
-  '/places': 'Saved Places & Geofences',
-  '/members': 'Family Members & Roles',
+  '/requests/escalation': 'Escalation & Voice',
+  '/places': 'Saved Places',
+  '/places/console': 'Geofence Console',
+  '/members': 'Family Members',
+  '/members/roles': 'Roles & Permissions',
+  '/members/invitations': 'Invitations',
   '/billing': 'Billing & Subscription',
+  '/settings': 'Settings',
   '/admin': 'Global Analytics Overview',
   '/admin/tenants': 'Tenant Workspaces & Client Families',
   '/admin/audit-logs': 'Global Audit & Security Log',
@@ -99,11 +158,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
     await switchTo(Number(event.target.value));
   };
 
+  const sections = isPlatformAdmin ? platformSections : householdSections;
+
   return (
     <div className="min-h-full bg-canvas">
       {/* ------------------------------- sidebar ------------------------------- */}
       <aside className="fixed left-0 top-0 z-50 hidden h-full w-72 flex-col justify-between bg-surface shadow-e1 lg:flex">
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-y-auto">
           <div className="flex items-center gap-3 px-5 py-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sage-soft text-primary">
               <Icon name={isPlatformAdmin ? 'shield' : 'cottage'} className="text-[20px]" />
@@ -118,41 +179,49 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </div>
 
-          {/* Active household selector — supplanted by the header dropdown. */}
+          {/* Scope indicator. For a platform admin this is not a control — there is
+              no tenant to switch to, because the console sees all of them. */}
           <div className="px-4 pb-2">
             <div className="flex items-center justify-between rounded-xl bg-surface-container-low px-4 py-2">
               <span className="flex min-w-0 items-center gap-2.5">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-secondary" />
                 <span className="flex min-w-0 flex-col">
                   <span className="text-label-sm leading-none text-muted">
-                    {isPlatformAdmin ? 'Landlord scope' : 'Active Household'}
+                    {isPlatformAdmin ? 'Scope' : 'Active Household'}
                   </span>
                   <span className="truncate text-label-lg leading-snug text-on-surface">
                     {isPlatformAdmin ? 'All tenants' : (active?.name ?? 'None selected')}
                   </span>
                 </span>
               </span>
-              <Icon name="unfold_more" className="text-[18px] text-on-surface-variant" />
+              {!isPlatformAdmin && (
+                <Icon name="unfold_more" className="text-[18px] text-on-surface-variant" />
+              )}
             </div>
           </div>
 
-          <nav className="flex flex-col gap-1 px-4 py-1">
-            {(isPlatformAdmin ? platformNav : householdNav).map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                activeOptions={{ exact: item.exact ?? false }}
-                className="flex items-center gap-4 rounded-xl px-4 py-2 text-body-md text-on-surface-variant transition-all hover:bg-sage-soft hover:text-on-surface"
-                activeProps={{
-                  className:
-                    'flex items-center gap-4 rounded-xl bg-primary-container px-4 py-2 text-headline-sm font-bold text-on-primary-container',
-                }}
-              >
-                <Icon name={item.icon} />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          {sections.map((section) => (
+            <nav key={section.title} className="flex flex-col gap-1 px-4 py-1">
+              <span className="px-4 py-1 text-label-sm uppercase tracking-wider text-muted">
+                {section.title}
+              </span>
+              {section.items.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  activeOptions={{ exact: item.exact ?? false }}
+                  className="flex items-center gap-4 rounded-xl px-4 py-2 text-body-md text-on-surface-variant transition-all hover:bg-sage-soft hover:text-on-surface"
+                  activeProps={{
+                    className:
+                      'flex items-center gap-4 rounded-xl bg-primary-container px-4 py-2 text-headline-sm font-bold text-on-primary-container',
+                  }}
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          ))}
         </div>
 
         <div className="flex flex-col gap-3 p-4">
@@ -193,7 +262,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-label-lg leading-snug text-on-surface">{user?.name}</span>
                 <span className="truncate text-label-sm leading-tight text-muted">
-                  {isPlatformAdmin ? 'Platform Admin' : 'Tenant Admin'}
+                  {isPlatformAdmin ? 'Platform Admin' : 'Household member'}
                 </span>
               </span>
             </span>
@@ -224,7 +293,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex shrink-0 items-center gap-3">
             {active && !isPlatformAdmin && <Badge tone="success">{active.status}</Badge>}
 
-            {memberships.length > 1 && (
+            {/* Household switcher is a tenant control, so the platform console must
+                not show it — a landlord has no single household to be "in". */}
+            {!isPlatformAdmin && memberships.length > 1 && (
               <label className="flex items-center">
                 <span className="sr-only">Active household</span>
                 <select

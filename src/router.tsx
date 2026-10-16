@@ -11,6 +11,11 @@ import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { VerifyPhonePage } from '@/pages/VerifyPhonePage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { SettingsPage } from '@/pages/SettingsPage';
+import { InvitationsPage } from '@/pages/members/InvitationsPage';
+import { RolesPage } from '@/pages/members/RolesPage';
+import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
+import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
@@ -72,6 +77,27 @@ const membersRoute = createRoute({
   component: MembersPage,
 });
 
+const membersRolesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/members/roles',
+  beforeLoad: requireTenant,
+  component: RolesPage,
+});
+
+const membersInvitationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/members/invitations',
+  beforeLoad: requireTenant,
+  component: InvitationsPage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  beforeLoad: requireTenant,
+  component: SettingsPage,
+});
+
 const requestsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/requests',
@@ -79,11 +105,25 @@ const requestsRoute = createRoute({
   component: RequestsPage,
 });
 
+const escalationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/escalation',
+  beforeLoad: requireTenant,
+  component: EscalationPage,
+});
+
 const placesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/places',
   beforeLoad: requireTenant,
   component: PlacesPage,
+});
+
+const geofenceConsoleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/places/console',
+  beforeLoad: requireTenant,
+  component: GeofenceConsolePage,
 });
 
 const billingRoute = createRoute({
@@ -130,8 +170,13 @@ export const routeTree = rootRoute.addChildren([
   verifyEmailRoute,
   verifyPhoneRoute,
   membersRoute,
+  membersRolesRoute,
+  membersInvitationsRoute,
+  settingsRoute,
   requestsRoute,
+  escalationRoute,
   placesRoute,
+  geofenceConsoleRoute,
   billingRoute,
   adminLoginRoute,
   adminOverviewRoute,

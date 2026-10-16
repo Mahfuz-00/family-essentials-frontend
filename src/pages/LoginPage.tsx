@@ -40,7 +40,9 @@ export function LoginPage() {
       });
 
       setAuth(data.token, data.user);
-      await navigate({ to: '/' });
+
+      // A landlord signing in here belongs in the console, not the household view.
+      await navigate({ to: data.user.is_platform_admin ? '/admin' : '/' });
     } catch (caught) {
       setError(apiError(caught));
     }

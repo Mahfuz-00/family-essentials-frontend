@@ -24,7 +24,6 @@ import type {
   ServiceRequest,
   TenantMember,
   VoiceCall,
-  VoiceQuota,
 } from '@/types';
 
 type ColumnKey = 'overdue' | 'due_today' | 'assigned_to_me' | 'backlog' | 'completed_today';
@@ -154,12 +153,7 @@ export function RequestsPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
-  // Today's escalation usage against the configured budget.
-  const quota = useQuery({
-    queryKey: ['voice', 'quota'],
-    queryFn: async () => (await api.get<VoiceQuota>('/v1/voice-calls/quota')).data,
-  });
-
+  // Today's escalation usage moved to the Escalation & voice module.
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['requests'] });
   };
@@ -586,16 +580,6 @@ export function RequestsPage() {
 
           {/* View switcher */}
           <div className="flex flex-wrap items-center gap-3">
-            {quota.data && (
-              <span
-                className="flex items-center gap-1.5 rounded-full bg-surface-container-low px-3 py-1.5 text-label-md text-on-surface-variant"
-                title="Manual voice escalations used today against the configured daily budget"
-              >
-                <Icon name="ring_volume" className="text-[16px] text-error" />
-                Voice budget {quota.data.used_today}/{quota.data.daily_budget} used today
-              </span>
-            )}
-
             <div
               className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
               role="group"

@@ -1,40 +1,25 @@
-import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
-import { Alert } from '@/components/ui/alert';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
-import { api, apiError } from '@/lib/api';
+import { api } from '@/lib/api';
 import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
-import type { AuthUser, RequestBoard } from '@/types';
+import type { RequestBoard } from '@/types';
 
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
   const active = useTenantStore((state) => state.active);
-  const [error, setError] = useState<string | null>(null);
 
   const board = useQuery({
     queryKey: ['requests', 'board'],
     queryFn: async () => (await api.get<RequestBoard>('/v1/requests/board')).data,
-  });
-
-  const voiceConsent = useMutation({
-    mutationFn: async (optIn: boolean) => {
-      await api.patch('/v1/auth/voice-consent', { voice_opt_in: optIn });
-
-      const { data } = await api.get<{ data: AuthUser }>('/v1/auth/me');
-      setUser(data.data);
-    },
-    onError: (caught) => setError(apiError(caught)),
-    onSuccess: () => setError(null),
   });
 
   const tiles = [
@@ -81,8 +66,6 @@ export function DashboardPage() {
         />
 
         {/* Today's numbers */}
-        {error && <Alert>{error}</Alert>}
-
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {board.isLoading
             ? tiles.map((tile) => <SkeletonCard key={tile.key} />)
@@ -157,30 +140,25 @@ export function DashboardPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <VerificationRow label="Email" verified={user?.email_verified ?? false} to="/verify-email" />
-                <VerificationRow label="Phone" verified={user?.phone_verified ?? false} to="/verify-phone" />
-
-                <div className="flex items-start justify-between gap-3 rounded-xl bg-canvas px-4 py-3">
-                  <span className="flex flex-col">
-                    <span className="text-body-md font-semibold text-on-surface">Voice escalation</span>
-                    <span className="text-body-sm text-muted">
-                      {user?.phone_verified
-                        ? 'Automated calls for urgent overdue tasks.'
-                        : 'Verify your phone number first.'}
-                    </span>
-                  </span>
-                  <label className="flex cursor-pointer items-center">
-                    <span className="sr-only">Enable voice escalation</span>
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={user?.voice_opt_in ?? false}
-                      disabled={voiceConsent.isPending || !user?.phone_verified}
-                      onChange={(event) => voiceConsent.mutate(event.target.checked)}
-                    />
-                    <span className="relative block h-6 w-11 rounded-full bg-outline-variant/70 transition-colors peer-checked:bg-secondary peer-disabled:opacity-50 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
-                  </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={user?.email_verified ? 'success' : 'danger'}>
+                    {user?.email_verified ? 'Email verified' : 'Email unverified'}
+                  </Badge>
+                  <Badge tone={user?.phone_verified ? 'success' : 'danger'}>
+                    {user?.phone_verified ? 'Phone verified' : 'Phone unverified'}
+                  </Badge>
+                  <Badge tone={user?.voice_opt_in ? 'success' : 'neutral'}>
+                    Voice escalation {user?.voice_opt_in ? 'on' : 'off'}
+                  </Badge>
                 </div>
+
+                {/* Configuration moved to Settings; the dashboard is for the day's work. */}
+                <Link to="/settings" className="inline-flex">
+                  <span className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-sage-soft px-3.5 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
+                    <Icon name="tune" className="text-[16px]" />
+                    Manage in settings
+                  </span>
+                </Link>
               </div>
             </div>
           </Card>
@@ -218,31 +196,5 @@ function StatTile({
       </div>
       <span className="text-display-lg font-bold text-on-surface">{value}</span>
     </Card>
-  );
-}
-
-function VerificationRow({
-  label,
-  verified,
-  to,
-}: {
-  label: string;
-  verified: boolean;
-  to: '/verify-email' | '/verify-phone';
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-xl bg-canvas px-4 py-3">
-      <span className="flex flex-col">
-        <span className="text-body-md font-semibold text-on-surface">{label}</span>
-        <span className={`text-body-sm font-semibold ${verified ? 'text-secondary' : 'text-error'}`}>
-          {verified ? 'Verified' : 'Not verified'}
-        </span>
-      </span>
-      {!verified && (
-        <Link to={to} className="text-body-md font-semibold text-secondary hover:underline">
-          Verify →
-        </Link>
-      )}
-    </div>
   );
 }

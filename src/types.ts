@@ -38,6 +38,29 @@ export interface MemberDevice {
   last_used_at: string | null;
 }
 
+/** A row of the capability matrix, served by /v1/tenant/roles. */
+export interface TenantCapability {
+  key: string;
+  label: string;
+  detail: string;
+  access: Record<string, boolean>;
+}
+
+export interface TenantRole {
+  key: MemberRole;
+  label: string;
+  detail: string;
+  member_count: number;
+  /** False when the caller may not grant this role (a co-admin cannot grant admin). */
+  can_be_granted: boolean;
+}
+
+export interface TenantRoleCatalogue {
+  can_manage_roles: boolean;
+  roles: TenantRole[];
+  capabilities: TenantCapability[];
+}
+
 export interface TenantMember {
   id: number;
   user_id: number;

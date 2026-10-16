@@ -286,9 +286,11 @@ export function AdminOverviewPage() {
         </Card>
 
         <Alert tone="info">
-          Security log exploration (W-PA-04) is not available: the database has no audit-events table and
-          the API exposes no audit endpoint. It needs a recorder plus an endpoint before any UI would be
-          honest.
+          Tenant suspension and provisioning are audited into the security ledger — see{' '}
+          <Link to="/admin/audit-logs" className="font-semibold text-secondary hover:underline">
+            Audit & Security Logs
+          </Link>
+          .
         </Alert>
       </div>
     </AppLayout>

@@ -6,6 +6,7 @@ import type {
   ServiceRequest,
   Tenant,
   TenantMember,
+  TenantRoleCatalogue,
 } from '@/types';
 
 export const household: Tenant = {
@@ -143,6 +144,33 @@ export function auditEvent(overrides: Partial<PlatformAuditEvent> = {}): Platfor
   };
 }
 
+export function roleCatalogue(overrides: Partial<TenantRoleCatalogue> = {}): TenantRoleCatalogue {
+  return {
+    can_manage_roles: true,
+    roles: [
+      { key: 'tenant_admin', label: 'Tenant admin', detail: 'Full control', member_count: 1, can_be_granted: true },
+      { key: 'co_admin', label: 'Co-admin', detail: 'Runs the household', member_count: 0, can_be_granted: true },
+      { key: 'member', label: 'Household member', detail: 'Creates and completes', member_count: 1, can_be_granted: true },
+      { key: 'junior', label: 'Junior', detail: 'Own requests only', member_count: 0, can_be_granted: true },
+    ],
+    capabilities: [
+      {
+        key: 'manage_roles',
+        label: 'Change roles / remove members',
+        detail: 'Household administration',
+        access: { tenant_admin: true, co_admin: false, member: false, junior: false },
+      },
+      {
+        key: 'dispatch_requests',
+        label: 'Create & assign requests',
+        detail: 'Dispatch work to another member',
+        access: { tenant_admin: true, co_admin: true, member: true, junior: false },
+      },
+    ],
+    ...overrides,
+  };
+}
+
 /** The GET routes the dashboard needs once signed in. */
 export function sessionRoutes() {
   return {
@@ -155,6 +183,7 @@ export function sessionRoutes() {
         member({ id: 2, user_id: 2, name: 'Sarah Rahman', email: 'sarah@familyessentials.app', role: 'member' }),
       ],
     },
+    '/v1/tenant/roles': roleCatalogue(),
     '/v1/places': { data: [] },
     '/v1/voice-calls/quota': {
       used_today: 0,
