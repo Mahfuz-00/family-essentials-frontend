@@ -120,7 +120,8 @@ const adminAuditRoute = createRoute({
   component: AuditLogPage,
 });
 
-const routeTree = rootRoute.addChildren([
+// Exported so tests can build a router over the real tree (see tests/support/render.tsx).
+export const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,

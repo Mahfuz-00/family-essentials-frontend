@@ -27,10 +27,14 @@ export function Button({
   className,
   variant = 'primary',
   size = 'md',
+  // Defaults to "button" so a Button inside a form never submits it by accident;
+  // real submit buttons pass type="submit" explicitly.
+  type = 'button',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
   return (
     <button
+      type={type}
       className={cn(
         'inline-flex cursor-pointer items-center justify-center font-semibold transition-all duration-150',
         'disabled:pointer-events-none disabled:opacity-50',

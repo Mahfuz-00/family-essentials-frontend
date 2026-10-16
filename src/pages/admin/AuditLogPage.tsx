@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
@@ -65,17 +65,28 @@ export function AuditLogPage() {
   const [error, setError] = useState<string | null>(null);
 
   const activeRange = ranges.find((option) => option.value === range) ?? ranges[1];
-  const from = activeRange.hours
-    ? new Date(Date.now() - activeRange.hours * 3_600_000).toISOString()
-    : undefined;
 
-  const params = {
-    ...(level !== 'all' ? { level } : {}),
-    ...(action !== 'all' ? { action } : {}),
-    ...(search.trim() !== '' ? { q: search.trim() } : {}),
-    ...(from ? { from } : {}),
-    page,
-  };
+  // Derived once per range, not on every render: a window computed from
+  // Date.now() inside the render body changes the query key every time, which
+  // makes the query refetch in a loop.
+  const from = useMemo(
+    () =>
+      activeRange.hours === null
+        ? undefined
+        : new Date(Date.now() - activeRange.hours * 3_600_000).toISOString(),
+    [activeRange.hours],
+  );
+
+  const params = useMemo(
+    () => ({
+      ...(level !== 'all' ? { level } : {}),
+      ...(action !== 'all' ? { action } : {}),
+      ...(search.trim() !== '' ? { q: search.trim() } : {}),
+      ...(from ? { from } : {}),
+      page,
+    }),
+    [level, action, search, from, page],
+  );
 
   const events = useQuery({
     queryKey: ['platform', 'audit-logs', params],

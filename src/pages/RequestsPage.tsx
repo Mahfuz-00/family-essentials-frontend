@@ -344,7 +344,10 @@ export function RequestsPage() {
 
         {/* Metric strip */}
         {metrics.length > 0 && (
-          <section className="flex flex-wrap items-center gap-2 rounded-2xl bg-surface p-1.5 shadow-e1">
+          <section
+            aria-label="Board summary"
+            className="flex flex-wrap items-center gap-2 rounded-2xl bg-surface p-1.5 shadow-e1"
+          >
             {metrics.map((metric) => (
               <span
                 key={metric.label}
