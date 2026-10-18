@@ -12,7 +12,7 @@
  */
 
 /** Minor units in one major unit. Every currency this build serves uses 1/100. */
-export const MINOR_UNITS = 100;
+const MINOR_UNITS = 100;
 
 /**
  * The one message both amount fields raise, so the recurring form and the

@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
@@ -236,7 +237,15 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
         )}
 
         {/* The same card for every role: what differs is what sits underneath it. */}
-        {ledger && <SummaryCard summary={summary.data} currency={currency} loading={summary.isLoading} />}
+        {ledger && (
+          <SummaryCard
+            summary={summary.data}
+            currency={currency}
+            loading={summary.isLoading}
+            error={summary.isError ? summary.error : null}
+            onRetry={() => void summary.refetch()}
+          />
+        )}
 
         {ledger && !canReadEntries && (
           <Alert tone="info">
@@ -467,11 +476,22 @@ function SummaryCard({
   summary,
   currency,
   loading,
+  error,
+  onRetry,
 }: {
   summary: LedgerSummary | undefined;
   currency: string;
   loading: boolean;
+  error?: unknown;
+  onRetry: () => void;
 }) {
+  // A failed summary used to leave the skeletons pulsing forever.
+  if (error) {
+    return (
+      <QueryError error={error} what="this period's totals" onRetry={onRetry} />
+    );
+  }
+
   if (loading || !summary) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

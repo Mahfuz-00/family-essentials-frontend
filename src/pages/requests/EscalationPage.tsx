@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
-import { api, apiError } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import type { VoiceCall, VoiceQuota } from '@/types';
 
@@ -66,17 +65,11 @@ export function EscalationPage() {
           title="Escalation & voice"
           description="When the household gets called, how often, and what has actually been dialled."
           titleSize="headline"
-          actions={
-            <Link to="/settings" className="inline-flex">
-              <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-sage-soft px-4 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                <Icon name="tune" className="text-[18px]" />
-                Consent & settings
-              </span>
-            </Link>
-          }
         />
 
-        {quota.isError && <Alert>{apiError(quota.error)}</Alert>}
+        {quota.isError && (
+          <QueryError error={quota.error} what="the call budget" onRetry={() => void quota.refetch()} />
+        )}
 
         {/* Budget */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -143,7 +136,17 @@ export function EscalationPage() {
             </p>
           </div>
 
-          {(calls.data ?? []).length === 0 ? (
+          {calls.isError ? (
+            <div className="p-5 pt-0">
+              <QueryError
+                error={calls.error}
+                what="the call history"
+                onRetry={() => void calls.refetch()}
+              />
+            </div>
+          ) : calls.isLoading ? (
+            <p className="p-5 pt-0 text-body-md text-muted">Loading calls…</p>
+          ) : (calls.data ?? []).length === 0 ? (
             <div className="p-5 pt-0">
               <EmptyState
                 title="No calls yet"

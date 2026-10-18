@@ -404,15 +404,10 @@ export function TenantsPage() {
                         </TD>
 
                         <TD>
-                          <span className="flex flex-col gap-1.5">
-                            <span className="text-body-sm text-on-surface-variant">
-                              {used} of {plan.seatCap} members
-                            </span>
-                            <span className="block h-1.5 w-24 overflow-hidden rounded-full bg-canvas">
-                              <span
-                                className="block h-1.5 rounded-full bg-secondary"
-                                style={{ width: `${Math.min(100, (used / plan.seatCap) * 100)}%` }}
-                              />
+                          <span className="flex flex-col">
+                            <span className="text-body-md text-on-surface">{used}</span>
+                            <span className="text-body-sm text-muted">
+                              {used === 1 ? 'member' : 'members'}
                             </span>
                           </span>
                         </TD>
@@ -515,8 +510,9 @@ export function TenantsPage() {
         )}
 
         <Alert tone="info">
-          Member seat caps come from the presentation plan catalogue, not from the server. The API returns
-          the member count only.
+          The platform API returns each tenant's member count and nothing more: it does not send that
+          household's seat cap, so this console shows usage without a limit line. The caps a household
+          sees are its own — they come from <span className="font-mono">/v1/tenant/quotas</span>.
         </Alert>
       </div>
 
@@ -558,7 +554,7 @@ export function TenantsPage() {
               >
                 {plans.map((plan) => (
                   <option key={plan.key} value={plan.key}>
-                    {plan.label} ({plan.price})
+                    {plan.label}
                   </option>
                 ))}
               </Select>
@@ -578,7 +574,8 @@ export function TenantsPage() {
           </div>
 
           <p className="text-body-sm text-muted">
-            Tier prices come from the presentation catalogue; no payment provider is connected.
+            The tier key is what the API validates; this build has no payment provider, so no price is
+            attached to a provision.
           </p>
         </div>
       </Modal>

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import type { Place } from '@/types';
@@ -36,14 +37,37 @@ const categoryTint: Record<string, string> = {
   other: 'bg-surface-container-low text-on-surface-variant',
 };
 
+/**
+ * An empty coordinate pair, not a guess.
+ *
+ * The form used to prefill Dhaka's coordinates, so a place saved without
+ * touching those two fields got a geofence in the wrong country. Coordinates
+ * are validated when the form is submitted instead.
+ */
 const emptyForm = {
   name: '',
   address: '',
-  latitude: '23.8103',
-  longitude: '90.4125',
+  latitude: '',
+  longitude: '',
   radius_meters: 300,
   category: 'grocery',
 };
+
+/** Latitude is ±90, longitude ±180; anything else is not a position. */
+function coordinate(raw: string, limit: number): number | null {
+  const trimmed = raw.trim();
+
+  if (!/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+    return null;
+  }
+
+  const value = Number(trimmed);
+
+  return Number.isFinite(value) && Math.abs(value) <= limit ? value : null;
+}
+
+const COORDINATE_ERROR =
+  'Enter the latitude (−90 to 90) and longitude (−180 to 180) of this place before saving.';
 
 /**
  * Saved places: the list, the CRUD and the per-place store list.
@@ -77,12 +101,12 @@ export function PlacesPage() {
   };
 
   const create = useMutation({
-    mutationFn: async () =>
+    mutationFn: async (position: { latitude: number; longitude: number }) =>
       api.post('/v1/places', {
         name: form.name,
         address: form.address || null,
-        latitude: Number(form.latitude),
-        longitude: Number(form.longitude),
+        latitude: position.latitude,
+        longitude: position.longitude,
         radius_meters: form.radius_meters,
         category: form.category,
       }),
@@ -95,6 +119,21 @@ export function PlacesPage() {
     },
     onError,
   });
+
+  /** Checked here rather than by the API: a missing position is a form problem. */
+  const submitPlace = () => {
+    const latitude = coordinate(form.latitude, 90);
+    const longitude = coordinate(form.longitude, 180);
+
+    if (latitude === null || longitude === null) {
+      setError(COORDINATE_ERROR);
+      setNotice(null);
+
+      return;
+    }
+
+    create.mutate({ latitude, longitude });
+  };
 
   const remove = useMutation({
     mutationFn: async (id: number) => api.delete(`/v1/places/${id}`),
@@ -130,18 +169,10 @@ export function PlacesPage() {
           description="The stores and places your family visits, each with the radius that arms its geofence."
           titleSize="headline"
           actions={
-            <>
-              <Link to="/places/console" className="inline-flex">
-                <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-sage-soft px-4 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                  <Icon name="map" className="text-[18px]" />
-                  Geofence console
-                </span>
-              </Link>
-              <Button size="lg" onClick={() => setAddOpen(true)}>
-                <Icon name="add_location_alt" className="text-[18px]" />
-                Add New Place
-              </Button>
-            </>
+            <Button size="lg" onClick={() => setAddOpen(true)}>
+              <Icon name="add_location_alt" className="text-[18px]" />
+              Add New Place
+            </Button>
           }
         />
 
@@ -182,6 +213,9 @@ export function PlacesPage() {
         </Card>
 
         {places.isLoading && <p className="text-body-md text-muted">Loading places…</p>}
+        {places.isError && (
+          <QueryError error={places.error} what="saved places" onRetry={() => void places.refetch()} />
+        )}
 
         {places.isSuccess && visible.length === 0 && (
           <EmptyState
@@ -190,11 +224,6 @@ export function PlacesPage() {
               list.length === 0
                 ? 'Add the stores and places your family visits so lists surface at the right moment.'
                 : 'Adjust the search or category filter to find a saved place.'
-            }
-            action={
-              <Button size="lg" onClick={() => setAddOpen(true)}>
-                Add New Place
-              </Button>
             }
           />
         )}
@@ -255,14 +284,6 @@ export function PlacesPage() {
             );
           })}
         </section>
-
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          className="w-full cursor-pointer rounded-2xl border-2 border-dashed border-primary/30 py-3.5 text-label-lg font-semibold text-primary transition-all hover:border-primary hover:bg-sage-soft/40"
-        >
-          + Add another destination or school zone
-        </button>
       </div>
 
       <Modal
@@ -278,7 +299,7 @@ export function PlacesPage() {
             <Button
               size="lg"
               disabled={create.isPending || form.name.trim() === ''}
-              onClick={() => create.mutate()}
+              onClick={submitPlace}
             >
               {create.isPending ? 'Saving…' : 'Save place'}
             </Button>
@@ -315,6 +336,7 @@ export function PlacesPage() {
                 inputMode="decimal"
                 value={form.latitude}
                 onChange={(event) => setForm({ ...form, latitude: event.target.value })}
+                placeholder="e.g. 51.5074"
               />
             </div>
             <div>
@@ -324,9 +346,15 @@ export function PlacesPage() {
                 inputMode="decimal"
                 value={form.longitude}
                 onChange={(event) => setForm({ ...form, longitude: event.target.value })}
+                placeholder="e.g. -0.1278"
               />
             </div>
           </div>
+
+          <p className="text-body-sm text-muted">
+            The geofence arms from these two numbers, so they are required: a place saved without them
+            would have a radius in the wrong place.
+          </p>
 
           <div>
             <Label htmlFor="place-category">Category</Label>

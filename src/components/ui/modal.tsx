@@ -1,10 +1,24 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
+/** Everything inside a dialog that can hold focus. */
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function focusableWithin(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+    (element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true',
+  );
+}
+
 /**
  * Overlay on the attention plane: blurred slate backdrop, focus moved in on
- * open, Escape and backdrop-click close, focus returned to the trigger.
- * (DESIGN.md Level 4 + accessibility floor.)
+ * open and trapped there, Escape and backdrop-click close, focus returned to
+ * the trigger. (DESIGN.md Level 4 + accessibility floor.)
+ *
+ * Tab is cycled inside the panel by hand: moving focus in and restoring it was
+ * not enough, because Tab walked straight out into the page behind the
+ * backdrop and left the dialog open but unreachable.
  */
 export function Modal({
   open,
@@ -46,7 +60,41 @@ export function Modal({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         close.current();
+
+        return;
       }
+
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const root = panel.current;
+
+      if (!root) {
+        return;
+      }
+
+      const stops = focusableWithin(root);
+
+      if (stops.length === 0) {
+        // Nothing to cycle through: keep the focus on the dialog itself.
+        event.preventDefault();
+        root.focus();
+
+        return;
+      }
+
+      const current = document.activeElement as HTMLElement | null;
+      const index = current ? stops.indexOf(current) : -1;
+
+      // Focus outside the panel (or still on the panel) enters at either end.
+      const next =
+        index === -1
+          ? stops[event.shiftKey ? stops.length - 1 : 0]
+          : stops[event.shiftKey ? (index - 1 + stops.length) % stops.length : (index + 1) % stops.length];
+
+      event.preventDefault();
+      next.focus();
     };
 
     document.addEventListener('keydown', onKey);

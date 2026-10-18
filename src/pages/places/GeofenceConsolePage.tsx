@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { api, apiError } from '@/lib/api';
 import type { GeofenceEvent, Place, ServiceRequest } from '@/types';
 
@@ -137,25 +138,19 @@ export function GeofenceConsolePage() {
           description="Zone geometry, boundary events, and the store list each zone will surface."
           titleSize="headline"
           actions={
-            <>
-              <Button variant="outline" size="lg" onClick={useMyLocation} disabled={report.isPending}>
-                <Icon name="gps_fixed" className="text-[18px] text-primary" />
-                {report.isPending ? 'Reading position…' : 'Report my position'}
-              </Button>
-              <Link to="/places" className="inline-flex">
-                <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-sage-soft px-4 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                  <Icon name="list" className="text-[18px]" />
-                  Manage places
-                </span>
-              </Link>
-            </>
+            <Button variant="outline" size="lg" onClick={useMyLocation} disabled={report.isPending}>
+              <Icon name="gps_fixed" className="text-[18px] text-primary" />
+              {report.isPending ? 'Reading position…' : 'Report my position'}
+            </Button>
           }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="info">{notice}</Alert>}
 
-        {list.length === 0 && places.isSuccess ? (
+        {places.isError ? (
+          <QueryError error={places.error} what="the saved places" onRetry={() => void places.refetch()} />
+        ) : list.length === 0 && places.isSuccess ? (
           <EmptyState
             title="No zones to plot"
             description="Add a saved place and its geofence radius appears here."
@@ -340,6 +335,15 @@ export function GeofenceConsolePage() {
                 </p>
 
                 <ul className="mt-4 flex flex-col gap-2">
+                  {events.isError && (
+                    <li>
+                      <QueryError
+                        error={events.error}
+                        what="the boundary events"
+                        onRetry={() => void events.refetch()}
+                      />
+                    </li>
+                  )}
                   {(events.data ?? []).slice(0, 8).map((event) => (
                     <li
                       key={event.id}
@@ -358,7 +362,7 @@ export function GeofenceConsolePage() {
                       </span>
                     </li>
                   ))}
-                  {(events.data ?? []).length === 0 && (
+                  {!events.isError && (events.data ?? []).length === 0 && (
                     <li className="rounded-xl bg-canvas px-4 py-6 text-center text-body-sm text-muted">
                       No boundary events recorded yet.
                     </li>

@@ -98,4 +98,71 @@ describe('Modal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });
+
+  it('keeps Tab inside the dialog, cycling through its controls', async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Open dialog</button>
+          <Modal
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Add a request"
+            footer={<button type="button">Save</button>}
+          >
+            <input aria-label="What does the family need?" />
+          </Modal>
+        </>
+      );
+    }
+
+    render(<Harness />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open dialog' }));
+
+    const dialog = screen.getByRole('dialog');
+    const close = screen.getByRole('button', { name: 'Close dialog' });
+    const field = screen.getByLabelText('What does the family need?');
+    const save = screen.getByRole('button', { name: 'Save' });
+
+    // Focus starts on the panel, so the first Tab lands on the first control.
+    expect(dialog).toHaveFocus();
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+
+    await userEvent.tab();
+    expect(field).toHaveFocus();
+
+    await userEvent.tab();
+    expect(save).toHaveFocus();
+
+    // Past the last control it wraps, rather than walking out behind the backdrop.
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+    expect(document.activeElement).not.toBe(screen.getByRole('button', { name: 'Open dialog' }));
+  });
+
+  it('cycles backwards from the first control to the last', async () => {
+    render(
+      <Modal
+        open
+        onClose={() => {}}
+        title="Add a request"
+        footer={<button type="button">Save</button>}
+      >
+        <input aria-label="What does the family need?" />
+      </Modal>,
+    );
+
+    const close = screen.getByRole('button', { name: 'Close dialog' });
+    const save = screen.getByRole('button', { name: 'Save' });
+
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+
+    await userEvent.tab({ shift: true });
+    expect(save).toHaveFocus();
+  });
 });

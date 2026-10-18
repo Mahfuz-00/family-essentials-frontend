@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -12,10 +11,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
-import { planFor } from '@/lib/plans';
-import { useTenantStore } from '@/stores/tenant';
 import type { MemberRole, TenantInvitation, TenantMember, TenantRoleCatalogue } from '@/types';
 
 /**
@@ -24,8 +22,6 @@ import type { MemberRole, TenantInvitation, TenantMember, TenantRoleCatalogue } 
  */
 export function InvitationsPage() {
   const queryClient = useQueryClient();
-  const active = useTenantStore((state) => state.active);
-  const plan = planFor(active?.subscription_tier);
 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<MemberRole>('member');
@@ -82,11 +78,11 @@ export function InvitationsPage() {
   const memberCount = members.data?.length ?? 0;
   const invitationList = invitations.data ?? [];
   const pending = invitationList.filter((invitation) => invitation.status === 'pending');
-  // The cap comes from the API, which is also what refuses the next invitation.
+  // Label and cap come from the API, which is what refuses the next invitation.
   const quota = useQuota();
-  const seatCap = quota.capFor('seats', plan.seatCap);
+  const seatCap = quota.capFor('seats');
   const seatsUsed = memberCount + pending.length;
-  const seatsLeft = Math.max(0, seatCap - seatsUsed);
+  const seatsLeft = seatCap === null ? null : Math.max(0, seatCap - seatsUsed);
 
   const grantable = (catalogue.data?.roles ?? []).filter((entry) => entry.can_be_granted);
 
@@ -98,18 +94,20 @@ export function InvitationsPage() {
           title="Invitations"
           description="Issue a magic link, and keep track of who has not accepted yet."
           titleSize="headline"
-          actions={
-            <Link to="/members/roles" className="inline-flex">
-              <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-sage-soft px-4 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                <Icon name="shield_person" className="text-[18px]" />
-                Roles & permissions
-              </span>
-            </Link>
-          }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
+        {members.isError && (
+          <QueryError error={members.error} what="the member list" onRetry={() => void members.refetch()} />
+        )}
+        {invitations.isError && (
+          <QueryError
+            error={invitations.error}
+            what="the invitation list"
+            onRetry={() => void invitations.refetch()}
+          />
+        )}
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* Invite */}
@@ -144,6 +142,13 @@ export function InvitationsPage() {
 
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-1 text-label-lg text-on-surface">Household role</legend>
+              {catalogue.isError && (
+                <QueryError
+                  error={catalogue.error}
+                  what="the role list"
+                  onRetry={() => void catalogue.refetch()}
+                />
+              )}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {grantable.map((option) => (
                   <label
@@ -178,17 +183,24 @@ export function InvitationsPage() {
             <h2 className="text-headline-sm text-on-surface">Seats</h2>
             <span className="flex items-baseline gap-1.5">
               <span className="text-display-lg font-bold text-on-surface">{seatsUsed}</span>
-              <span className="text-body-md text-muted">of {seatCap} used</span>
+              <span className="text-body-md text-muted">
+                {seatCap === null ? 'used' : `of ${seatCap} used`}
+              </span>
             </span>
-            <span className="block h-2 w-full overflow-hidden rounded-full bg-surface-container">
-              <span
-                className="block h-2 rounded-full bg-secondary transition-all"
-                style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
-              />
-            </span>
+            {seatCap !== null && (
+              <span className="block h-2 w-full overflow-hidden rounded-full bg-surface-container">
+                <span
+                  className="block h-2 rounded-full bg-secondary transition-all"
+                  style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
+                />
+              </span>
+            )}
             <span className="text-body-sm text-muted">
-              {seatsLeft} seat{seatsLeft === 1 ? '' : 's'} available on the {plan.label} plan — the API
-              refuses an invitation past this.
+              {seatsLeft === null
+                ? 'The API has not reported the seat cap, so the remaining seats are unknown.'
+                : `${seatsLeft} seat${seatsLeft === 1 ? '' : 's'} available on the ${
+                    quota.planLabel
+                  } plan — the API refuses an invitation past this.`}
             </span>
             <span className="text-body-sm text-muted">
               {memberCount} active {memberCount === 1 ? 'member' : 'members'} · {pending.length} pending
@@ -213,7 +225,7 @@ export function InvitationsPage() {
             </Badge>
           </div>
 
-          {pending.length === 0 ? (
+          {invitations.isSuccess && pending.length === 0 ? (
             <div className="mt-4">
               <EmptyState
                 title="No invitations waiting"

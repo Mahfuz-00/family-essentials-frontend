@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -70,19 +70,24 @@ export function RolesPage() {
           title="Roles & Permissions"
           description="What each household role may do, and who holds which role."
           titleSize="headline"
-          actions={
-            <Link to="/members" className="inline-flex">
-              <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-sage-soft px-4 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                <Icon name="group" className="text-[18px]" />
-                Back to members
-              </span>
-            </Link>
-          }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
-        {catalogue.isError && <Alert>{apiError(catalogue.error)}</Alert>}
+        {catalogue.isError && (
+          <QueryError
+            error={catalogue.error}
+            what="the capability matrix"
+            onRetry={() => void catalogue.refetch()}
+          />
+        )}
+        {members.isError && (
+          <QueryError
+            error={members.error}
+            what="the role assignment list"
+            onRetry={() => void members.refetch()}
+          />
+        )}
 
         {!canManage && data && (
           <Alert tone="info">

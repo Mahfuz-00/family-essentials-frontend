@@ -95,8 +95,9 @@ describe('plan limits', () => {
     expect(await screen.findByText(/2 held by invitations/)).toBeInTheDocument();
   });
 
-  it('keeps working on the presentation fallback when the quota call has not landed', async () => {
-    // No /v1/tenant/quotas stub at all: the catalogue still renders a meter.
+  it('does not invent a plan limit while the quota call is outstanding', async () => {
+    // No /v1/tenant/quotas stub at all: the meter may show what it knows — how
+    // many members there are — but must never print a cap the API never sent.
     const routes = sessionRoutes();
     installGetRoutes(apiMock, {
       '/v1/auth/me': routes['/v1/auth/me'],
@@ -107,6 +108,9 @@ describe('plan limits', () => {
 
     renderApp('/billing');
 
-    expect(await seatMeter()).toContain('2 of 5');
+    const meter = await seatMeter();
+    expect(meter).toContain('2');
+    expect(meter).not.toContain('of 5');
+    expect(meter).toContain('the API has not reported the plan limit');
   });
 });

@@ -10,13 +10,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
-import { plans, planFor } from '@/lib/plans';
+import { plans } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
 import type { Place, UserRef } from '@/types';
 
 export function BillingPage() {
   const active = useTenantStore((state) => state.active);
-  const plan = planFor(active?.subscription_tier);
 
   const members = useQuery({
     queryKey: ['tenant', 'members'],
@@ -28,15 +27,16 @@ export function BillingPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
-  // Caps and usage come from the API — the same numbers it enforces. The plan
-  // catalogue still supplies the label, price and feature list, which no backend
-  // owns.
+  // Label, price, cadence and caps are the API's — the same numbers it
+  // enforces. Nothing about the household's own plan is hardcoded here.
   const quota = useQuota();
 
   const seatsUsed = quota.data?.usage.members ?? members.data?.length ?? active?.member_count ?? 0;
   const placesUsed = quota.data?.usage.places ?? places.data?.length ?? 0;
-  const seatCap = quota.capFor('seats', plan.seatCap);
-  const placeCap = quota.capFor('places', plan.placeCap);
+  const seatCap = quota.seatCap;
+  const placeCap = quota.placeCap;
+  const remaining = (cap: number | null, used: number) =>
+    cap === null ? 'the API has not reported the plan limit' : `${Math.max(0, cap - used)} remaining`;
 
   const usage = [
     {
@@ -46,15 +46,15 @@ export function BillingPage() {
       icon: 'group',
       note:
         (quota.data?.usage.seats_reserved ?? 0) > 0
-          ? `${Math.max(0, seatCap - seatsUsed)} remaining · ${quota.data?.usage.seats_reserved} held by invitations`
-          : `${Math.max(0, seatCap - seatsUsed)} remaining`,
+          ? `${remaining(seatCap, seatsUsed)} · ${quota.data?.usage.seats_reserved} held by invitations`
+          : remaining(seatCap, seatsUsed),
     },
     {
       label: 'Saved places',
       used: placesUsed,
       cap: placeCap,
       icon: 'pin_drop',
-      note: `${Math.max(0, placeCap - placesUsed)} remaining`,
+      note: remaining(placeCap, placesUsed),
     },
     ...(quota.data?.meters ?? [])
       .filter((meter) => meter.key === 'requests' || meter.key === 'voice')
@@ -83,8 +83,8 @@ export function BillingPage() {
         {members.isError && <Alert>{apiError(members.error)}</Alert>}
 
         <Alert tone="info">
-          Plan pricing and seat caps are a presentation catalogue. This build has no payment provider or
-          invoice store connected, so no charge can be made from this screen.
+          Your plan's label, price and limits are the API's own record of what it enforces. This build
+          has no payment provider or invoice store connected, so no charge can be made from this screen.
         </Alert>
 
         {/* ---------------------- active subscription overview ---------------------- */}
@@ -104,19 +104,20 @@ export function BillingPage() {
                   </span>
                   <div className="flex flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-headline-md text-on-surface">{plan.label}</h2>
+                      <h2 className="text-headline-md text-on-surface">{quota.planLabel}</h2>
                       <Badge tone={active?.status === 'suspended' ? 'danger' : 'success'}>
                         {active?.status === 'suspended' ? 'Suspended' : 'Active membership'}
                       </Badge>
                     </span>
-                    <p className="text-body-md text-muted">{plan.tagline}</p>
                     <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted">
                       <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 font-mono">
-                        tier: {active?.subscription_tier ?? '—'}
+                        tier: {quota.plan?.key ?? active?.subscription_tier ?? '—'}
                       </span>
-                      <span className="rounded-full bg-surface-container-low px-2.5 py-0.5">
-                        catalogue price {plan.price} {plan.cadence}
-                      </span>
+                      {quota.plan && (
+                        <span className="rounded-full bg-surface-container-low px-2.5 py-0.5">
+                          {quota.plan.price} {quota.plan.cadence}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -168,7 +169,8 @@ export function BillingPage() {
           <div className="flex flex-col gap-1">
             <h2 className="text-headline-md text-on-surface">Compare plans</h2>
             <p className="text-body-sm text-muted">
-              Catalogue tiers. The active tier is read from the tenant record.
+              What each tier is for. The prices and limits above are the ones the API enforces for your
+              own household; it does not publish a price list for the others.
             </p>
           </div>
 
@@ -192,20 +194,6 @@ export function BillingPage() {
                       </div>
                       {isCurrent && <Badge tone="primary">Current plan</Badge>}
                     </div>
-
-                    <span className="flex items-baseline gap-1.5">
-                      <span className="text-display-lg font-bold text-on-surface">{tier.price}</span>
-                      <span className="text-body-sm text-muted">/ {tier.cadence}</span>
-                    </span>
-
-                    <ul className="flex flex-col gap-2">
-                      {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2 text-body-sm text-on-surface-variant">
-                          <Icon name="check" className="mt-0.5 text-[16px] text-secondary" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
 
                     <Button
                       variant={isCurrent ? 'soft' : 'outline'}

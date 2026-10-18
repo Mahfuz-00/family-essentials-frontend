@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { planFor, plans } from '@/lib/plans';
 
+/**
+ * The catalogue is presentation copy only.
+ *
+ * Prices, seat caps and place caps belong to `/v1/tenant/quotas` — the numbers
+ * the API enforces — so this file must not grow a second copy of them.
+ */
 describe('plan catalogue', () => {
-  it('resolves each backend tier to a displayed plan', () => {
+  it('resolves each backend tier key to a displayed label', () => {
     expect(planFor('pilot').label).toBe('Pilot Family Tier');
     expect(planFor('standard').label).toBe('Household Pro');
     expect(planFor('enterprise').label).toBe('Enterprise Household');
@@ -14,20 +20,17 @@ describe('plan catalogue', () => {
     expect(planFor(undefined).key).toBe('pilot');
   });
 
-  it('increases seat and place caps as tiers get larger', () => {
-    const seats = plans.map((plan) => plan.seatCap);
-    const places = plans.map((plan) => plan.placeCap);
-
-    expect(seats).toEqual([...seats].sort((a, b) => a - b));
-    expect(places).toEqual([...places].sort((a, b) => a - b));
+  it('describes every tier with a key, a label and a tagline', () => {
+    for (const plan of plans) {
+      expect(plan.key.length).toBeGreaterThan(0);
+      expect(plan.label.length).toBeGreaterThan(0);
+      expect(plan.tagline.length).toBeGreaterThan(0);
+    }
   });
 
-  it('gives every plan a price, a cadence and at least one feature', () => {
+  it('carries no price and no caps — those are the API’s numbers', () => {
     for (const plan of plans) {
-      expect(plan.price).toMatch(/^\$/);
-      expect(plan.cadence.length).toBeGreaterThan(0);
-      expect(plan.features.length).toBeGreaterThan(0);
-      expect(plan.seatCap).toBeGreaterThan(0);
+      expect(Object.keys(plan).sort()).toEqual(['key', 'label', 'tagline']);
     }
   });
 });

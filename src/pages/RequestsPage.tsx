@@ -133,7 +133,6 @@ export function RequestsPage() {
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
   const addOpen = useUiStore((state) => state.addRequestOpen);
-  const openAddRequest = useUiStore((state) => state.openAddRequest);
   const closeAddRequest = useUiStore((state) => state.closeAddRequest);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
@@ -629,8 +628,8 @@ export function RequestsPage() {
           </Card>
         )}
 
-        {/* Empty board. The create action is the floating button below, not a
-            second "Add request" here: one action, in one place. */}
+        {/* Empty board. The create action is the shell's "Add Request", which is
+            on every screen — one action, in one place, not a second one here. */}
         {board.data && filtered && !hasAnyCard && (
           <EmptyState
             title="All caught up"
@@ -638,17 +637,6 @@ export function RequestsPage() {
           />
         )}
       </div>
-
-      {/* Floating action button */}
-      <button
-        type="button"
-        onClick={openAddRequest}
-        title="Add request"
-        aria-label="Add request"
-        className="fixed bottom-6 right-8 z-40 flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl bg-secondary text-on-secondary shadow-e3 transition-all hover:bg-primary active:scale-95"
-      >
-        <Icon name="add" className="text-[28px]" />
-      </button>
 
       {/* Quick add */}
       <Modal

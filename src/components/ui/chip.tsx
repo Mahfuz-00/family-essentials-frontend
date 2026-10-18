@@ -1,7 +1,12 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type ChipTone = 'low' | 'normal' | 'high' | 'urgent' | 'neutral' | 'success' | 'info';
+/**
+ * Tones for a read-only status pill. There is no `Chip` button here any more:
+ * the filter pills a page builds are local to that page and carry their own
+ * pressed state, and nothing imported the interactive variant.
+ */
+type ChipTone = 'low' | 'normal' | 'high' | 'urgent' | 'neutral' | 'success' | 'info';
 
 const tones: Record<ChipTone, { base: string; dot: string }> = {
   low: { base: 'bg-surface-container-low text-muted', dot: 'bg-outline' },
@@ -12,32 +17,6 @@ const tones: Record<ChipTone, { base: string; dot: string }> = {
   success: { base: 'bg-forest-soft text-secondary', dot: 'bg-success' },
   info: { base: 'bg-surface-container text-primary', dot: 'bg-primary' },
 };
-
-export function Chip({
-  children,
-  tone = 'neutral',
-  dot = false,
-  className,
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { tone?: ChipTone; dot?: boolean; children: ReactNode }) {
-  const t = tones[tone];
-
-  return (
-    <button
-      type="button"
-      className={cn(
-        'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-label-md transition-all',
-        'hover:brightness-[0.97] active:scale-[0.97]',
-        t.base,
-        className,
-      )}
-      {...props}
-    >
-      {dot && <span className={cn('h-1.5 w-1.5 rounded-full', t.dot)} />}
-      {children}
-    </button>
-  );
-}
 
 export function StaticChip({
   children,

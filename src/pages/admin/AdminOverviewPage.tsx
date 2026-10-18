@@ -7,11 +7,42 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { SkeletonCard } from '@/components/ui/skeleton';
-import { api, apiError } from '@/lib/api';
-import type { PlatformMetrics, Tenant } from '@/types';
+import { api } from '@/lib/api';
+import type { Paginated, PlatformMetrics, Tenant } from '@/types';
 
 const donutColors = ['#376847', '#4d6054', '#81b29a', '#f4a261', '#e76f51', '#b7ccbc'];
+
+/** 100 households a page, as the API allows, and a ceiling on the loop. */
+const PER_PAGE = 100;
+const MAX_PAGES = 50;
+
+/**
+ * Every tenant, not the first page of them.
+ *
+ * The screen used to fetch `/v1/platform/tenants` with no `per_page`, then
+ * count "onboarded this month" and "average members" from that single page —
+ * so every household past the twentieth was silently left out of the numbers.
+ */
+async function fetchAllTenants(): Promise<Tenant[]> {
+  const first = (
+    await api.get<Paginated<Tenant>>('/v1/platform/tenants', {
+      params: { page: 1, per_page: PER_PAGE },
+    })
+  ).data;
+
+  const lastPage = Math.min(first.meta?.last_page ?? 1, MAX_PAGES);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, lastPage - 1) }, (_, index) =>
+      api.get<Paginated<Tenant>>('/v1/platform/tenants', {
+        params: { page: index + 2, per_page: PER_PAGE },
+      }),
+    ),
+  );
+
+  return [first, ...rest.map((page) => page.data)].flatMap((page) => page.data ?? []);
+}
 
 export function AdminOverviewPage() {
   const metrics = useQuery({
@@ -20,8 +51,8 @@ export function AdminOverviewPage() {
   });
 
   const tenants = useQuery({
-    queryKey: ['platform', 'tenants', ''],
-    queryFn: async () => (await api.get<{ data: Tenant[] }>('/v1/platform/tenants')).data.data,
+    queryKey: ['platform', 'tenants', 'all'],
+    queryFn: fetchAllTenants,
   });
 
   const data = metrics.data;
@@ -89,10 +120,16 @@ export function AdminOverviewPage() {
             10,
         ) / 10;
 
-  const cards = [
+  const cards: {
+    label: string;
+    value: string | number;
+    icon: string;
+    tone: string;
+    footer: { label: string; value: number }[] | null;
+  }[] = [
     {
       label: 'Total Active Tenants',
-      value: data?.total_tenants ?? 0,
+      value: metrics.isError ? '—' : (data?.total_tenants ?? 0),
       icon: 'apartment',
       tone: 'bg-forest-soft text-secondary',
       footer: [
@@ -103,21 +140,21 @@ export function AdminOverviewPage() {
     },
     {
       label: 'Active Members',
-      value: data?.active_members ?? 0,
+      value: metrics.isError ? '—' : (data?.active_members ?? 0),
       icon: 'group',
       tone: 'bg-sage-soft text-primary',
       footer: null,
     },
     {
       label: 'Onboarded This Month',
-      value: onboardedThisMonth,
+      value: tenants.isError ? '—' : onboardedThisMonth,
       icon: 'trending_up',
       tone: 'bg-sage-soft text-secondary',
       footer: null,
     },
     {
       label: 'Avg Members / Tenant',
-      value: avgMembers,
+      value: tenants.isError ? '—' : avgMembers,
       icon: 'diversity_3',
       tone: 'bg-coral-soft text-tertiary',
       footer: null,
@@ -146,7 +183,20 @@ export function AdminOverviewPage() {
           }
         />
 
-        {metrics.isError && <Alert>{apiError(metrics.error)}</Alert>}
+        {metrics.isError && (
+          <QueryError
+            error={metrics.error}
+            what="platform metrics"
+            onRetry={() => void metrics.refetch()}
+          />
+        )}
+        {tenants.isError && (
+          <QueryError
+            error={tenants.error}
+            what="the tenant list behind these charts"
+            onRetry={() => void tenants.refetch()}
+          />
+        )}
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.isLoading

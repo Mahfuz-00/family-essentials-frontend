@@ -145,13 +145,6 @@ export function MoneyPage() {
               </div>
 
               <p className="text-body-sm text-on-surface-variant">{roleDetail[ledger.my_role]}</p>
-
-              <Link to="/money/$ledgerId" params={{ ledgerId: String(ledger.id) }} className="inline-flex">
-                <span className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-sage-soft px-3.5 text-label-lg font-semibold text-secondary transition-all hover:bg-forest-soft">
-                  <Icon name="receipt_long" className="text-[16px]" />
-                  Open ledger
-                </span>
-              </Link>
             </Card>
           ))}
         </section>

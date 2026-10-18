@@ -445,30 +445,6 @@ export interface GeofenceEvent {
   user?: { id: number; name: string } | null;
 }
 
-export interface GeofenceEvaluation {
-  transitions: { place_id: number; event: 'enter' | 'exit'; distance_meters: number }[];
-  shopping_lists: { place: Place; requests: ServiceRequest[] }[];
-  /** What the server decided on this report: one per entry, sent or refused. */
-  location_notifications?: LocationArrival[];
-}
-
-/** One arrival decision: what was sent, or why nothing was. */
-export interface LocationArrival {
-  id: number;
-  place_id: number;
-  place_name: string | null;
-  kind: 'home' | 'office' | 'store' | 'other';
-  kind_label: string;
-  status: 'queued' | 'sent' | 'skipped' | 'failed';
-  reason: string | null;
-  reason_message: string | null;
-  title: string | null;
-  body: string | null;
-  task_count: number;
-  tasks?: { id: number; title: string; quantity: string | null; status: string }[];
-  notified_at: string | null;
-}
-
 export interface VoiceCall {
   id: number;
   status: string;

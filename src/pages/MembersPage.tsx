@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import type { MemberRole, TenantMember, TenantRoleCatalogue } from '@/types';
@@ -74,22 +75,6 @@ export function MembersPage() {
           title="Family Members"
           description="Who is in the household circle, and what they are carrying this week."
           titleSize="headline"
-          actions={
-            <>
-              <Link to="/members/roles" className="inline-flex">
-                <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-[rgba(43,45,66,0.06)] bg-surface px-4 text-label-lg font-semibold text-on-surface shadow-e1 transition-all hover:bg-sage-soft active:scale-[0.97]">
-                  <Icon name="shield_person" className="text-[19px] text-primary" />
-                  Roles & permissions
-                </span>
-              </Link>
-              <Link to="/members/invitations" className="inline-flex">
-                <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-secondary px-4 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97]">
-                  <Icon name="person_add_alt" className="text-[18px]" />
-                  Invitations
-                </span>
-              </Link>
-            </>
-          }
         />
 
         {error && <Alert>{error}</Alert>}
@@ -132,6 +117,9 @@ export function MembersPage() {
         </div>
 
         {members.isLoading && <p className="text-body-md text-muted">Loading members…</p>}
+        {members.isError && (
+          <QueryError error={members.error} what="the household roster" onRetry={() => void members.refetch()} />
+        )}
 
         {visible.length === 0 && members.isSuccess ? (
           <EmptyState

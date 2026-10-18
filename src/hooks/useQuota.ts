@@ -1,22 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { planFor, type PlanTier } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
 import type { QuotaMeter, QuotaReport } from '@/types';
+
+/** The plan record the API sends: the numbers it actually enforces. */
+export type ServerPlan = QuotaReport['plan'];
 
 /**
  * The household's plan limits and live usage, from the API.
  *
- * The caps come from the server now — the same numbers it enforces — while
- * `planFor()` still supplies the cosmetics (label, price, feature bullet list)
- * that no backend owns.
- *
- * `capFor()` falls back to the catalogue if the request has not resolved, so a
- * seat meter never renders as `undefined` mid-load.
+ * Everything numeric here is the server's: `plan` is the plan record it sent,
+ * and `capFor()` reads the same caps it refuses a request against. A cap that
+ * has not arrived is `null` rather than a catalogue guess — a screen must be
+ * able to say "unknown" instead of printing a limit nothing enforces.
  */
 export function useQuota(options: { enabled?: boolean } = {}) {
   const active = useTenantStore((state) => state.active);
-  const plan: PlanTier = planFor(active?.subscription_tier);
 
   const query = useQuery({
     queryKey: ['tenant', 'quotas'],
@@ -29,15 +28,18 @@ export function useQuota(options: { enabled?: boolean } = {}) {
   const meter = (key: QuotaMeter['key']): QuotaMeter | undefined =>
     query.data?.meters.find((entry) => entry.key === key);
 
-  const capFor = (key: QuotaMeter['key'], fallback: number): number =>
-    meter(key)?.cap ?? fallback;
+  const capFor = (key: QuotaMeter['key']): number | null => meter(key)?.cap ?? null;
 
   return {
     ...query,
-    plan,
+    /** Null until the API answers; never a presentation constant. */
+    plan: query.data?.plan ?? null,
+    /** A neutral word for an unknown plan, so a heading never renders empty. */
+    planLabel: query.data?.plan.label ?? 'Your plan',
     meter,
     capFor,
+    seatCap: capFor('seats'),
+    placeCap: capFor('places'),
     seatsUsed: query.data?.usage.members ?? active?.member_count ?? 0,
-    planLabel: query.data?.plan.label ?? plan.label,
   };
 }

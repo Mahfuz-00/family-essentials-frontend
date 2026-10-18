@@ -6,9 +6,10 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
+import { QueryError } from '@/components/ui/query-error';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { useQuota } from '@/hooks/useQuota';
 import { api } from '@/lib/api';
-import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import type { RequestBoard } from '@/types';
@@ -17,10 +18,16 @@ export function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const active = useTenantStore((state) => state.active);
 
+  // The plan label is the server's word for the household's tier, not a
+  // presentation constant — and a platform admin has no household to ask about.
+  const quota = useQuota({ enabled: user?.is_platform_admin !== true });
+
   const board = useQuery({
     queryKey: ['requests', 'board'],
     queryFn: async () => (await api.get<RequestBoard>('/v1/requests/board')).data,
   });
+
+  const counts = board.data?.counts;
 
   const tiles = [
     { key: 'overdue', label: 'Overdue', icon: 'warning', tone: 'danger' as const },
@@ -42,9 +49,7 @@ export function DashboardPage() {
           title="Today's Household Overview"
           description={
             active
-              ? `${active.name} · ${planFor(active.subscription_tier).label} · ${
-                  active.member_count ?? 0
-                } members`
+              ? `${quota.planLabel} · ${active.member_count ?? 0} members`
               : 'No active household yet.'
           }
           actions={
@@ -65,20 +70,29 @@ export function DashboardPage() {
           }
         />
 
+        {board.isError && (
+          <QueryError
+            error={board.error}
+            what="today's numbers"
+            onRetry={() => void board.refetch()}
+          />
+        )}
+
         {/* Today's numbers */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {board.isLoading
-            ? tiles.map((tile) => <SkeletonCard key={tile.key} />)
-            : tiles.map((tile) => (
-                <Link key={tile.key} to="/requests" className="inline-flex">
-                  <StatTile
-                    label={tile.label}
-                    icon={tile.icon}
-                    tone={tile.tone}
-                    value={board.data?.counts[tile.key as keyof RequestBoard['counts']] ?? 0}
-                  />
-                </Link>
-              ))}
+          {board.isLoading && tiles.map((tile) => <SkeletonCard key={tile.key} />)}
+
+          {counts &&
+            tiles.map((tile) => (
+              <Link key={tile.key} to="/requests" className="inline-flex">
+                <StatTile
+                  label={tile.label}
+                  icon={tile.icon}
+                  tone={tile.tone}
+                  value={counts[tile.key as keyof RequestBoard['counts']]}
+                />
+              </Link>
+            ))}
         </section>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
@@ -90,12 +104,9 @@ export function DashboardPage() {
                   <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
                     <Icon name="cottage" className="text-[22px]" />
                   </span>
-                  <div className="flex flex-col">
-                    <h2 className="text-headline-sm text-on-surface">{active?.name ?? 'No household'}</h2>
-                    <span className="text-body-sm text-muted">
-                      Tier {active?.subscription_tier ?? '—'} · {active?.member_count ?? 0} members
-                    </span>
-                  </div>
+                  {/* The plan and the member count are in the header; repeating
+                      them here printed the same two facts twice. */}
+                  <h2 className="text-headline-sm text-on-surface">{active?.name ?? 'No household'}</h2>
                 </div>
                 {active && (
                   <Badge tone={active.status === 'suspended' ? 'danger' : 'success'}>{active.status}</Badge>

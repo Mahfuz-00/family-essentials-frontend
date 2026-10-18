@@ -10,7 +10,6 @@ import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
-import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import type { AuthUser, Tenant } from '@/types';
@@ -26,7 +25,6 @@ export function SettingsPage() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const active = useTenantStore((state) => state.active);
-  const plan = planFor(active?.subscription_tier);
   const quota = useQuota();
   const [error, setError] = useState<string | null>(null);
 
@@ -191,8 +189,22 @@ export function SettingsPage() {
             <h2 className="text-headline-sm text-on-surface">Workspace</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Detail label="Household" value={active?.name ?? '—'} />
-              <Detail label="Plan" value={`${plan.label} · ${plan.price}`} />
-              <Detail label="Members" value={`${quota.seatsUsed} of ${quota.capFor('seats', plan.seatCap)} seats`} />
+              <Detail
+                label="Plan"
+                value={
+                  quota.plan
+                    ? `${quota.planLabel} · ${quota.plan.price} ${quota.plan.cadence}`
+                    : quota.planLabel
+                }
+              />
+              <Detail
+                label="Members"
+                value={
+                  quota.seatCap === null
+                    ? `${quota.seatsUsed} seats used`
+                    : `${quota.seatsUsed} of ${quota.seatCap} seats`
+                }
+              />
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2.5">
