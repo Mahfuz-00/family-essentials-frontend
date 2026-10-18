@@ -70,19 +70,6 @@ describe('household kanban', () => {
     expect(screen.getAllByText('Organic Whole Milk').length).toBeGreaterThan(0);
   });
 
-  it('summarises the board in the metric strip', async () => {
-    renderApp('/requests');
-
-    // Scoped: 'Overdue' and 'Due Today' are also kanban column headings.
-    const summary = await screen.findByRole('region', { name: 'Board summary' });
-
-    expect(within(summary).getByText('Open items').parentElement?.textContent).toContain('4');
-    expect(within(summary).getByText('Overdue').parentElement?.textContent).toContain('1');
-    expect(within(summary).getByText('Due Today').parentElement?.textContent).toContain('1');
-    expect(within(summary).getByText('Backlog').parentElement?.textContent).toContain('1');
-    expect(within(summary).getByText('Completed').parentElement?.textContent).toContain('0');
-  });
-
   it('places each request in its column', async () => {
     await openBoard();
 

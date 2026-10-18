@@ -4,7 +4,6 @@ import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
-import { useQuota } from '@/hooks/useQuota';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -14,11 +13,13 @@ type RoutePath =
   | '/'
   | '/requests'
   | '/requests/escalation'
+  | '/recurring'
   | '/places'
   | '/places/console'
   | '/members'
   | '/members/roles'
   | '/members/invitations'
+  | '/money'
   | '/billing'
   | '/settings'
   | '/feedback'
@@ -52,6 +53,7 @@ const householdSections: NavSection[] = [
       { to: '/', label: 'Dashboard', icon: 'cottage', exact: true },
       { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban' },
       { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume' },
+      { to: '/recurring', label: 'Recurring', icon: 'event_repeat' },
     ],
   },
   {
@@ -72,6 +74,9 @@ const householdSections: NavSection[] = [
   {
     title: 'Account',
     items: [
+      // Money is deliberately not `exact`: a ledger page keeps its parent
+      // highlighted, and a summary member gets the same item as everyone else.
+      { to: '/money', label: 'Money', icon: 'account_balance_wallet' },
       { to: '/billing', label: 'Billing & Subscription', icon: 'credit_card' },
       { to: '/settings', label: 'Settings', icon: 'tune' },
       { to: '/feedback', label: 'Help & Feedback', icon: 'forum' },
@@ -97,11 +102,13 @@ const routeLabels: Record<string, string> = {
   '/': 'Dashboard',
   '/requests': 'Requests & Errands',
   '/requests/escalation': 'Escalation & Voice',
+  '/recurring': 'Recurring',
   '/places': 'Saved Places',
   '/places/console': 'Geofence Console',
   '/members': 'Family Members',
   '/members/roles': 'Roles & Permissions',
   '/members/invitations': 'Invitations',
+  '/money': 'Money',
   '/billing': 'Billing & Subscription',
   '/settings': 'Settings',
   '/feedback': 'Help & Feedback',
@@ -113,20 +120,6 @@ const routeLabels: Record<string, string> = {
   '/admin/audit-logs': 'Global Audit & Security Log',
 };
 
-function greeting(): string {
-  const hour = new Date().getHours();
-
-  if (hour < 12) {
-    return 'Good morning';
-  }
-
-  if (hour < 18) {
-    return 'Good afternoon';
-  }
-
-  return 'Good evening';
-}
-
 export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -136,14 +129,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const switchTo = useTenantStore((state) => state.switchTo);
 
   const isPlatformAdmin = user?.is_platform_admin === true;
-  // Seat caps come from the API now — the same numbers it enforces.
-  const quota = useQuota({ enabled: !isPlatformAdmin });
-  const plan = quota.plan;
-  const seatCap = quota.capFor('seats', plan.seatCap);
-  const seatsUsed = quota.seatsUsed;
 
   const path = window.location.pathname;
-  const routeLabel = routeLabels[path] ?? (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
+  // The dynamic Money detail pages have no entry of their own, so the first
+  // segment labels them ('/money/4' → 'Money').
+  const routeLabel =
+    routeLabels[path] ??
+    routeLabels[`/${path.split('/')[1] ?? ''}`] ??
+    (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
 
   /**
    * The create modal lives on the requests page, so record the intent then make
@@ -240,7 +233,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="flex flex-col gap-3 p-4">
-          {isPlatformAdmin ? (
+          {/* A household's plan and seat usage belong to Billing; the shell only
+              reports the platform-admin isolation state. */}
+          {isPlatformAdmin && (
             <div className="rounded-xl bg-forest-soft/60 p-4">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-success" />
@@ -250,23 +245,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 Row-level security active across every tenant schema.
               </p>
             </div>
-          ) : (
-            active && (
-              <div className="rounded-xl bg-forest-soft p-4">
-                <span className="mb-1 flex items-center justify-between">
-                  <span className="text-label-sm font-bold text-secondary">{plan.label}</span>
-                  <span className="text-label-sm text-on-surface-variant">
-                    {seatsUsed}/{seatCap} Members
-                  </span>
-                </span>
-                <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
-                  <span
-                    className="block h-1.5 rounded-full bg-secondary transition-all"
-                    style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
-                  />
-                </span>
-              </div>
-            )
           )}
 
           <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-2">
@@ -296,14 +274,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* -------------------------------- header ------------------------------- */}
       <div className="lg:pl-72">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 bg-surface/80 px-6 shadow-e1 backdrop-blur-xl">
-          <div className="flex min-w-0 flex-col">
+          {/* The route label, not a greeting: the shell says where you are. */}
+          <span className="flex min-w-0 flex-col">
             <span className="truncate text-headline-sm font-semibold leading-tight text-on-surface">
-              {greeting()}, {user?.name?.split(' ')[0]}
+              {routeLabel}
             </span>
             <span className="truncate text-label-sm text-muted">
-              {isPlatformAdmin ? 'Platform Admin' : 'Family Workspace'} · {routeLabel}
+              {isPlatformAdmin ? 'Platform Admin' : 'Family Workspace'}
             </span>
-          </div>
+          </span>
 
           <div className="flex shrink-0 items-center gap-3">
             {active && !isPlatformAdmin && <Badge tone="success">{active.status}</Badge>}
@@ -326,11 +305,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </select>
               </label>
             )}
-
-            <span className="hidden items-center gap-1.5 rounded-full bg-sage-soft px-2 py-1 text-label-sm text-secondary md:inline-flex">
-              <Icon name="palette" className="text-[14px]" />
-              Warm Sage
-            </span>
 
             {!isPlatformAdmin && (
               <button

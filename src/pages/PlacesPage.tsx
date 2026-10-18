@@ -14,7 +14,7 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
-import type { GeofenceEvent, Place } from '@/types';
+import type { Place } from '@/types';
 
 const categories = ['grocery', 'pharmacy', 'home', 'office', 'school', 'other'];
 
@@ -65,14 +65,10 @@ export function PlacesPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
-  const events = useQuery({
-    queryKey: ['geofence-events'],
-    queryFn: async () => (await api.get<{ data: GeofenceEvent[] }>('/v1/geofence-events')).data.data,
-  });
-
+  // The boundary-event count lived only in the KPI strip, so the fetch went with
+  // it: the console logs the events, and this page does not.
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['places'] });
-    await queryClient.invalidateQueries({ queryKey: ['geofence-events'] });
   };
 
   const onError = (caught: unknown) => {
@@ -111,7 +107,6 @@ export function PlacesPage() {
   });
 
   const list = places.data ?? [];
-  const eventList = events.data ?? [];
 
   const visible = useMemo(
     () =>
@@ -125,33 +120,6 @@ export function PlacesPage() {
       }),
     [list, filter, search],
   );
-
-  const kpis = [
-    {
-      label: 'Saved Places',
-      value: String(list.length),
-      icon: 'pin_drop',
-      tone: 'bg-sage-soft text-primary',
-    },
-    {
-      label: 'Geofenced Zones',
-      value: String(list.filter((place) => place.radius_meters > 0).length),
-      icon: 'radar',
-      tone: 'bg-forest-soft text-secondary',
-    },
-    {
-      label: 'Open Store Requests',
-      value: String(list.reduce((total, place) => total + (place.active_requests_count ?? 0), 0)),
-      icon: 'shopping_basket',
-      tone: 'bg-coral-soft text-error',
-    },
-    {
-      label: 'Boundary Events Logged',
-      value: String(eventList.length),
-      icon: 'notifications_active',
-      tone: 'bg-sage-soft text-secondary',
-    },
-  ];
 
   return (
     <AppLayout>
@@ -179,20 +147,6 @@ export function PlacesPage() {
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
-
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {kpis.map((kpi) => (
-            <Card key={kpi.label} className="flex items-center justify-between p-4">
-              <span className="flex flex-col">
-                <span className="text-display-lg font-bold text-on-surface">{kpi.value}</span>
-                <span className="text-body-sm text-muted">{kpi.label}</span>
-              </span>
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${kpi.tone}`}>
-                <Icon name={kpi.icon} className="text-[20px]" />
-              </span>
-            </Card>
-          ))}
-        </section>
 
         <Card className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full max-w-sm">

@@ -2,12 +2,16 @@ import type {
   AuthUser,
   BackupsPayload,
   FeedbackReport,
+  Ledger,
+  LedgerEntry,
+  LedgerSummary,
   Membership,
   OpsHealth,
   Place,
   PlatformAuditEvent,
   PlatformFeedbackReport,
   QuotaReport,
+  RecurringRule,
   RequestBoard,
   ServiceRequest,
   Tenant,
@@ -494,7 +498,7 @@ export function sessionRoutes() {
       ],
     },
     '/v1/tenant/roles': roleCatalogue(),
-    // AppLayout reads the seat cap from here on every page.
+    // Billing reads the seat cap from here — the shell does not show a meter.
     '/v1/tenant/quotas': quotaReport(),
     '/v1/feedback': { data: [], summary: { total: 0, open: 0, last_sent_at: null } },
     '/v1/places': { data: [] },
@@ -504,5 +508,74 @@ export function sessionRoutes() {
       max_attempts_per_request: 2,
       cooldown_minutes: 30,
     },
+  };
+}
+
+/* ------------------------------------------------------- recurring rules --- */
+
+export function recurringRule(overrides: Partial<RecurringRule> = {}): RecurringRule {
+  return {
+    id: 1,
+    title: 'Bins out',
+    quantity: null,
+    notes: null,
+    category: 'home',
+    priority: 'normal',
+    cadence: 'weekly',
+    weekday: 4,
+    day_of_month: null,
+    active: true,
+    next_run_on: '2026-10-22',
+    last_run_on: '2026-10-15',
+    assignee: { id: 1, name: 'Tanvir Rahman' },
+    place: { id: 1, name: 'Home' },
+    location_trigger: null,
+    amount_minor: null,
+    ledger_id: null,
+    ...overrides,
+  };
+}
+
+/* --------------------------------------------------------------- ledgers --- */
+
+export function ledger(overrides: Partial<Ledger> = {}): Ledger {
+  return {
+    id: 7,
+    name: 'Household spending',
+    currency: 'USD',
+    my_role: 'owner',
+    member_count: 3,
+    ...overrides,
+  };
+}
+
+export function ledgerSummary(overrides: Partial<LedgerSummary> = {}): LedgerSummary {
+  return {
+    currency: 'USD',
+    from: '2026-10-01',
+    to: '2026-10-31',
+    expense_minor: 124_550,
+    income_minor: 300_000,
+    net_minor: 175_450,
+    entry_count: 2,
+    by_category: [
+      { label: 'grocery', expense_minor: 100_000, share: 0.8 },
+      { label: 'pharmacy', expense_minor: 24_550, share: 0.2 },
+    ],
+    ...overrides,
+  };
+}
+
+export function ledgerEntry(overrides: Partial<LedgerEntry> = {}): LedgerEntry {
+  return {
+    id: 1,
+    amount_minor: 124_550,
+    direction: 'expense',
+    category: 'grocery',
+    description: 'Weekly shop',
+    occurred_on: '2026-10-16',
+    source: 'manual',
+    paid_by: { id: 1, name: 'Tanvir Rahman' },
+    ...overrides,
   };
 }

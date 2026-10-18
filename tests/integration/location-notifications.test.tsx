@@ -112,15 +112,17 @@ describe('location notifications', () => {
   });
 
   it('keeps the quota-cap seat meter intact when planes of work change', async () => {
-    // Sanity: the shell still resolves the household even as Settings grows.
+    // The seat meter lives on Billing now; the shell no longer carries one.
     installGetRoutes(apiMock, {
       ...sessionRoutes(),
       '/v1/tenant/quotas': quotaReport(),
       '/v1/tenant/roles': roleCatalogue(),
     });
 
-    renderApp('/members');
+    renderApp('/billing');
 
-    expect(await screen.findByText('2 of 5 used')).toBeInTheDocument();
+    const meter = (await screen.findByText('Family member seats')).closest('div');
+
+    expect(meter?.textContent).toContain('2 of 5');
   });
 });

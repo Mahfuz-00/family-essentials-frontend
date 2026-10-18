@@ -24,6 +24,16 @@ describe('plan limits', () => {
     signIn(tenantAdmin, 'dashboard-token');
   });
 
+  /**
+   * The seat meter lives on Billing, and it is one span with the count split
+   * across two nodes ("2" + " of 3"), so the card's own text is read.
+   */
+  async function seatMeter(): Promise<string> {
+    const label = await screen.findByText('Family member seats');
+
+    return label.closest('div')?.textContent ?? '';
+  }
+
   it('shows the cap the API enforces, not the catalogue copy', async () => {
     // The tenant's tier is `pilot`, whose catalogue says five seats. The server
     // says three, and the server is the one that refuses the fourth member.
@@ -37,10 +47,12 @@ describe('plan limits', () => {
       }),
     });
 
-    renderApp('/members');
+    renderApp('/billing');
 
-    expect(await screen.findByText('2 of 3 used')).toBeInTheDocument();
-    expect(screen.queryByText('2 of 5 used')).not.toBeInTheDocument();
+    const meter = await seatMeter();
+
+    expect(meter).toContain('2 of 3');
+    expect(meter).not.toContain('2 of 5');
   });
 
   it('flags a meter that has reached its plan limit', async () => {
@@ -85,16 +97,16 @@ describe('plan limits', () => {
 
   it('keeps working on the presentation fallback when the quota call has not landed', async () => {
     // No /v1/tenant/quotas stub at all: the catalogue still renders a meter.
+    const routes = sessionRoutes();
     installGetRoutes(apiMock, {
-      '/v1/auth/me': { data: tenantAdmin },
-      '/v1/auth/tenants': { data: sessionRoutes()['/v1/auth/tenants'].data },
-      '/v1/requests/board': sessionRoutes()['/v1/requests/board'],
-      '/v1/tenant/members': sessionRoutes()['/v1/tenant/members'],
-      '/v1/places': { data: [] },
+      '/v1/auth/me': routes['/v1/auth/me'],
+      '/v1/auth/tenants': routes['/v1/auth/tenants'],
+      '/v1/tenant/members': routes['/v1/tenant/members'],
+      '/v1/places': routes['/v1/places'],
     });
 
-    renderApp('/members');
+    renderApp('/billing');
 
-    expect(await screen.findByText('2 of 5 used')).toBeInTheDocument();
+    expect(await seatMeter()).toContain('2 of 5');
   });
 });

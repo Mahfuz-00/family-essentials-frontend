@@ -10,11 +10,14 @@ export interface ApiMock {
 /**
  * Returns a resolved-axios-response shape. Pages read `response.data`, so the
  * payload is nested exactly as the real API nests it (`{ data: ... }`).
+ *
+ * `status` defaults to 200; a test that cares about a 201 (a created backup or
+ * feedback report) passes it explicitly, as `backups.test.tsx` already did.
  */
-export function jsonResponse(payload: unknown): Promise<unknown> {
+export function jsonResponse(payload: unknown, status = 200): Promise<unknown> {
   return Promise.resolve({
     data: payload,
-    status: 200,
+    status,
     statusText: 'OK',
     headers: {},
     config: {},

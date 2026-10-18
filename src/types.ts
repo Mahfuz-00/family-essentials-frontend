@@ -484,3 +484,86 @@ export interface VoiceCall {
   created_at: string;
   request?: { id: number; title: string } | null;
 }
+
+/* ------------------------------------------------------- recurring rules --- */
+
+export type RecurringCadence = 'daily' | 'weekly' | 'monthly';
+
+/** Which side of a geofence fires the reminder: arriving or leaving. */
+export type LocationTriggerDirection = 'enter' | 'exit';
+
+export interface RecurringRule {
+  id: number;
+  title: string;
+  quantity: string | null;
+  notes: string | null;
+  category: string | null;
+  priority: RequestPriority;
+  cadence: RecurringCadence;
+  /**
+   * ISO-8601 weekday used when `cadence` is `weekly`: 1 = Monday … 7 = Sunday.
+   * The contract does not state the encoding; the client also tolerates `0` as
+   * Sunday (the JavaScript habit) and renders "Every week" for anything else.
+   */
+  weekday: number | null;
+  day_of_month: number | null;
+  active: boolean;
+  next_run_on: string | null;
+  last_run_on: string | null;
+  assignee: UserRef | null;
+  place: { id: number; name: string } | null;
+  location_trigger: {
+    place_id: number;
+    place_name: string;
+    direction: LocationTriggerDirection;
+  } | null;
+  amount_minor: number | null;
+  ledger_id: number | null;
+}
+
+/* --------------------------------------------------------------- ledgers --- */
+
+/** What the caller may do with a ledger. `summary` sees totals, never entries. */
+export type LedgerRole = 'owner' | 'manager' | 'summary';
+
+export interface Ledger {
+  id: number;
+  name: string;
+  currency: string;
+  my_role: LedgerRole;
+  member_count: number;
+}
+
+export interface LedgerCategoryTotal {
+  label: string;
+  expense_minor: number;
+  /** Fraction of the period's expense, 0–1. */
+  share: number;
+}
+
+export interface LedgerSummary {
+  currency: string;
+  from: string;
+  to: string;
+  expense_minor: number;
+  income_minor: number;
+  net_minor: number;
+  entry_count: number;
+  by_category: LedgerCategoryTotal[];
+}
+
+export type LedgerEntryDirection = 'expense' | 'income';
+
+export interface LedgerEntry {
+  id: number;
+  amount_minor: number;
+  direction: LedgerEntryDirection;
+  category: string | null;
+  description: string | null;
+  occurred_on: string;
+  source: string | null;
+  paid_by: UserRef | null;
+}
+
+/** The roles an owner may grant through the members endpoint. */
+export type LedgerGrantRole = 'manager' | 'summary';

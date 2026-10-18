@@ -25,6 +25,15 @@ export function Modal({
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const restoreTo = useRef<Element | null>(null);
+  const close = useRef(onClose);
+
+  // `onClose` is usually an inline arrow, so it is a new function on every
+  // render of the screen that owns the modal. Keeping it in a ref lets the
+  // effect below depend on `open` alone: previously it re-ran on every
+  // keystroke, re-focusing the panel and swallowing the rest of the input.
+  useEffect(() => {
+    close.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) {
@@ -36,7 +45,7 @@ export function Modal({
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        close.current();
       }
     };
 
@@ -46,7 +55,7 @@ export function Modal({
       document.removeEventListener('keydown', onKey);
       (restoreTo.current as HTMLElement | null)?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;

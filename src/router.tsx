@@ -4,7 +4,9 @@ import { BillingPage } from '@/pages/BillingPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { MembersPage } from '@/pages/MembersPage';
+import { MoneyPage } from '@/pages/MoneyPage';
 import { PlacesPage } from '@/pages/PlacesPage';
+import { RecurringPage } from '@/pages/RecurringPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { RequestsPage } from '@/pages/RequestsPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
@@ -13,6 +15,7 @@ import { VerifyPhonePage } from '@/pages/VerifyPhonePage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { FeedbackPage } from '@/pages/FeedbackPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { LedgerPage } from '@/pages/money/LedgerPage';
 import { InvitationsPage } from '@/pages/members/InvitationsPage';
 import { RolesPage } from '@/pages/members/RolesPage';
 import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
@@ -144,6 +147,34 @@ const billingRoute = createRoute({
   component: BillingPage,
 });
 
+const recurringRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/recurring',
+  beforeLoad: requireTenant,
+  component: RecurringPage,
+});
+
+const moneyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/money',
+  beforeLoad: requireTenant,
+  component: MoneyPage,
+});
+
+const ledgerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/money/$ledgerId',
+  beforeLoad: requireTenant,
+  component: LedgerRoute,
+});
+
+/** The ledger screen reads its own parameter, so the page takes a plain number. */
+function LedgerRoute() {
+  const { ledgerId } = ledgerRoute.useParams();
+
+  return <LedgerPage ledgerId={Number(ledgerId)} />;
+}
+
 const adminLoginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/login',
@@ -211,6 +242,9 @@ export const routeTree = rootRoute.addChildren([
   placesRoute,
   geofenceConsoleRoute,
   billingRoute,
+  recurringRoute,
+  moneyRoute,
+  ledgerRoute,
   adminLoginRoute,
   adminOverviewRoute,
   adminTenantsRoute,

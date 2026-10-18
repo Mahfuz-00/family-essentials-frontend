@@ -11,10 +11,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
-import { useQuota } from '@/hooks/useQuota';
-import { planFor } from '@/lib/plans';
 import { useAuthStore } from '@/stores/auth';
-import { useTenantStore } from '@/stores/tenant';
 import type { MemberRole, TenantMember, TenantRoleCatalogue } from '@/types';
 
 /**
@@ -25,8 +22,6 @@ import type { MemberRole, TenantMember, TenantRoleCatalogue } from '@/types';
 export function MembersPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
-  const active = useTenantStore((state) => state.active);
-  const plan = planFor(active?.subscription_tier);
 
   const [filter, setFilter] = useState<'all' | MemberRole>('all');
   const [error, setError] = useState<string | null>(null);
@@ -71,11 +66,6 @@ export function MembersPage() {
   const roleLabel = (role: MemberRole) =>
     catalogue.data?.roles.find((entry) => entry.key === role)?.label ?? role;
 
-  const seatsUsed = memberList.length;
-  // The cap comes from the API, which is also what refuses the next invitation.
-  const quota = useQuota();
-  const seatCap = quota.capFor('seats', plan.seatCap);
-
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -105,64 +95,21 @@ export function MembersPage() {
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* Seat + telemetry banner */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          <div className="flex flex-col justify-between gap-3 rounded-2xl bg-forest-soft p-4 md:col-span-4">
-            <span className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-label-md font-bold text-secondary">
-                <Icon name="chair" className="text-[18px]" />
-                Household seats
-              </span>
-              <span className="text-label-sm text-on-surface">
-                {seatsUsed} of {seatCap} used
-              </span>
-            </span>
-            <span className="block h-2 w-full overflow-hidden rounded-full bg-surface-container">
-              <span
-                className="block h-2 rounded-full bg-secondary transition-all"
-                style={{ width: `${Math.min(100, (seatsUsed / seatCap) * 100)}%` }}
-              />
-            </span>
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm text-muted">
-                {Math.max(0, seatCap - seatsUsed)} seat
-                {seatCap - seatsUsed === 1 ? '' : 's'} available in {plan.label}
-              </span>
-              <span className="text-label-sm text-muted">{plan.price}/mo catalogue</span>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 rounded-2xl bg-sage-soft p-4 md:col-span-5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface text-secondary shadow-e1">
-              <Icon name="sensors" filled className="text-[20px]" />
-            </span>
-            <span className="flex flex-col">
-              <span className="flex items-center gap-2 text-label-md font-bold text-on-surface">
-                Telemetry & device health
-                <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
-              </span>
-              <span className="text-body-sm text-on-surface-variant">
-                {memberList.reduce((total, member) => total + (member.devices?.length ?? 0), 0)} paired
-                devices synced via push and geofence
-              </span>
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between rounded-2xl bg-coral-soft p-4 md:col-span-3">
-            <span className="flex items-center gap-2">
-              <Icon name="ring_volume" className="text-[20px] text-error" />
-              <span className="flex flex-col">
-                <span className="text-label-sm font-bold text-on-surface">Voice escalation</span>
-                <span className="text-label-sm text-muted">
-                  {memberList.filter((member) => member.role === 'tenant_admin').length} primary admins
-                </span>
-              </span>
-            </span>
-            <span className="rounded-full bg-surface px-2 py-0.5 text-label-sm font-bold text-error">
-              Armed
-            </span>
-          </div>
-        </section>
+        {/* The seat meter lives on Billing, and telemetry and voice escalation are
+            their own modules — this page is the roster. */}
+        <Link
+          to="/billing"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-forest-soft px-4 py-3 transition-colors hover:bg-sage-soft"
+        >
+          <span className="flex items-center gap-2 text-label-md font-bold text-secondary">
+            <Icon name="chair" className="text-[18px]" />
+            Seat allocation & plan limits
+          </span>
+          <span className="flex items-center gap-1.5 text-label-sm text-on-surface-variant">
+            See the seats on Billing
+            <Icon name="arrow_forward" className="text-[16px]" />
+          </span>
+        </Link>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter members">

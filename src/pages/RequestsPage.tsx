@@ -331,67 +331,6 @@ export function RequestsPage() {
 
   const overdueList = filtered?.overdue ?? [];
 
-  const counts = board.data?.counts;
-
-  const filtersActive = query.trim() !== '' || assignee !== 'all' || category !== 'all' || store !== 'all';
-
-  /**
-   * Each tile matches its column exactly. The household-wide aggregate appears
-   * only when no filter is applied, because open items can appear in more than
-   * one column (overdue *and* assigned to me) — a sum would be a lie, and a
-   * filtered aggregate could not reconcile with what is on screen.
-   */
-  const metrics: { label: string; value: number; pill: string; dot: string; icon: boolean }[] = filtered
-    ? [
-        ...(filtersActive
-          ? []
-          : [
-              {
-                label: 'Open items',
-                value: counts?.open ?? 0,
-                pill: 'bg-surface-container-low text-on-surface',
-                dot: 'bg-primary',
-                icon: false,
-              },
-            ]),
-        {
-          label: 'Overdue',
-          value: filtered.overdue.length,
-          pill: 'bg-coral-soft text-error',
-          dot: 'bg-error',
-          icon: false,
-        },
-        {
-          label: 'Due Today',
-          value: filtered.due_today.length,
-          pill: 'bg-tertiary-fixed/40 text-tertiary',
-          dot: 'bg-warning',
-          icon: false,
-        },
-        {
-          label: `Assigned to ${firstName}`,
-          value: filtered.assigned_to_me.length,
-          pill: 'bg-sage-soft text-secondary',
-          dot: 'bg-secondary',
-          icon: false,
-        },
-        {
-          label: 'Backlog',
-          value: filtered.backlog.length,
-          pill: 'bg-surface-container-low text-on-surface-variant',
-          dot: 'bg-outline',
-          icon: false,
-        },
-        {
-          label: 'Completed',
-          value: filtered.completed_today.length,
-          pill: 'bg-forest-soft text-secondary',
-          dot: 'bg-success',
-          icon: true,
-        },
-      ]
-    : [];
-
   const hasAnyCard = filtered
     ? filtered.overdue.length +
         filtered.due_today.length +
@@ -417,29 +356,6 @@ export function RequestsPage() {
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone={noticeTone}>{notice}</Alert>}
-
-        {/* Metric strip */}
-        {metrics.length > 0 && (
-          <section
-            aria-label="Board summary"
-            className="flex flex-wrap items-center gap-2 rounded-2xl bg-surface p-1.5 shadow-e1"
-          >
-            {metrics.map((metric) => (
-              <span
-                key={metric.label}
-                className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-label-md ${metric.pill}`}
-              >
-                {metric.icon ? (
-                  <Icon name="check_circle" className="text-[15px]" />
-                ) : (
-                  <span className={`h-2 w-2 rounded-full ${metric.dot}`} />
-                )}
-                <span className="font-bold">{metric.value}</span>
-                <span>{metric.label}</span>
-              </span>
-            ))}
-          </section>
-        )}
 
         {/* Overdue banner */}
         {overdueList.length > 0 && (
@@ -713,16 +629,12 @@ export function RequestsPage() {
           </Card>
         )}
 
+        {/* Empty board. The create action is the floating button below, not a
+            second "Add request" here: one action, in one place. */}
         {board.data && filtered && !hasAnyCard && (
           <EmptyState
             title="All caught up"
             description="No pending requests for your family right now. Add one and the right person gets notified."
-            action={
-              <Button size="lg" onClick={openAddRequest}>
-                <Icon name="add" className="text-[18px]" />
-                Add request
-              </Button>
-            }
           />
         )}
       </div>
