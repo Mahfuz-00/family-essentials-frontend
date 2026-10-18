@@ -4,6 +4,7 @@ import type {
   FeedbackReport,
   Membership,
   OpsHealth,
+  Place,
   PlatformAuditEvent,
   PlatformFeedbackReport,
   QuotaReport,
@@ -352,6 +353,24 @@ export function backupsPayload(overrides: Partial<BackupsPayload> = {}): Backups
         },
       ],
     },
+    ...overrides,
+  };
+}
+
+export function place(overrides: Partial<Place> = {}): Place {
+  return {
+    id: 1,
+    name: 'Whole Foods',
+    address: '12 Main Street',
+    latitude: 23.8103,
+    longitude: 90.4125,
+    radius_meters: 300,
+    category: 'grocery',
+    // Derived by the API from `category` — the client only displays it.
+    kind: 'store',
+    kind_label: 'Store',
+    active_requests_count: 0,
+    created_at: '2026-10-16T09:00:00.000Z',
     ...overrides,
   };
 }

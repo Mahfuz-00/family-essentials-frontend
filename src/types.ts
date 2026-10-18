@@ -7,6 +7,7 @@ export interface AuthUser {
   phone_verified: boolean;
   is_platform_admin: boolean;
   voice_opt_in: boolean;
+  location_notifications_opt_in?: boolean;
   active_tenant_id: number | null;
 }
 
@@ -429,6 +430,9 @@ export interface Place {
   longitude: number;
   radius_meters: number;
   category: string | null;
+  /** Notification-facing classification, derived from `category` by the API. */
+  kind?: string | null;
+  kind_label?: string | null;
   active_requests_count?: number;
   created_at: string;
 }
@@ -444,6 +448,25 @@ export interface GeofenceEvent {
 export interface GeofenceEvaluation {
   transitions: { place_id: number; event: 'enter' | 'exit'; distance_meters: number }[];
   shopping_lists: { place: Place; requests: ServiceRequest[] }[];
+  /** What the server decided on this report: one per entry, sent or refused. */
+  location_notifications?: LocationArrival[];
+}
+
+/** One arrival decision: what was sent, or why nothing was. */
+export interface LocationArrival {
+  id: number;
+  place_id: number;
+  place_name: string | null;
+  kind: 'home' | 'office' | 'store' | 'other';
+  kind_label: string;
+  status: 'queued' | 'sent' | 'skipped' | 'failed';
+  reason: string | null;
+  reason_message: string | null;
+  title: string | null;
+  body: string | null;
+  task_count: number;
+  tasks?: { id: number; title: string; quantity: string | null; status: string }[];
+  notified_at: string | null;
 }
 
 export interface VoiceCall {

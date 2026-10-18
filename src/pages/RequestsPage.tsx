@@ -821,6 +821,7 @@ export function RequestsPage() {
                 {placeList.map((place) => (
                   <option key={place.id} value={place.id}>
                     {place.name}
+                    {place.kind_label ? ` · ${place.kind_label}` : ''}
                   </option>
                 ))}
               </Select>

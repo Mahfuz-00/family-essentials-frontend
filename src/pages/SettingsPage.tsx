@@ -45,6 +45,16 @@ export function SettingsPage() {
     onSuccess: () => setError(null),
   });
 
+  const locationConsent = useMutation({
+    mutationFn: async (optIn: boolean) => {
+      await api.patch('/v1/auth/location-consent', { opt_in: optIn });
+      const { data } = await api.get<{ data: AuthUser }>('/v1/auth/me');
+      setUser(data.data);
+    },
+    onError: (caught) => setError(apiError(caught)),
+    onSuccess: () => setError(null),
+  });
+
   const quietHours = (tenant.data?.settings?.quiet_hours ?? null) as
     | { enabled?: boolean; start?: string; end?: string }
     | null;
@@ -124,6 +134,30 @@ export function SettingsPage() {
                   checked={user?.voice_opt_in ?? false}
                   disabled={voiceConsent.isPending || !user?.phone_verified}
                   onChange={(event) => voiceConsent.mutate(event.target.checked)}
+                />
+                <span className="relative block h-6 w-11 rounded-full bg-outline-variant/70 transition-colors peer-checked:bg-secondary peer-disabled:opacity-50 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+              </label>
+            </div>
+
+            <div className="mt-3 flex items-start justify-between gap-3 rounded-xl bg-canvas px-4 py-3">
+              <span className="flex flex-col">
+                <span className="text-body-md font-semibold text-on-surface">
+                  Arrival notifications
+                </span>
+                <span className="text-body-sm text-muted">
+                  When you arrive at a saved place with your own work waiting, you are told once.
+                  Checked while the app is open — nothing is read in the background, and household
+                  quiet hours still apply.
+                </span>
+              </span>
+              <label className="flex cursor-pointer items-center">
+                <span className="sr-only">Enable arrival notifications</span>
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={user?.location_notifications_opt_in ?? false}
+                  disabled={locationConsent.isPending}
+                  onChange={(event) => locationConsent.mutate(event.target.checked)}
                 />
                 <span className="relative block h-6 w-11 rounded-full bg-outline-variant/70 transition-colors peer-checked:bg-secondary peer-disabled:opacity-50 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
               </label>

@@ -16,12 +16,13 @@ import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import type { GeofenceEvent, Place } from '@/types';
 
-const categories = ['grocery', 'pharmacy', 'home', 'school', 'other'];
+const categories = ['grocery', 'pharmacy', 'home', 'office', 'school', 'other'];
 
 const categoryIcon: Record<string, string> = {
   grocery: 'shopping_cart',
   pharmacy: 'medication',
   home: 'home',
+  office: 'business',
   school: 'school',
   other: 'storefront',
 };
@@ -30,6 +31,7 @@ const categoryTint: Record<string, string> = {
   grocery: 'bg-forest-soft text-secondary',
   pharmacy: 'bg-coral-soft text-error',
   home: 'bg-sage-soft text-primary',
+  office: 'bg-surface-container text-primary',
   school: 'bg-surface-container text-primary',
   other: 'bg-surface-container-low text-on-surface-variant',
 };
@@ -271,7 +273,7 @@ export function PlacesPage() {
 
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="rounded-full bg-sage-soft px-2.5 py-0.5 text-label-sm capitalize text-secondary">
-                    {place.category ?? 'other'}
+                    {place.kind_label ?? place.category ?? 'other'}
                   </span>
                   <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 text-label-sm text-on-surface-variant">
                     {place.radius_meters} m radius

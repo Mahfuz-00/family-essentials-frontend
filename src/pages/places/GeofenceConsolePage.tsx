@@ -258,6 +258,7 @@ export function GeofenceConsolePage() {
                         <span className="flex items-center gap-2">
                           <h2 className="truncate text-headline-sm text-on-surface">{active.name}</h2>
                           <Badge tone="primary">{active.radius_meters} m</Badge>
+                          {active.kind_label && <Badge tone="neutral">{active.kind_label}</Badge>}
                         </span>
                         <span className="truncate text-body-sm text-muted">
                           {active.latitude.toFixed(4)}, {active.longitude.toFixed(4)}
