@@ -92,6 +92,8 @@ const emptyForm = {
   category: '',
   notes: '',
   place_id: '',
+  trigger_place_id: '',
+  trigger_direction: '',
   priority: 'normal' as RequestPriority,
   due_at: '',
   assignee_id: '',
@@ -172,6 +174,10 @@ export function RequestsPage() {
         category: form.category || null,
         notes: form.notes || null,
         place_id: form.place_id ? Number(form.place_id) : null,
+        // The reminder cue is separate from the shop above: where to buy it and
+        // where to remind me are different facts.
+        location_trigger_place_id: form.trigger_place_id ? Number(form.trigger_place_id) : null,
+        location_trigger_direction: form.trigger_direction || null,
         priority: form.priority,
         due_at: form.due_at || null,
         assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
@@ -826,6 +832,47 @@ export function RequestsPage() {
                 ))}
               </Select>
             </div>
+
+            <div>
+              <Label htmlFor="trigger-place">Remind me at</Label>
+              <Select
+                id="trigger-place"
+                value={form.trigger_place_id}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    trigger_place_id: event.target.value,
+                    // Choosing a place implies a direction; arriving is the default.
+                    trigger_direction: event.target.value
+                      ? form.trigger_direction || 'enter'
+                      : '',
+                  })
+                }
+              >
+                <option value="">Time only</option>
+                {placeList.map((place) => (
+                  <option key={place.id} value={place.id}>
+                    {place.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {form.trigger_place_id !== '' && (
+              <div>
+                <Label htmlFor="trigger-direction">When</Label>
+                <Select
+                  id="trigger-direction"
+                  value={form.trigger_direction || 'enter'}
+                  onChange={(event) =>
+                    setForm({ ...form, trigger_direction: event.target.value })
+                  }
+                >
+                  <option value="enter">On arriving</option>
+                  <option value="exit">On leaving</option>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="assignee">Assign to</Label>
