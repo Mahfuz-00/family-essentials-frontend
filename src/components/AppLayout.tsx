@@ -33,6 +33,7 @@ type RoutePath =
   | '/admin/refunds'
   | '/admin/health'
   | '/admin/backups'
+  | '/admin/marketing'
   | '/admin/feedback'
   | '/admin/audit-logs';
 
@@ -110,8 +111,9 @@ const platformSections: NavSection[] = [
     ],
   },
   {
-    title: 'Governance & Feedback',
+    title: 'Growth & Governance',
     items: [
+      { to: '/admin/marketing', label: 'Marketing & Campaigns', icon: 'campaign' },
       { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
       { to: '/admin/feedback', label: 'Household Feedback', icon: 'forum' },
     ],
@@ -139,6 +141,7 @@ const routeLabels: Record<string, string> = {
   '/admin/health': 'System Health',
   '/admin/backups': 'Backups & Disaster Recovery',
   '/admin/feedback': 'Feedback Inbox',
+  '/admin/marketing': 'Marketing & Campaigns',
   '/admin/audit-logs': 'Global Audit & Security Log',
 };
 

@@ -39,6 +39,7 @@ import { PaymentGatewayConfigPage } from '@/pages/admin/PaymentGatewayConfigPage
 import { PlatformAnalyticsPage } from '@/pages/admin/PlatformAnalyticsPage';
 import { RefundPolicyPage } from '@/pages/admin/RefundPolicyPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
+import { MarketingPage as AdminMarketingPage } from '@/pages/admin/MarketingPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
 const rootRoute = createRootRoute({
@@ -339,6 +340,13 @@ const adminRefundsRoute = createRoute({
   component: RefundPolicyPage,
 });
 
+const adminMarketingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/marketing',
+  beforeLoad: requirePlatformAdmin,
+  component: AdminMarketingPage,
+});
+
 // Exported so tests can build a router over the real tree (see tests/support/render.tsx).
 export const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -380,6 +388,7 @@ export const routeTree = rootRoute.addChildren([
   adminPaymentGatewayRoute,
   adminEmailConfigRoute,
   adminRefundsRoute,
+  adminMarketingRoute,
   adminHealthRoute,
   adminBackupsRoute,
   adminFeedbackRoute,

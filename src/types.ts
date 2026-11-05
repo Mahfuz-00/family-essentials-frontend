@@ -699,3 +699,76 @@ export interface MaintenanceModeStatus {
   started_at: string | null;
   allowed_ips: string[];
 }
+
+/* ---------------------------------------------------- marketing console --- */
+
+export interface MarketingOverview {
+  total_leads: number;
+  new_leads: number;
+  converted_leads: number;
+  lead_conversion_rate: number;
+  active_promotions: number;
+  total_redemptions: number;
+  active_announcements: number;
+  total_impressions: number;
+  total_clicks: number;
+  banner_ctr_percent: number;
+}
+
+export interface MarketingPromotion {
+  id: number;
+  code: string;
+  description: string | null;
+  discount_type: 'percent' | 'fixed_amount';
+  discount_value: number;
+  currency: string;
+  duration: 'once' | 'repeating' | 'forever';
+  duration_in_months: number | null;
+  max_redemptions: number | null;
+  times_redeemed: number;
+  applicable_tiers: string[] | null;
+  starts_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface MarketingAnnouncement {
+  id: number;
+  title: string;
+  message: string;
+  cta_text: string | null;
+  cta_url: string | null;
+  tone: 'primary' | 'success' | 'warning' | 'info';
+  target_audience: 'all' | 'trial_only' | 'free_only' | 'paying_only';
+  is_active: boolean;
+  dismissable: boolean;
+  impressions_count: number;
+  clicks_count: number;
+  starts_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface MarketingLead {
+  id: number;
+  email: string;
+  name: string | null;
+  source: string;
+  campaign: string | null;
+  status: 'new' | 'contacted' | 'converted' | 'unsubscribed';
+  notes: string | null;
+  converted_tenant_id: number | null;
+  created_at: string;
+}
+
+export interface ReferralProgramSettings {
+  enabled: boolean;
+  reward_type: 'credit_minor' | 'free_months';
+  reward_value: number;
+  referrer_bonus_cents: number;
+  referee_discount_percent: number;
+  min_subscription_tier: string;
+  terms_markdown: string;
+}
+
