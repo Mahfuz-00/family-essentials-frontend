@@ -13,49 +13,49 @@
     </filter>
   </defs>
 
-  <!-- Left Emblem Container: 130x130 at (25, 25) -->
-  <g transform="translate(25, 25)">
+  <!-- Left Emblem Container: 134x134 at (23, 23) -->
+  <g transform="translate(23, 23)">
     <!-- Squircle Background -->
-    <rect x="0" y="0" width="130" height="130" rx="34" fill="url(#forestGrad)" filter="url(#iconGlow)"/>
-    <rect x="1.5" y="1.5" width="127" height="127" rx="33" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="1.5"/>
+    <rect x="0" y="0" width="134" height="134" rx="34" fill="url(#forestGrad)" filter="url(#iconGlow)"/>
+    <rect x="1.5" y="1.5" width="131" height="131" rx="33" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="1.5"/>
 
-    <!-- Two People Coming Closer / Convergence / Roof / Heart-Leaf -->
-    <g transform="translate(65, 65)">
+    <!-- Two People Coming Together / Balanced Scale / Roof / Heart-Leaf -->
+    <g transform="translate(67, 67)">
       <!-- Partner 1 (Left Head) -->
-      <circle cx="-19" cy="-26" r="8.5" fill="#FFFFFF"/>
+      <circle cx="-21" cy="-25" r="8.5" fill="#FFFFFF"/>
       
       <!-- Partner 2 (Right Head) -->
-      <circle cx="19" cy="-26" r="8.5" fill="#FFFFFF"/>
+      <circle cx="21" cy="-25" r="8.5" fill="#FFFFFF"/>
 
-      <!-- Aura base -->
-      <path d="M -30 20 C -32 -2, -26 -16, -18 -18 C -12 -19, -6 -12, 0 -4 C 6 -12, 12 -19, 18 -18 C 26 -16, 32 -2, 30 20 C 28 32, 16 38, 0 38 C -16 38, -28 32, -30 20 Z" fill="#FFFFFF" fill-opacity="0.2"/>
+      <!-- Subtle Aura Base -->
+      <path d="M -31 18 C -33 -3, -28 -17, -19 -19 C -12 -21, -6 -13, 0 -6 C 6 -13, 12 -21, 19 -19 C 28 -17, 33 -3, 31 18 C 29 31, 18 36, 0 36 C -18 36, -29 31, -31 18 Z" fill="#FFFFFF" fill-opacity="0.22"/>
 
-      <!-- Converging Bodies & Mutual Embrace Arch (Forms roofline & shopping tote loop) -->
-      <path d="M -24 16 C -26 2, -22 -10, -14 -14 C -8 -16, -3 -10, 0 -2 C 3 -10, 8 -16, 14 -14 C 22 -10, 26 2, 24 16 C 22 28, 12 34, 0 34 C -12 34, -22 28, -24 16 Z" fill="#FFFFFF"/>
+      <!-- Converging Silhouettes & Balanced Embrace Arch -->
+      <path d="M -25 15 C -27 1, -23 -11, -15 -14 C -9 -16, -4 -9, 0 -3 C 4 -9, 9 -16, 15 -14 C 23 -11, 27 1, 25 15 C 23 27, 13 32, 0 32 C -13 32, -23 27, -25 15 Z" fill="#FFFFFF"/>
 
-      <!-- Inner Negative Space forming Heart & Leaf Sprout -->
-      <path d="M 0 6 C -6 -2, -14 -2, -14 7 C -14 15, 0 24, 0 24 C 0 24, 14 15, 14 7 C 14 -2, 6 -2, 0 6 Z" fill="url(#forestGrad)"/>
+      <!-- Inner Negative Space forming Heart & Leaf Sprout Cutout -->
+      <path d="M 0 5 C -6 -3, -14 -3, -14 6 C -14 14, 0 23, 0 23 C 0 23, 14 14, 14 6 C 14 -3, 6 -3, 0 5 Z" fill="url(#forestGrad)"/>
 
-      <!-- Radiant Coral Accent Center: Synchronized Heart Core -->
-      <circle cx="0" cy="11" r="5" fill="url(#coralGrad)"/>
-      <path d="M 0 5 C 2.2 2.5, 5 3, 5 6 C 5 8.5, 0 12, 0 12 C 0 12, -5 8.5, -5 6 C -5 3, -2.2 2.5, 0 5 Z" fill="url(#coralGrad)"/>
+      <!-- Radiant Coral Accent Center: Synchronized Heart-Seed -->
+      <circle cx="0" cy="10" r="5" fill="url(#coralGrad)"/>
+      <path d="M 0 4 C 2.2 2.3, 5 2.8, 5 5.8 C 5 8.2, 0 11.5, 0 11.5 C 0 11.5, -5 8.2, -5 5.8 C -5 2.8, -2.2 2.3, 0 4 Z" fill="url(#coralGrad)"/>
     </g>
   </g>
 
-  <!-- Typography: Wordmark 'KinSync' -->
+  <!-- Typography: Wordmark 'FairShare' -->
   <g transform="translate(185, 45)">
     <g>
-      <text x="0" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="60" font-weight="800" letter-spacing="-1.8" fill="#2B2D42">Kin</text>
-      <text x="108" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="60" font-weight="700" letter-spacing="-1.4" fill="#376847">Sync</text>
-      <circle cx="266" cy="48" r="6" fill="#E76F51"/>
+      <text x="0" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="58" font-weight="800" letter-spacing="-1.8" fill="#2B2D42">Fair</text>
+      <text x="122" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="58" font-weight="700" letter-spacing="-1.4" fill="#376847">Share</text>
+      <circle cx="300" cy="48" r="6" fill="#E76F51"/>
     </g>
 
     <!-- Subtitle Badge -->
     <g transform="translate(2, 74)">
-      <rect x="0" y="0" width="186" height="24" rx="12" fill="#EBF0ED"/>
+      <rect x="0" y="0" width="194" height="24" rx="12" fill="#EBF0ED"/>
       <circle cx="10" cy="12" r="3.5" fill="#376847"/>
-      <text x="20" y="16" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" letter-spacing="0.8" fill="#376847" text-transform="uppercase">FAMILY OS &amp; ERRANDS</text>
-      <text x="198" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="500" fill="#6C757D">Shared Logistics &amp; Home Care</text>
+      <text x="20" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.8" fill="#376847" text-transform="uppercase">SHARED HOUSEHOLD OS</text>
+      <text x="206" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="500" fill="#6C757D">Mutual Balance &amp; Daily Logistics</text>
     </g>
   </g>
 </svg>
