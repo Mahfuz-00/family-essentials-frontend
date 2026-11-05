@@ -61,7 +61,6 @@ export function EscalationPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Requests', 'Escalation & voice']}
           title="Escalation & voice"
           description="When the household gets called, how often, and what has actually been dialled."
           titleSize="headline"

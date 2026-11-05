@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
@@ -57,33 +57,33 @@ const householdSections: NavSection[] = [
     title: 'Today',
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: 'cottage', exact: true },
-      { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban' },
-      { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume' },
-      { to: '/recurring', label: 'Recurring', icon: 'event_repeat' },
+      { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
+      { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
+      { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
     ],
   },
   {
     title: 'Household',
     items: [
       { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
-      { to: '/places/console', label: 'Geofence Console', icon: 'map' },
+      { to: '/places/console', label: 'Geofence Console', icon: 'map', exact: true },
     ],
   },
   {
     title: 'People',
     items: [
       { to: '/members', label: 'Family Members', icon: 'group', exact: true },
-      { to: '/members/roles', label: 'Roles & Permissions', icon: 'shield_person' },
-      { to: '/members/invitations', label: 'Invitations', icon: 'mark_email_unread' },
+      { to: '/members/roles', label: 'Roles & Permissions', icon: 'shield_person', exact: true },
+      { to: '/members/invitations', label: 'Invitations', icon: 'mark_email_unread', exact: true },
     ],
   },
   {
     title: 'Account',
     items: [
-      { to: '/money', label: 'Money', icon: 'account_balance_wallet' },
-      { to: '/billing', label: 'Billing & Invoices', icon: 'credit_card' },
-      { to: '/settings', label: 'Settings', icon: 'tune' },
-      { to: '/feedback', label: 'Help & Feedback', icon: 'forum' },
+      { to: '/money', label: 'Money', icon: 'account_balance_wallet', exact: true },
+      { to: '/billing', label: 'Billing & Invoices', icon: 'credit_card', exact: true },
+      { to: '/settings', label: 'Settings', icon: 'tune', exact: true },
+      { to: '/feedback', label: 'Help & Feedback', icon: 'forum', exact: true },
     ],
   },
 ];
@@ -93,28 +93,28 @@ const platformSections: NavSection[] = [
     title: 'Platform Analytics & Households',
     items: [
       { to: '/admin', label: 'Overview & MRR', icon: 'monitoring', exact: true },
-      { to: '/admin/analytics', label: 'Platform Analytics', icon: 'analytics' },
-      { to: '/admin/tenants', label: 'Household Workspaces', icon: 'apartment' },
+      { to: '/admin/analytics', label: 'Platform Analytics', icon: 'analytics', exact: true },
+      { to: '/admin/tenants', label: 'Household Workspaces', icon: 'apartment', exact: true },
     ],
   },
   {
     title: 'System & Finance Controls',
     items: [
-      { to: '/admin/settings', label: 'System Settings', icon: 'settings_suggest' },
-      { to: '/admin/payment-gateways', label: 'Payment Gateways', icon: 'payments' },
-      { to: '/admin/refunds', label: 'Refund Policy & Requests', icon: 'currency_exchange' },
-      { to: '/admin/email-config', label: 'Email Configuration', icon: 'mail' },
-      { to: '/admin/health', label: 'System Health & Ops', icon: 'monitor_heart' },
-      { to: '/admin/backups', label: 'Backups & Recovery', icon: 'cloud_sync' },
+      { to: '/admin/settings', label: 'System Settings', icon: 'settings_suggest', exact: true },
+      { to: '/admin/payment-gateways', label: 'Payment Gateways', icon: 'payments', exact: true },
+      { to: '/admin/refunds', label: 'Refund Policy & Requests', icon: 'currency_exchange', exact: true },
+      { to: '/admin/email-config', label: 'Email Configuration', icon: 'mail', exact: true },
+      { to: '/admin/health', label: 'System Health & Ops', icon: 'monitor_heart', exact: true },
+      { to: '/admin/backups', label: 'Backups & Recovery', icon: 'cloud_sync', exact: true },
     ],
   },
   {
     title: 'Growth & Governance',
     items: [
-      { to: '/admin/marketing', label: 'Marketing & Campaigns', icon: 'campaign' },
-      { to: '/admin/profile', label: 'Admin Profile', icon: 'badge' },
-      { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
-      { to: '/admin/feedback', label: 'Household Feedback', icon: 'forum' },
+      { to: '/admin/marketing', label: 'Marketing & Campaigns', icon: 'campaign', exact: true },
+      { to: '/admin/profile', label: 'Admin Profile', icon: 'badge', exact: true },
+      { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user', exact: true },
+      { to: '/admin/feedback', label: 'Household Feedback', icon: 'forum', exact: true },
     ],
   },
 ];
@@ -167,7 +167,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const isPlatformAdmin = user?.is_platform_admin === true;
 
-  const path = window.location.pathname;
+  const location = useLocation();
+  const path = location.pathname;
   const routeLabel =
     routeLabels[path] ??
     routeLabels[`/${path.split('/')[1] ?? ''}`] ??
@@ -483,9 +484,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <span>/</span>
                 <span className="font-medium text-on-surface">{routeLabel}</span>
               </div>
-              <h1 className="truncate text-base sm:text-lg font-bold leading-tight text-on-surface">
+              <span className="truncate text-base sm:text-lg font-bold leading-tight text-on-surface">
                 {routeLabel}
-              </h1>
+              </span>
             </div>
           </div>
 
