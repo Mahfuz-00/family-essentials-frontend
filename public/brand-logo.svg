@@ -1,55 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="800" height="240" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" width="640" height="180" fill="none">
   <defs>
-    <linearGradient id="primaryGrad" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+    <linearGradient id="forestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#376847"/>
-      <stop offset="100%" stop-color="#2D553A"/>
+      <stop offset="100%" stop-color="#284E34"/>
     </linearGradient>
-    <linearGradient id="accentGrad" x1="100" y1="50" x2="160" y2="150" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#E76F51"/>
-      <stop offset="100%" stop-color="#D95D3E"/>
+    <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F28469"/>
+      <stop offset="100%" stop-color="#E76F51"/>
     </linearGradient>
-    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#2B2D42" flood-opacity="0.08"/>
+    <filter id="iconGlow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#376847" flood-opacity="0.18"/>
     </filter>
   </defs>
 
-  <!-- Icon Symbol Container: 180x180 centered in Y=30 -->
-  <g transform="translate(30, 20)" filter="url(#subtleShadow)">
+  <!-- Left Emblem Container: 130x130 at (25, 25) -->
+  <g transform="translate(25, 25)">
     <!-- Squircle Background -->
-    <rect x="0" y="0" width="200" height="200" rx="46" fill="url(#primaryGrad)"/>
+    <rect x="0" y="0" width="130" height="130" rx="34" fill="url(#forestGrad)" filter="url(#iconGlow)"/>
+    <rect x="1.5" y="1.5" width="127" height="127" rx="33" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="1.5"/>
 
-    <!-- Bag & Home Outer Structure -->
-    <!-- Geometric Roof Pitch + Tote Body -->
-    <!-- Gable Roof Peak at (100, 38), rafters sloped down to (46, 78) and (154, 78), bag sides down to (148, 162), base (52, 162) with rounded base corners -->
-    <path d="M100 38 L154 76 C158 79 160 84 158 89 L148 152 C146 160 140 166 131 166 L69 166 C60 166 54 160 52 152 L42 89 C40 84 42 79 46 76 Z" fill="#FFFFFF" fill-opacity="0.12"/>
-    
-    <!-- Tote Handle / Roof Truss Loop -->
-    <path d="M78 68 C78 54 88 44 100 44 C112 44 122 54 122 68" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Two People Coming Closer / Convergence / Roof / Heart-Leaf -->
+    <g transform="translate(65, 65)">
+      <!-- Partner 1 (Left Head) -->
+      <circle cx="-19" cy="-26" r="8.5" fill="#FFFFFF"/>
+      
+      <!-- Partner 2 (Right Head) -->
+      <circle cx="19" cy="-26" r="8.5" fill="#FFFFFF"/>
 
-    <!-- Main Solid White Bag Body with angled roofline top -->
-    <path d="M100 52 L150 86 C153 88 154 91 153 95 L144 146 C143 152 138 157 131 157 L69 157 C62 157 57 152 56 146 L47 95 C46 91 47 88 50 86 Z" fill="#FFFFFF"/>
+      <!-- Aura base -->
+      <path d="M -30 20 C -32 -2, -26 -16, -18 -18 C -12 -19, -6 -12, 0 -4 C 6 -12, 12 -19, 18 -18 C 26 -16, 32 -2, 30 20 C 28 32, 16 38, 0 38 C -16 38, -28 32, -30 20 Z" fill="#FFFFFF" fill-opacity="0.2"/>
 
-    <!-- Heart / Leaf / Checkmark Emblem Cutout / Overlay -->
-    <!-- Sprout / Leaf Checkmark overlaying bottom-right in Coral Accent -->
-    <path d="M84 110 L98 124 L132 88" stroke="#376847" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    
-    <!-- Coral Sprout Seed / Heart Accent -->
-    <circle cx="132" cy="74" r="9" fill="url(#accentGrad)"/>
-    <path d="M132 83 C138 83 144 79 144 73 C144 67 132 58 132 58 C132 58 120 67 120 73 C120 79 126 83 132 83 Z" fill="url(#accentGrad)"/>
+      <!-- Converging Bodies & Mutual Embrace Arch (Forms roofline & shopping tote loop) -->
+      <path d="M -24 16 C -26 2, -22 -10, -14 -14 C -8 -16, -3 -10, 0 -2 C 3 -10, 8 -16, 14 -14 C 22 -10, 26 2, 24 16 C 22 28, 12 34, 0 34 C -12 34, -22 28, -24 16 Z" fill="#FFFFFF"/>
+
+      <!-- Inner Negative Space forming Heart & Leaf Sprout -->
+      <path d="M 0 6 C -6 -2, -14 -2, -14 7 C -14 15, 0 24, 0 24 C 0 24, 14 15, 14 7 C 14 -2, 6 -2, 0 6 Z" fill="url(#forestGrad)"/>
+
+      <!-- Radiant Coral Accent Center: Synchronized Heart Core -->
+      <circle cx="0" cy="11" r="5" fill="url(#coralGrad)"/>
+      <path d="M 0 5 C 2.2 2.5, 5 3, 5 6 C 5 8.5, 0 12, 0 12 C 0 12, -5 8.5, -5 6 C -5 3, -2.2 2.5, 0 5 Z" fill="url(#coralGrad)"/>
+    </g>
   </g>
 
-  <!-- Typography: Plus Jakarta Sans / Inter style geometric brand lettering -->
-  <g transform="translate(265, 84)">
-    <!-- Wordmark Line 1: 'Family' -->
-    <text x="0" y="32" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="44" font-weight="800" letter-spacing="-1.2" fill="#2B2D42">Family</text>
-    <!-- Wordmark Line 1 cont: 'Essentials' -->
-    <text x="146" y="32" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="44" font-weight="500" letter-spacing="-0.8" fill="#376847">Essentials</text>
+  <!-- Typography: Wordmark 'KinSync' -->
+  <g transform="translate(185, 45)">
+    <g>
+      <text x="0" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="60" font-weight="800" letter-spacing="-1.8" fill="#2B2D42">Kin</text>
+      <text x="108" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="60" font-weight="700" letter-spacing="-1.4" fill="#376847">Sync</text>
+      <circle cx="266" cy="48" r="6" fill="#E76F51"/>
+    </g>
 
-    <!-- Subtitle / Tagline Badge -->
-    <rect x="0" y="52" width="168" height="24" rx="12" fill="#EBF0ED"/>
-    <circle cx="10" cy="64" r="4" fill="#376847"/>
-    <text x="20" y="68" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" letter-spacing="0.8" fill="#376847" text-transform="uppercase">Household OS</text>
-    
-    <text x="180" y="68" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#6C757D">Shared errands &amp; nursery buffer</text>
+    <!-- Subtitle Badge -->
+    <g transform="translate(2, 74)">
+      <rect x="0" y="0" width="186" height="24" rx="12" fill="#EBF0ED"/>
+      <circle cx="10" cy="12" r="3.5" fill="#376847"/>
+      <text x="20" y="16" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" letter-spacing="0.8" fill="#376847" text-transform="uppercase">FAMILY OS &amp; ERRANDS</text>
+      <text x="198" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="500" fill="#6C757D">Shared Logistics &amp; Home Care</text>
+    </g>
   </g>
 </svg>

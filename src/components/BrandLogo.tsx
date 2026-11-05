@@ -17,7 +17,7 @@ export function BrandLogo({
 
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      {/* Stitch Official Brand Emblem */}
+      {/* Stitch Official KinSync Two-People Converging Emblem */}
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-sm transition-transform duration-200 hover:scale-105">
         <svg
           viewBox="0 0 200 200"
@@ -26,49 +26,52 @@ export function BrandLogo({
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            <linearGradient id="brandLogoGrad" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+            <linearGradient id="kinSyncGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#376847" />
-              <stop offset="100%" stopColor="#2D553A" />
+              <stop offset="100%" stopColor="#284E34" />
             </linearGradient>
-            <linearGradient id="brandAccentGrad" x1="100" y1="50" x2="160" y2="150" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#E76F51" />
-              <stop offset="100%" stopColor="#D95D3E" />
+            <linearGradient id="kinCoralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F28469" />
+              <stop offset="100%" stopColor="#E76F51" />
             </linearGradient>
           </defs>
-          <rect width="200" height="200" rx="46" fill="url(#brandLogoGrad)" />
-          {/* Bag & Home Structure */}
-          <path
-            d="M100 38 L154 76 C158 79 160 84 158 89 L148 152 C146 160 140 166 131 166 L69 166 C60 166 54 160 52 152 L42 89 C40 84 42 79 46 76 Z"
-            fill="#FFFFFF"
-            fillOpacity="0.12"
-          />
-          {/* Handle / Roof loop */}
-          <path
-            d="M78 68 C78 54 88 44 100 44 C112 44 122 54 122 68"
-            stroke="#FFFFFF"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Solid White Base */}
-          <path
-            d="M100 52 L150 86 C153 88 154 91 153 95 L144 146 C143 152 138 157 131 157 L69 157 C62 157 57 152 56 146 L47 95 C46 91 47 88 50 86 Z"
-            fill="#FFFFFF"
-          />
-          {/* Green Checkmark */}
-          <path
-            d="M84 110 L98 124 L132 88"
-            stroke="#376847"
-            strokeWidth="9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Coral Sprout Accent */}
-          <circle cx="132" cy="74" r="9" fill="url(#brandAccentGrad)" />
-          <path
-            d="M132 83 C138 83 144 79 144 73 C144 67 132 58 132 58 C132 58 120 67 120 73 C120 79 126 83 132 83 Z"
-            fill="url(#brandAccentGrad)"
-          />
+          <rect width="200" height="200" rx="52" fill="url(#kinSyncGrad)" />
+          <rect x="2" y="2" width="196" height="196" rx="50" stroke="#FFFFFF" strokeOpacity="0.16" strokeWidth="2" />
+
+          {/* Two Partners Converging Silhouettes / Roof Arch / Heart-Leaf */}
+          <g transform="translate(100, 100) scale(1.4)">
+            {/* Partner 1 (Left Head) */}
+            <circle cx="-19" cy="-26" r="8.5" fill="#FFFFFF" />
+            
+            {/* Partner 2 (Right Head) */}
+            <circle cx="19" cy="-26" r="8.5" fill="#FFFFFF" />
+
+            {/* Subtle Aura Base */}
+            <path
+              d="M -30 20 C -32 -2, -26 -16, -18 -18 C -12 -19, -6 -12, 0 -4 C 6 -12, 12 -19, 18 -18 C 26 -16, 32 -2, 30 20 C 28 32, 16 38, 0 38 C -16 38, -28 32, -30 20 Z"
+              fill="#FFFFFF"
+              fillOpacity="0.2"
+            />
+
+            {/* Converging Bodies & Mutual Embrace Arch */}
+            <path
+              d="M -24 16 C -26 2, -22 -10, -14 -14 C -8 -16, -3 -10, 0 -2 C 3 -10, 8 -16, 14 -14 C 22 -10, 26 2, 24 16 C 22 28, 12 34, 0 34 C -12 34, -22 28, -24 16 Z"
+              fill="#FFFFFF"
+            />
+
+            {/* Inner Negative Space forming Heart & Leaf Sprout */}
+            <path
+              d="M 0 6 C -6 -2, -14 -2, -14 7 C -14 15, 0 24, 0 24 C 0 24, 14 15, 14 7 C 14 -2, 6 -2, 0 6 Z"
+              fill="url(#kinSyncGrad)"
+            />
+
+            {/* Radiant Coral Accent Center: Synchronized Heart Core */}
+            <circle cx="0" cy="11" r="5" fill="url(#kinCoralGrad)" />
+            <path
+              d="M 0 5 C 2.2 2.5, 5 3, 5 6 C 5 8.5, 0 12, 0 12 C 0 12, -5 8.5, -5 6 C -5 3, -2.2 2.5, 0 5 Z"
+              fill="url(#kinCoralGrad)"
+            />
+          </g>
         </svg>
       </div>
 
@@ -76,11 +79,12 @@ export function BrandLogo({
         <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-1.5 leading-none">
             <span className="truncate text-base font-extrabold tracking-tight text-on-surface">
-              Family
+              Kin
             </span>
-            <span className="truncate text-base font-medium tracking-tight text-secondary">
-              Essentials
+            <span className="truncate text-base font-semibold tracking-tight text-secondary">
+              Sync
             </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-[#E76F51]" />
           </div>
           <span className="truncate text-[11px] font-medium tracking-wide text-muted mt-0.5">
             {subtitle ?? defaultSubtitle}
