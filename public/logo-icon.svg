@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" fill="none">
+  <defs>
+    <linearGradient id="primaryGradIcon" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#376847"/>
+      <stop offset="100%" stop-color="#2D553A"/>
+    </linearGradient>
+    <linearGradient id="accentGradIcon" x1="100" y1="50" x2="160" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E76F51"/>
+      <stop offset="100%" stop-color="#D95D3E"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="200" rx="46" fill="url(#primaryGradIcon)"/>
+  <path d="M100 38 L154 76 C158 79 160 84 158 89 L148 152 C146 160 140 166 131 166 L69 166 C60 166 54 160 52 152 L42 89 C40 84 42 79 46 76 Z" fill="#FFFFFF" fill-opacity="0.12"/>
+  <path d="M78 68 C78 54 88 44 100 44 C112 44 122 54 122 68" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100 52 L150 86 C153 88 154 91 153 95 L144 146 C143 152 138 157 131 157 L69 157 C62 157 57 152 56 146 L47 95 C46 91 47 88 50 86 Z" fill="#FFFFFF"/>
+  <path d="M84 110 L98 124 L132 88" stroke="#376847" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="132" cy="74" r="9" fill="url(#accentGradIcon)"/>
+  <path d="M132 83 C138 83 144 79 144 73 C144 67 132 58 132 58 C132 58 120 67 120 73 C120 79 126 83 132 83 Z" fill="url(#accentGradIcon)"/>
+</svg>

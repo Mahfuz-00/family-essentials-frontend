@@ -17,40 +17,72 @@ export function BrandLogo({
 
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-sm transition-transform duration-200 hover:scale-105">
-        {/* Soft background glow */}
-        <div className="absolute inset-0 rounded-xl bg-primary/10 opacity-60" />
-        {/* SVG emblem: Stylized cottage with a flourishing leaf accent */}
+      {/* Stitch Official Brand Emblem */}
+      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-sm transition-transform duration-200 hover:scale-105">
         <svg
-          viewBox="0 0 24 24"
+          viewBox="0 0 200 200"
+          className="h-full w-full"
           fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="relative h-5 w-5 text-secondary"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          {isPlatformAdmin ? (
-            <>
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
-            </>
-          ) : (
-            <>
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-              <path d="M12 2a4 4 0 0 0-4 4c0 2 4 4 4 4s4-2 4-4a4 4 0 0 0-4-4z" className="fill-secondary/20 stroke-secondary" />
-            </>
-          )}
+          <defs>
+            <linearGradient id="brandLogoGrad" x1="20" y1="20" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#376847" />
+              <stop offset="100%" stopColor="#2D553A" />
+            </linearGradient>
+            <linearGradient id="brandAccentGrad" x1="100" y1="50" x2="160" y2="150" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#E76F51" />
+              <stop offset="100%" stopColor="#D95D3E" />
+            </linearGradient>
+          </defs>
+          <rect width="200" height="200" rx="46" fill="url(#brandLogoGrad)" />
+          {/* Bag & Home Structure */}
+          <path
+            d="M100 38 L154 76 C158 79 160 84 158 89 L148 152 C146 160 140 166 131 166 L69 166 C60 166 54 160 52 152 L42 89 C40 84 42 79 46 76 Z"
+            fill="#FFFFFF"
+            fillOpacity="0.12"
+          />
+          {/* Handle / Roof loop */}
+          <path
+            d="M78 68 C78 54 88 44 100 44 C112 44 122 54 122 68"
+            stroke="#FFFFFF"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Solid White Base */}
+          <path
+            d="M100 52 L150 86 C153 88 154 91 153 95 L144 146 C143 152 138 157 131 157 L69 157 C62 157 57 152 56 146 L47 95 C46 91 47 88 50 86 Z"
+            fill="#FFFFFF"
+          />
+          {/* Green Checkmark */}
+          <path
+            d="M84 110 L98 124 L132 88"
+            stroke="#376847"
+            strokeWidth="9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Coral Sprout Accent */}
+          <circle cx="132" cy="74" r="9" fill="url(#brandAccentGrad)" />
+          <path
+            d="M132 83 C138 83 144 79 144 73 C144 67 132 58 132 58 C132 58 120 67 120 73 C120 79 126 83 132 83 Z"
+            fill="url(#brandAccentGrad)"
+          />
         </svg>
       </div>
 
       {!iconOnly && (
         <div className="flex min-w-0 flex-col">
-          <span className="truncate text-headline-sm font-bold tracking-tight text-on-surface">
-            Family Essentials
-          </span>
-          <span className="truncate text-label-sm font-medium tracking-wide text-muted">
+          <div className="flex items-center gap-1.5 leading-none">
+            <span className="truncate text-base font-extrabold tracking-tight text-on-surface">
+              Family
+            </span>
+            <span className="truncate text-base font-medium tracking-tight text-secondary">
+              Essentials
+            </span>
+          </div>
+          <span className="truncate text-[11px] font-medium tracking-wide text-muted mt-0.5">
             {subtitle ?? defaultSubtitle}
           </span>
         </div>
