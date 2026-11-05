@@ -130,7 +130,6 @@ export function RefundPolicyPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Finance & Billing']}
           title="Refund Policy &amp; Transactions"
           description="Enforce household refund terms, review disputed charges, issue partial credits, and maintain tenant satisfaction."
         />

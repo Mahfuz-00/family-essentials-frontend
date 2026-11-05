@@ -90,7 +90,6 @@ export function PaymentGatewayConfigPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Finance & Billing']}
           title="Payment Gateway Configuration"
           description="Configure merchant credentials, active gateway provider, test sandboxes, currency, and webhook synchronization."
         />

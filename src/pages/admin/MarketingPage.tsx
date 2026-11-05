@@ -213,7 +213,6 @@ export function MarketingPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Growth & Acquisition']}
           title="Marketing &amp; Campaign Console"
           description="Manage promotional coupons, broadcast announcement banners, inbound waitlist leads, and the household referral reward program."
         />

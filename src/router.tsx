@@ -40,6 +40,8 @@ import { PlatformAnalyticsPage } from '@/pages/admin/PlatformAnalyticsPage';
 import { RefundPolicyPage } from '@/pages/admin/RefundPolicyPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
 import { MarketingPage as AdminMarketingPage } from '@/pages/admin/MarketingPage';
+import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
+import { AdminSystemSettingsPage } from '@/pages/admin/AdminSystemSettingsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
 const rootRoute = createRootRoute({
@@ -347,6 +349,20 @@ const adminMarketingRoute = createRoute({
   component: AdminMarketingPage,
 });
 
+const adminSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/settings',
+  beforeLoad: requirePlatformAdmin,
+  component: AdminSystemSettingsPage,
+});
+
+const adminProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/profile',
+  beforeLoad: requirePlatformAdmin,
+  component: AdminProfilePage,
+});
+
 // Exported so tests can build a router over the real tree (see tests/support/render.tsx).
 export const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -389,6 +405,8 @@ export const routeTree = rootRoute.addChildren([
   adminEmailConfigRoute,
   adminRefundsRoute,
   adminMarketingRoute,
+  adminSettingsRoute,
+  adminProfileRoute,
   adminHealthRoute,
   adminBackupsRoute,
   adminFeedbackRoute,

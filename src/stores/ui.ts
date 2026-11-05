@@ -12,10 +12,24 @@ interface UiState {
   addRequestOpen: boolean;
   openAddRequest: () => void;
   closeAddRequest: () => void;
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
   addRequestOpen: false,
   openAddRequest: () => set({ addRequestOpen: true }),
   closeAddRequest: () => set({ addRequestOpen: false }),
+  sidebarCollapsed: localStorage.getItem('sidebar_collapsed') === 'true',
+  toggleSidebar: () =>
+    set((state) => {
+      const next = !state.sidebarCollapsed;
+      localStorage.setItem('sidebar_collapsed', String(next));
+      return { sidebarCollapsed: next };
+    }),
+  setSidebarCollapsed: (collapsed: boolean) => {
+    localStorage.setItem('sidebar_collapsed', String(collapsed));
+    set({ sidebarCollapsed: collapsed });
+  },
 }));

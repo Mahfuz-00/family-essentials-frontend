@@ -239,7 +239,6 @@ export function TenantsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Tenant Workspaces']}
           title="Tenant Workspaces & Client Families"
           description="Provision, suspend and inspect every client household workspace. Each tenant is isolated at the database row level."
         />

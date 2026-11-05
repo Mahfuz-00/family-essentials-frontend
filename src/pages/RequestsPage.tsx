@@ -133,11 +133,23 @@ export function RequestsPage() {
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
   const addOpen = useUiStore((state) => state.addRequestOpen);
+  const openAddRequest = useUiStore((state) => state.openAddRequest);
   const closeAddRequest = useUiStore((state) => state.closeAddRequest);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeTone, setNoticeTone] = useState<'success' | 'info'>('success');
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarCopied, setCalendarCopied] = useState(false);
+  const [nlpPrompt, setNlpPrompt] = useState('');
+
+  const calendarQuery = useQuery({
+    queryKey: ['calendar', 'feed-url'],
+    queryFn: async () =>
+      (await api.get<{ data: { feed_url: string; webcal_url: string; token: string } }>('/v1/calendar/feed-url'))
+        .data.data,
+    enabled: calendarModalOpen,
+  });
 
   const board = useQuery({
     queryKey: ['requests', 'board'],
@@ -163,6 +175,21 @@ export function RequestsPage() {
     setError(apiError(caught));
     setNotice(null);
   };
+
+  const nlpDispatcherMutation = useMutation({
+    mutationFn: async (text: string) =>
+      (await api.post<{ parsed: any; created: boolean }>('/v1/requests/parse-nlp', { text, execute: true })).data,
+    onSuccess: async (data) => {
+      setNlpPrompt('');
+      setNotice(
+        `AI Dispatcher created errand: "${data.parsed.title}" (${data.parsed.assignee_name ? `Assigned to ${data.parsed.assignee_name}` : 'Unassigned'}${data.parsed.store_name ? ` at ${data.parsed.store_name}` : ''})`
+      );
+      setNoticeTone('success');
+      setError(null);
+      await refresh();
+    },
+    onError,
+  });
 
   const create = useMutation({
     mutationFn: async () =>
@@ -351,10 +378,59 @@ export function RequestsPage() {
           }
           title="Household Kanban & Errand Hub"
           description="Real-time domestic coordination for your household, synced across every paired device."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCalendarModalOpen(true)}
+              >
+                <Icon name="calendar_month" className="text-[18px]" />
+                Sync Calendar (.ics)
+              </Button>
+              <Button
+                variant="primary"
+                onClick={openAddRequest}
+              >
+                <Icon name="add" className="text-[18px]" />
+                New Errand
+              </Button>
+            </div>
+          }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone={noticeTone}>{notice}</Alert>}
+
+        {/* Gap G: AI Family Dispatcher Natural Language Quick-Add */}
+        <section className="relative overflow-hidden rounded-2xl border border-secondary/25 bg-forest-soft/30 p-3.5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+              <Icon name="psychology" className="text-[22px]" />
+            </span>
+            <div className="flex flex-1 flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={nlpPrompt}
+                onChange={(e) => setNlpPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && nlpPrompt.trim() && !nlpDispatcherMutation.isPending) {
+                    nlpDispatcherMutation.mutate(nlpPrompt.trim());
+                  }
+                }}
+                placeholder="AI Dispatcher: e.g. 'Pick up organic whole milk at Trader Joe\'s tomorrow 5pm for Sarah ASAP'"
+                className="h-10 flex-1 rounded-xl border border-outline-variant/40 bg-surface px-3.5 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 shadow-xs"
+              />
+              <Button
+                variant="primary"
+                disabled={!nlpPrompt.trim() || nlpDispatcherMutation.isPending}
+                onClick={() => nlpDispatcherMutation.mutate(nlpPrompt.trim())}
+              >
+                <Icon name="auto_awesome" className="text-[16px]" />
+                {nlpDispatcherMutation.isPending ? 'Dispatching...' : 'AI Quick-Dispatch'}
+              </Button>
+            </div>
+          </div>
+        </section>
 
         {/* Overdue banner */}
         {overdueList.length > 0 && (
@@ -809,6 +885,75 @@ export function RequestsPage() {
                 onChange={(event) => setForm({ ...form, due_at: event.target.value })}
               />
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Gap A: Calendar Feed (.ics) Sync Modal */}
+      <Modal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        title="Shared Family Calendar &amp; External Sync (.ics)"
+      >
+        <div className="flex flex-col gap-4 p-1">
+          <p className="text-xs text-muted leading-relaxed">
+            Subscribe to your live household errands and schedule directly in Google Calendar, Apple Calendar, or Microsoft Outlook. Changes made in FairShare automatically sync to your calendar.
+          </p>
+
+          {calendarQuery.isLoading ? (
+            <div className="p-6 text-center text-xs text-muted">Generating tokenized feed link...</div>
+          ) : calendarQuery.data ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-on-surface">Subscription Feed URL (RFC 5545 iCalendar)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={calendarQuery.data.feed_url}
+                    className="h-9 flex-1 rounded-xl border border-outline-variant/40 bg-surface-container-low px-3 font-mono text-[11px] text-on-surface select-all"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(calendarQuery.data.feed_url);
+                      setCalendarCopied(true);
+                      setTimeout(() => setCalendarCopied(false), 2000);
+                    }}
+                  >
+                    <Icon name={calendarCopied ? 'check' : 'content_copy'} className="text-[14px]" />
+                    {calendarCopied ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3 text-xs flex flex-col gap-2">
+                <span className="font-bold text-secondary flex items-center gap-1.5">
+                  <Icon name="sync" className="text-[16px]" />
+                  One-Click 1-Tap Subscription
+                </span>
+                <p className="text-muted text-[11px]">
+                  Clicking below registers the live feed with Apple Calendar or your default device calendar client via the WebCal protocol.
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = calendarQuery.data.webcal_url;
+                  }}
+                >
+                  <Icon name="calendar_add_on" className="text-[16px]" />
+                  Subscribe in Default / Apple Calendar
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={() => setCalendarModalOpen(false)}>
+              Close
+            </Button>
           </div>
         </div>
       </Modal>

@@ -82,7 +82,6 @@ export function EmailConfigPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Communications']}
           title="Email & Notification Delivery"
           description="Manage transactional email infrastructure, SMTP / cloud mail providers, and outgoing household notification templates."
         />

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { api, apiError } from '@/lib/api';
@@ -24,6 +25,8 @@ export function GeofenceConsolePage() {
   const [radius, setRadius] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [checkedItemIds, setCheckedItemIds] = useState<number[]>([]);
 
   const places = useQuery({
     queryKey: ['places'],
@@ -115,10 +118,20 @@ export function GeofenceConsolePage() {
           description="Zone geometry, boundary events, and the store list each zone will surface."
           titleSize="headline"
           actions={
-            <Button variant="outline" size="lg" onClick={useMyLocation} disabled={report.isPending}>
-              <Icon name="gps_fixed" className="text-[18px] text-primary" />
-              {report.isPending ? 'Reading position…' : 'Report my position'}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setChecklistOpen(true)}
+              >
+                <Icon name="smartphone" className="text-[18px]" />
+                Glanceable Store Checklist (Gap E)
+              </Button>
+              <Button variant="primary" size="lg" onClick={useMyLocation} disabled={report.isPending}>
+                <Icon name="gps_fixed" className="text-[18px]" />
+                {report.isPending ? 'Reading position…' : 'Report my position'}
+              </Button>
+            </div>
           }
         />
 
@@ -337,6 +350,129 @@ export function GeofenceConsolePage() {
             </div>
           </div>
         )}
+
+        {/* Gap E: Mobile Lockscreen & Glanceable Store Checklist Simulation */}
+        <Modal
+          open={checklistOpen}
+          onClose={() => setChecklistOpen(false)}
+          title="Mobile Lockscreen &amp; Glanceable Store Checklist (Gap E)"
+        >
+          <div className="flex flex-col gap-4 p-1">
+            <p className="text-xs text-muted leading-relaxed">
+              When a family member approaches a saved geofenced store (e.g. {active?.name ?? 'Trader Joe\'s'}), this glanceable shopping checklist appears on their mobile lockscreen as a Live Activity / persistent notification with one-tap item check-offs.
+            </p>
+
+            {/* Mobile Lockscreen Frame Simulation */}
+            <div className="mx-auto w-full max-w-sm rounded-[32px] border-4 border-outline-variant/60 bg-surface-container-lowest p-4 shadow-e3">
+              {/* Device Notch & Status bar */}
+              <div className="flex items-center justify-between pb-3 text-[11px] font-semibold text-muted">
+                <span>9:41 AM</span>
+                <div className="h-3.5 w-20 rounded-full bg-outline-variant/30" />
+                <div className="flex items-center gap-1">
+                  <Icon name="signal_cellular_alt" className="text-[13px]" />
+                  <Icon name="wifi" className="text-[13px]" />
+                  <Icon name="battery_full" className="text-[14px]" />
+                </div>
+              </div>
+
+              {/* Lockscreen Live Activity Notification Card */}
+              <div className="rounded-2xl border border-secondary/30 bg-surface p-3.5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-secondary text-on-secondary">
+                      <Icon name="location_on" className="text-[14px]" />
+                    </span>
+                    <span className="text-xs font-bold text-on-surface">FairShare Store Arrival</span>
+                  </div>
+                  <span className="text-[10px] text-muted font-medium">Just now</span>
+                </div>
+
+                <div className="mt-2 flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-secondary">
+                      📍 Arrived at {active?.name ?? 'Store'}
+                    </span>
+                    <Badge tone="success">In Zone</Badge>
+                  </div>
+                  <span className="text-[11px] text-muted">
+                    {(needs.data ?? []).length} items requested by family
+                  </span>
+                </div>
+
+                {/* Glanceable Checklist Items */}
+                <div className="mt-3 flex flex-col gap-1.5">
+                  {(needs.data ?? []).length === 0 ? (
+                    <div className="rounded-xl bg-forest-soft/40 p-3 text-center text-xs text-secondary font-medium">
+                      ✓ No pending requests for this location. Everything restocked!
+                    </div>
+                  ) : (
+                    (needs.data ?? []).map((req) => {
+                      const isChecked = checkedItemIds.includes(req.id);
+                      return (
+                        <button
+                          key={req.id}
+                          type="button"
+                          onClick={() => {
+                            setCheckedItemIds((prev) =>
+                              prev.includes(req.id) ? prev.filter((id) => id !== req.id) : [...prev, req.id]
+                            );
+                          }}
+                          className={`flex items-center justify-between rounded-xl p-2.5 text-xs text-left transition-all border ${
+                            isChecked
+                              ? 'border-outline-variant/30 bg-surface-container-low text-muted line-through'
+                              : 'border-secondary/20 bg-forest-soft/30 text-on-surface hover:bg-forest-soft/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                                isChecked
+                                  ? 'border-secondary bg-secondary text-on-secondary'
+                                  : 'border-outline-variant bg-surface'
+                              }`}
+                            >
+                              {isChecked && <Icon name="check" className="text-[14px]" />}
+                            </span>
+                            <span className="font-semibold">{req.title}</span>
+                          </div>
+                          {req.quantity && (
+                            <span className="text-[10px] font-mono rounded bg-surface px-1.5 py-0.5 border border-outline-variant/30">
+                              {req.quantity}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Quick Action Footer */}
+                <div className="mt-3 flex items-center justify-between pt-2 border-t border-outline-variant/20 text-[11px]">
+                  <span className="text-muted">
+                    {checkedItemIds.length} of {(needs.data ?? []).length} checked
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (needs.data) {
+                        setCheckedItemIds(needs.data.map((r) => r.id));
+                      }
+                    }}
+                    className="font-bold text-secondary hover:underline"
+                  >
+                    Check All Off
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button variant="outline" onClick={() => setChecklistOpen(false)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </AppLayout>
   );
