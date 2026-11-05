@@ -20,7 +20,7 @@ export async function requirePlatformAdmin(): Promise<void> {
   await requireAuth();
 
   if (!useAuthStore.getState().user?.is_platform_admin) {
-    throw redirect({ to: '/' });
+    throw redirect({ to: '/dashboard' });
   }
 }
 
@@ -28,6 +28,6 @@ export async function requireTenant(): Promise<void> {
   await requireAuth();
 
   if (!useTenantStore.getState().active) {
-    throw redirect({ to: '/' });
+    throw redirect({ to: '/dashboard' });
   }
 }

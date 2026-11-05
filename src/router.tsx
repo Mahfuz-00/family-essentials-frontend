@@ -1,8 +1,19 @@
 import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { AdminLoginPage } from '@/pages/AdminLoginPage';
 import { BillingPage } from '@/pages/BillingPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { FeedbackPage } from '@/pages/FeedbackPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { MarketingPage } from '@/pages/MarketingPage';
+import { AboutPage } from '@/pages/marketing/AboutPage';
+import { ContactPage } from '@/pages/marketing/ContactPage';
+import { FaqPage } from '@/pages/marketing/FaqPage';
+import { FeatureDetailPage } from '@/pages/marketing/FeatureDetailPage';
+import { FeaturesHubPage } from '@/pages/marketing/FeaturesHubPage';
+import { PricingPage } from '@/pages/marketing/PricingPage';
+import { SolutionDetailPage } from '@/pages/marketing/SolutionDetailPage';
+import { SolutionsHubPage } from '@/pages/marketing/SolutionsHubPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { MoneyPage } from '@/pages/MoneyPage';
 import { PlacesPage } from '@/pages/PlacesPage';
@@ -10,14 +21,12 @@ import { RecurringPage } from '@/pages/RecurringPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { RequestsPage } from '@/pages/RequestsPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
 import { VerifyPhonePage } from '@/pages/VerifyPhonePage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { FeedbackPage } from '@/pages/FeedbackPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { LedgerPage } from '@/pages/money/LedgerPage';
 import { InvitationsPage } from '@/pages/members/InvitationsPage';
 import { RolesPage } from '@/pages/members/RolesPage';
+import { LedgerPage } from '@/pages/money/LedgerPage';
 import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
 import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
@@ -32,11 +41,86 @@ const rootRoute = createRootRoute({
   component: () => <Outlet />,
 });
 
+// The public marketing website is served at the root '/'
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  component: MarketingPage,
+});
+
+// The authenticated household dashboard is served at '/dashboard' (and aliased at '/app')
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
   beforeLoad: requireAuth,
   component: DashboardPage,
+});
+
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/app',
+  beforeLoad: requireAuth,
+  component: DashboardPage,
+});
+
+const marketingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/landing',
+  component: MarketingPage,
+});
+
+const welcomeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/welcome',
+  component: MarketingPage,
+});
+
+const featuresHubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/features',
+  component: FeaturesHubPage,
+});
+
+const featureDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/features/$slug',
+  component: FeatureDetailPage,
+});
+
+const solutionsHubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/solutions',
+  component: SolutionsHubPage,
+});
+
+const solutionDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/solutions/$slug',
+  component: SolutionDetailPage,
+});
+
+const pricingMarketingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pricing',
+  component: PricingPage,
+});
+
+const aboutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/about',
+  component: AboutPage,
+});
+
+const faqRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/faq',
+  component: FaqPage,
+});
+
+const contactRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/contact',
+  component: ContactPage,
 });
 
 const loginRoute = createRoute({
@@ -101,14 +185,14 @@ const membersInvitationsRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  beforeLoad: requireTenant,
+  beforeLoad: requireAuth,
   component: SettingsPage,
 });
 
 const feedbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/feedback',
-  beforeLoad: requireTenant,
+  beforeLoad: requireAuth,
   component: FeedbackPage,
 });
 
@@ -226,6 +310,18 @@ const adminAuditRoute = createRoute({
 // Exported so tests can build a router over the real tree (see tests/support/render.tsx).
 export const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
+  appRoute,
+  marketingRoute,
+  welcomeRoute,
+  featuresHubRoute,
+  featureDetailRoute,
+  solutionsHubRoute,
+  solutionDetailRoute,
+  pricingMarketingRoute,
+  aboutRoute,
+  faqRoute,
+  contactRoute,
   loginRoute,
   registerRoute,
   forgotPasswordRoute,

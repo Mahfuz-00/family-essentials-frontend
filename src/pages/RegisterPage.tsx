@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AuthLayout } from '@/components/AuthLayout';
+import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,8 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -91,18 +94,45 @@ export function RegisterPage() {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="pr-10"
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide text' : 'Show text'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors cursor-pointer p-1"
+              >
+                <Icon name={showPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
+              </button>
+            </div>
             {errors.password && <p className="mt-1.5 text-body-sm text-error">{errors.password.message}</p>}
           </div>
 
           <div>
             <Label htmlFor="password_confirmation">Confirm password</Label>
-            <Input
-              id="password_confirmation"
-              type="password"
-              autoComplete="new-password"
-              {...register('password_confirmation')}
-            />
+            <div className="relative">
+              <Input
+                id="password_confirmation"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                className="pr-10"
+                {...register('password_confirmation')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Hide text' : 'Show text'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors cursor-pointer p-1"
+              >
+                <Icon name={showConfirmPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
+              </button>
+            </div>
             {errors.password_confirmation && (
               <p className="mt-1.5 text-body-sm text-error">{errors.password_confirmation.message}</p>
             )}

@@ -55,7 +55,7 @@ export function VerifyPhonePage() {
     try {
       const { data } = await api.post<{ user: AuthUser }>('/v1/auth/phone/verify', { code });
       setUser(data.user);
-      await navigate({ to: '/' });
+      await navigate({ to: '/dashboard' });
     } catch (caught) {
       setError(apiError(caught));
     } finally {

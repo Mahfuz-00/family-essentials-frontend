@@ -106,29 +106,6 @@ export function GeofenceConsolePage() {
     );
   };
 
-  // Normalise the stored coordinates into a 10..90 plot window.
-  const bounds = (() => {
-    if (list.length === 0) {
-      return null;
-    }
-
-    const lats = list.map((place) => place.latitude);
-    const lngs = list.map((place) => place.longitude);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-
-    return {
-      minLat,
-      maxLat,
-      minLng,
-      maxLng,
-      latSpan: maxLat - minLat || 0.01,
-      lngSpan: maxLng - minLng || 0.01,
-    };
-  })();
-
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -199,57 +176,45 @@ export function GeofenceConsolePage() {
             <div className="flex flex-col gap-5 xl:col-span-8">
               {active && (
                 <div className="relative h-[560px] overflow-hidden rounded-3xl bg-[#EAE8DE] shadow-e1">
-                  {bounds && (
-                    <svg
-                      viewBox="0 0 100 100"
-                      preserveAspectRatio="none"
-                      className="absolute inset-0 h-full w-full"
-                      role="img"
-                      aria-label={`Schematic plot of ${list.length} saved places and their geofence radii`}
-                    >
-                      <defs>
-                        <pattern id="streets" width="8" height="8" patternUnits="userSpaceOnUse">
-                          <path d="M8 0H0v8" fill="none" stroke="rgba(43,45,66,0.07)" strokeWidth="0.3" />
-                        </pattern>
-                      </defs>
-                      <rect width="100" height="100" fill="url(#streets)" />
+                  {/* OpenStreetMap Interactive View */}
+                  <iframe
+                    title={`OpenStreetMap view of ${active.name}`}
+                    className="absolute inset-0 h-full w-full border-0 rounded-3xl z-0"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${active.longitude - 0.008}%2C${active.latitude - 0.005}%2C${active.longitude + 0.008}%2C${active.latitude + 0.005}&layer=mapnik&marker=${active.latitude}%2C${active.longitude}`}
+                    loading="lazy"
+                  />
 
-                      {list.map((place) => {
-                        const x = ((place.longitude - bounds.minLng) / bounds.lngSpan) * 80 + 10;
-                        const y = ((bounds.maxLat - place.latitude) / bounds.latSpan) * 80 + 10;
-                        const metresPerUnit =
-                          Math.max(bounds.latSpan * 111_000, bounds.lngSpan * 111_000) / 80;
-                        const r = Math.max(1.5, Math.min(22, place.radius_meters / metresPerUnit));
-                        const isActive = active.id === place.id;
+                  {/* OpenStreetMap Attribution & Status Badge */}
+                  <span className="absolute left-4 top-4 flex items-center gap-1.5 rounded-xl bg-surface/95 px-3 py-1.5 text-label-sm font-bold text-on-surface shadow-e1 backdrop-blur-md z-10 border border-outline-variant/30">
+                    <Icon name="map" className="text-[16px] text-secondary" />
+                    <span>OpenStreetMap</span>
+                  </span>
 
-                        return (
-                          <g key={place.id}>
-                            <circle
-                              cx={x}
-                              cy={y}
-                              r={r}
-                              fill={isActive ? 'rgba(55,104,71,0.18)' : 'rgba(55,104,71,0.08)'}
-                              stroke={isActive ? '#376847' : 'rgba(55,104,71,0.45)'}
-                              strokeWidth={isActive ? 0.6 : 0.3}
-                            />
-                            <circle cx={x} cy={y} r={isActive ? 1.8 : 1.3} fill="#376847" />
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  )}
-
-                  <span className="absolute right-4 top-4 flex items-center gap-2 rounded-xl bg-surface/90 px-3 py-1.5 text-label-sm text-secondary shadow-e1 backdrop-blur">
-                    <span className="h-2 w-2 rounded-full bg-success" />
+                  <span className="absolute right-4 top-4 flex items-center gap-2 rounded-xl bg-surface/95 px-3 py-1.5 text-label-sm font-semibold text-secondary shadow-e1 backdrop-blur-md z-10 border border-outline-variant/30">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                    </span>
                     {list.length} zones plotted
                   </span>
 
-                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-surface/95 p-4 shadow-e2 backdrop-blur-md">
+                  <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-surface/95 p-4 shadow-e2 backdrop-blur-md z-10 border border-outline-variant/30">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-col gap-1">
-                        <span className="text-label-sm uppercase tracking-wider text-muted">
-                          Selected zone inspector
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-label-sm uppercase tracking-wider text-muted font-bold">
+                            Selected zone inspector
+                          </span>
+                          <a
+                            href={`https://www.openstreetmap.org/?mlat=${active.latitude}&mlon=${active.longitude}#map=16/${active.latitude}/${active.longitude}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-label-sm font-bold text-secondary hover:underline inline-flex items-center gap-1"
+                          >
+                            <span>Open in OpenStreetMap</span>
+                            <Icon name="open_in_new" className="text-[14px]" />
+                          </a>
+                        </div>
                         <span className="flex items-center gap-2">
                           <h2 className="truncate text-headline-sm text-on-surface">{active.name}</h2>
                           <Badge tone="primary">{active.radius_meters} m</Badge>

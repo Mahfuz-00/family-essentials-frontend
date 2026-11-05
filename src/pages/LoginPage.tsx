@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AuthLayout } from '@/components/AuthLayout';
+import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -42,7 +44,7 @@ export function LoginPage() {
       setAuth(data.token, data.user);
 
       // A landlord signing in here belongs in the console, not the household view.
-      await navigate({ to: data.user.is_platform_admin ? '/admin' : '/' });
+      await navigate({ to: data.user.is_platform_admin ? '/admin' : '/dashboard' });
     } catch (caught) {
       setError(apiError(caught));
     }
@@ -68,13 +70,24 @@ export function LoginPage() {
 
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            aria-invalid={errors.password ? 'true' : undefined}
-            {...register('password')}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              aria-invalid={errors.password ? 'true' : undefined}
+              className="pr-10"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide text' : 'Show text'}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors cursor-pointer p-1"
+            >
+              <Icon name={showPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
+            </button>
+          </div>
           {errors.password && <p className="mt-1.5 text-body-sm text-error">{errors.password.message}</p>}
         </div>
 
@@ -88,6 +101,12 @@ export function LoginPage() {
           </Link>
           <Link to="/register" className="font-semibold text-secondary hover:underline">
             Create a household
+          </Link>
+        </div>
+
+        <div className="border-t border-outline-variant/20 pt-4 text-center">
+          <Link to="/landing" className="text-body-sm text-muted transition-colors hover:text-secondary hover:underline">
+            ← Explore Family Essentials Overview
           </Link>
         </div>
       </form>
