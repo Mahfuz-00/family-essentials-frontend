@@ -301,5 +301,16 @@ describe('platform admin console enhancements', () => {
     expect(await screen.findByText('Household: The Tanvir Household')).toBeInTheDocument();
     expect(await screen.findByText('tanvir@familyessentials.app')).toBeInTheDocument();
     expect(screen.getByText('Pantry Essentials')).toBeInTheDocument();
+    expect(screen.getByText(/Back to Tenants/i)).toBeInTheDocument();
+  });
+
+  it('renders tenant details directly at /admin/tenants/$tenantId page', async () => {
+    renderApp('/admin/tenants/1');
+
+    expect(await screen.findByText('Household: The Tanvir Household')).toBeInTheDocument();
+    expect(await screen.findByText('tanvir@familyessentials.app')).toBeInTheDocument();
+    expect(screen.getByText('Resource Allocations & Live Telemetry')).toBeInTheDocument();
+    expect(screen.getByText('Subscription Quota & Capacity Limits')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Back to Tenants/i })).toBeInTheDocument();
   });
 });

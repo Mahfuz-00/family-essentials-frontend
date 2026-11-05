@@ -39,6 +39,7 @@ import { PaymentGatewayConfigPage } from '@/pages/admin/PaymentGatewayConfigPage
 import { PlatformAnalyticsPage } from '@/pages/admin/PlatformAnalyticsPage';
 import { RefundPolicyPage } from '@/pages/admin/RefundPolicyPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
+import { TenantDetailPage } from '@/pages/admin/TenantDetailPage';
 import { MarketingPage as AdminMarketingPage } from '@/pages/admin/MarketingPage';
 import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
 import { AdminSystemSettingsPage } from '@/pages/admin/AdminSystemSettingsPage';
@@ -286,6 +287,18 @@ const adminTenantsRoute = createRoute({
   component: TenantsPage,
 });
 
+const adminTenantDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/tenants/$tenantId',
+  beforeLoad: requirePlatformAdmin,
+  component: AdminTenantDetailRoute,
+});
+
+function AdminTenantDetailRoute() {
+  const { tenantId } = adminTenantDetailRoute.useParams();
+  return <TenantDetailPage tenantId={tenantId} />;
+}
+
 const adminHealthRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/health',
@@ -401,6 +414,7 @@ export const routeTree = rootRoute.addChildren([
   adminOverviewRoute,
   adminAnalyticsRoute,
   adminTenantsRoute,
+  adminTenantDetailRoute,
   adminPaymentGatewayRoute,
   adminEmailConfigRoute,
   adminRefundsRoute,
