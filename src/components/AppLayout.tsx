@@ -26,7 +26,11 @@ type RoutePath =
   | '/settings'
   | '/feedback'
   | '/admin'
+  | '/admin/analytics'
   | '/admin/tenants'
+  | '/admin/payment-gateways'
+  | '/admin/email-config'
+  | '/admin/refunds'
   | '/admin/health'
   | '/admin/backups'
   | '/admin/feedback'
@@ -88,14 +92,28 @@ const householdSections: NavSection[] = [
 
 const platformSections: NavSection[] = [
   {
-    title: 'Operations & Control',
+    title: 'Platform Analytics & Households',
     items: [
-      { to: '/admin', label: 'Overview / Analytics', icon: 'analytics', exact: true },
-      { to: '/admin/tenants', label: 'Tenants & Workspaces', icon: 'apartment' },
-      { to: '/admin/health', label: 'System Health', icon: 'monitor_heart' },
+      { to: '/admin', label: 'Overview & MRR', icon: 'monitoring', exact: true },
+      { to: '/admin/analytics', label: 'Platform Analytics', icon: 'analytics' },
+      { to: '/admin/tenants', label: 'Household Workspaces', icon: 'apartment' },
+    ],
+  },
+  {
+    title: 'System & Finance Controls',
+    items: [
+      { to: '/admin/payment-gateways', label: 'Payment Gateways', icon: 'payments' },
+      { to: '/admin/refunds', label: 'Refund Policy & Requests', icon: 'currency_exchange' },
+      { to: '/admin/email-config', label: 'Email Configuration', icon: 'mail' },
+      { to: '/admin/health', label: 'System Health & Ops', icon: 'monitor_heart' },
       { to: '/admin/backups', label: 'Backups & Recovery', icon: 'cloud_sync' },
-      { to: '/admin/feedback', label: 'Feedback Inbox', icon: 'forum' },
+    ],
+  },
+  {
+    title: 'Governance & Feedback',
+    items: [
       { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user' },
+      { to: '/admin/feedback', label: 'Household Feedback', icon: 'forum' },
     ],
   },
 ];

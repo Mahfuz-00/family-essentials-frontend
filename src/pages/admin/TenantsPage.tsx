@@ -15,7 +15,7 @@ import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { plans, planFor } from '@/lib/plans';
-import type { Paginated, PlatformMetrics, Tenant, TenantStatus } from '@/types';
+import type { Paginated, PlatformMetrics, Tenant, TenantDetailPayload, TenantStatus } from '@/types';
 
 function relativeDate(value: string): string {
   const days = Math.round((Date.now() - new Date(value).getTime()) / 86_400_000);
@@ -58,6 +58,7 @@ export function TenantsPage() {
   const [perPage, setPerPage] = useState(20);
   const [selected, setSelected] = useState<number[]>([]);
   const [provisionOpen, setProvisionOpen] = useState(false);
+  const [inspectingId, setInspectingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: '',
     subscription_tier: 'pilot',
@@ -131,6 +132,37 @@ export function TenantsPage() {
         }.`,
       );
       await refresh();
+    },
+    onError,
+  });
+
+  const inspectingQuery = useQuery({
+    queryKey: ['platform', 'tenants', inspectingId],
+    queryFn: async () =>
+      inspectingId
+        ? (await api.get<TenantDetailPayload>(`/v1/platform/tenants/${inspectingId}`)).data
+        : null,
+    enabled: inspectingId !== null,
+  });
+
+  const updateTenant = useMutation({
+    mutationFn: async (payload: { tier?: string; status?: string; trial_days?: number }) => {
+      if (!inspectingId) return;
+      const body: Record<string, unknown> = {};
+      if (payload.tier) body.subscription_tier = payload.tier;
+      if (payload.status) body.status = payload.status;
+      if (payload.trial_days) {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + payload.trial_days);
+        body.trial_ends_at = targetDate.toISOString();
+      }
+      return (await api.patch(`/v1/platform/tenants/${inspectingId}`, body)).data;
+    },
+    onSuccess: async () => {
+      setError(null);
+      setNotice('Household workspace updated.');
+      await refresh();
+      await queryClient.invalidateQueries({ queryKey: ['platform', 'tenants', inspectingId] });
     },
     onError,
   });
@@ -432,25 +464,35 @@ export function TenantsPage() {
                         </TD>
 
                         <TD className="text-right">
-                          {suspended ? (
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled={busy}
-                              onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'activate' })}
+                              onClick={() => setInspectingId(tenant.id)}
                             >
-                              Reactivate
+                              <Icon name="visibility" className="text-[16px]" />
+                              Details
                             </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={busy}
-                              onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'suspend' })}
-                            >
-                              Suspend
-                            </Button>
-                          )}
+                            {suspended ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'activate' })}
+                              >
+                                Reactivate
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'suspend' })}
+                              >
+                                Suspend
+                              </Button>
+                            )}
+                          </div>
                         </TD>
                       </TR>
                     );
@@ -578,6 +620,272 @@ export function TenantsPage() {
             attached to a provision.
           </p>
         </div>
+      </Modal>
+
+      {/* Household Full Details Modal for Platform Admin */}
+      <Modal
+        open={inspectingId !== null}
+        onClose={() => setInspectingId(null)}
+        title={
+          inspectingQuery.data
+            ? `Household: ${inspectingQuery.data.tenant.name}`
+            : 'Loading Household Details…'
+        }
+        description={
+          inspectingQuery.data
+            ? `Tenant #${inspectingQuery.data.tenant.id} · slug: ${inspectingQuery.data.tenant.slug} · Created ${relativeDate(
+                inspectingQuery.data.tenant.created_at,
+              )}`
+            : undefined
+        }
+        footer={
+          <Button variant="outline" onClick={() => setInspectingId(null)}>
+            Close
+          </Button>
+        }
+      >
+        {inspectingQuery.isLoading && (
+          <div className="flex flex-col gap-3 py-6">
+            <p className="text-body-md text-muted">Loading live household records from server…</p>
+          </div>
+        )}
+
+        {inspectingQuery.isError && (
+          <Alert tone="error">{apiError(inspectingQuery.error)}</Alert>
+        )}
+
+        {inspectingQuery.data && (
+          <div className="flex max-h-[75vh] flex-col gap-6 overflow-y-auto pr-1">
+            {/* Quick Overview & Admin Controls */}
+            <Card className="flex flex-col gap-4 border-surface-container bg-surface-container-low p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-forest-soft text-label-lg font-bold text-secondary">
+                    {initials(inspectingQuery.data.tenant.name)}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-headline-sm font-bold text-on-surface">
+                      {inspectingQuery.data.tenant.name}
+                    </span>
+                    <span className="font-mono text-body-sm text-muted">
+                      ID: #{inspectingQuery.data.tenant.id} · {inspectingQuery.data.tenant.slug}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Badge
+                    tone={
+                      inspectingQuery.data.tenant.status === 'suspended'
+                        ? 'danger'
+                        : inspectingQuery.data.tenant.status === 'active'
+                          ? 'success'
+                          : 'warning'
+                    }
+                  >
+                    {inspectingQuery.data.tenant.status}
+                  </Badge>
+                  <Badge tone="neutral">Tier: {inspectingQuery.data.tenant.subscription_tier}</Badge>
+                </div>
+              </div>
+
+              {/* Action Toolbar for Landlord / Admin */}
+              <div className="flex flex-wrap items-center gap-3 border-t border-surface-container pt-3">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="change-tier" className="text-label-sm text-muted">
+                    Tier:
+                  </Label>
+                  <select
+                    id="change-tier"
+                    value={inspectingQuery.data.tenant.subscription_tier}
+                    disabled={updateTenant.isPending}
+                    onChange={(e) => updateTenant.mutate({ tier: e.target.value })}
+                    className="h-8 rounded-lg bg-canvas px-2 text-label-sm text-on-surface shadow-inner"
+                  >
+                    {plans.map((p) => (
+                      <option key={p.key} value={p.key}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <span className="text-label-sm text-muted">Extend Trial:</span>
+                  {[7, 14, 30].map((days) => (
+                    <Button
+                      key={days}
+                      size="sm"
+                      variant="outline"
+                      disabled={updateTenant.isPending}
+                      onClick={() => updateTenant.mutate({ trial_days: days, status: 'trial' })}
+                    >
+                      +{days}d
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="ml-auto">
+                  {inspectingQuery.data.tenant.status === 'suspended' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        inspectingQuery.data &&
+                        setStatusOf.mutate({ id: inspectingQuery.data.tenant.id, action: 'activate' })
+                      }
+                    >
+                      <Icon name="check_circle" className="text-[16px] text-success" />
+                      Reactivate Workspace
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        inspectingQuery.data &&
+                        setStatusOf.mutate({ id: inspectingQuery.data.tenant.id, action: 'suspend' })
+                      }
+                    >
+                      <Icon name="pause_circle" className="text-[16px] text-error" />
+                      Suspend Workspace
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+
+            {/* Resource Counts & Metrics */}
+            <div>
+              <h4 className="mb-3 text-label-md font-bold uppercase tracking-wider text-muted">
+                Resource Allocations &amp; Live Telemetry
+              </h4>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <Card className="flex flex-col gap-1 p-3">
+                  <span className="text-label-sm text-muted">Family Members</span>
+                  <span className="text-headline-sm font-bold text-on-surface">
+                    {inspectingQuery.data.counts.members_count}
+                  </span>
+                  <span className="text-body-xs text-muted">
+                    Limit:{' '}
+                    {inspectingQuery.data.quotas?.plan?.seat_cap ?? '—'}
+                  </span>
+                </Card>
+
+                <Card className="flex flex-col gap-1 p-3">
+                  <span className="text-label-sm text-muted">Saved Places</span>
+                  <span className="text-headline-sm font-bold text-on-surface">
+                    {inspectingQuery.data.counts.places_count}
+                  </span>
+                  <span className="text-body-xs text-muted">
+                    Limit:{' '}
+                    {inspectingQuery.data.quotas?.plan?.place_cap ?? '—'}
+                  </span>
+                </Card>
+
+                <Card className="flex flex-col gap-1 p-3">
+                  <span className="text-label-sm text-muted">Total Errands</span>
+                  <span className="text-headline-sm font-bold text-on-surface">
+                    {inspectingQuery.data.counts.requests_count}
+                  </span>
+                  <span className="text-body-xs text-muted">
+                    {inspectingQuery.data.counts.requests_completed} completed
+                  </span>
+                </Card>
+
+                <Card className="flex flex-col gap-1 p-3">
+                  <span className="text-label-sm text-muted">Shared Ledgers</span>
+                  <span className="text-headline-sm font-bold text-on-surface">
+                    {inspectingQuery.data.counts.ledgers_count}
+                  </span>
+                  <span className="text-body-xs text-muted">
+                    ${(inspectingQuery.data.counts.total_expenses_cents / 100).toFixed(2)} logged
+                  </span>
+                </Card>
+
+                <Card className="flex flex-col gap-1 p-3">
+                  <span className="text-label-sm text-muted">Pantry Essentials</span>
+                  <span className="text-headline-sm font-bold text-on-surface">
+                    {inspectingQuery.data.counts.essentials_count}
+                  </span>
+                  <span className="text-body-xs text-muted">Active items</span>
+                </Card>
+              </div>
+            </div>
+
+            {/* Member Roster Table */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-label-md font-bold uppercase tracking-wider text-muted">
+                  Household Members ({inspectingQuery.data.members.length})
+                </h4>
+              </div>
+
+              {inspectingQuery.data.members.length === 0 ? (
+                <Card className="p-4 text-center text-body-sm text-muted">
+                  No members have joined this household yet.
+                </Card>
+              ) : (
+                <Card className="overflow-hidden p-0">
+                  <Table className="min-w-full">
+                    <THead>
+                      <TH>Member</TH>
+                      <TH>Contact</TH>
+                      <TH>Role</TH>
+                      <TH>Status</TH>
+                      <TH>Joined</TH>
+                    </THead>
+                    <tbody>
+                      {inspectingQuery.data.members.map((member) => (
+                        <TR key={member.id}>
+                          <TD>
+                            <div className="flex items-center gap-2.5">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-soft text-label-sm font-bold text-secondary">
+                                {initials(member.name)}
+                              </span>
+                              <span className="font-medium text-on-surface">{member.name}</span>
+                            </div>
+                          </TD>
+                          <TD>
+                            <div className="flex flex-col">
+                              <span className="text-body-sm text-on-surface">{member.email}</span>
+                              {member.phone && (
+                                <span className="font-mono text-body-xs text-muted">
+                                  {member.phone}
+                                </span>
+                              )}
+                            </div>
+                          </TD>
+                          <TD>
+                            <Badge
+                              tone={
+                                member.role === 'owner' || member.role === 'tenant_admin'
+                                  ? 'primary'
+                                  : 'neutral'
+                              }
+                            >
+                              {member.role}
+                            </Badge>
+                          </TD>
+                          <TD>
+                            <Badge tone={member.status === 'active' ? 'success' : 'warning'}>
+                              {member.status}
+                            </Badge>
+                          </TD>
+                          <TD className="text-body-sm text-muted">
+                            {new Date(member.joined_at).toLocaleDateString()}
+                          </TD>
+                        </TR>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
     </AppLayout>
   );

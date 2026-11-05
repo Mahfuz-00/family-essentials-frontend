@@ -32,8 +32,12 @@ import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 import { BackupsPage } from '@/pages/admin/BackupsPage';
+import { EmailConfigPage } from '@/pages/admin/EmailConfigPage';
 import { PlatformFeedbackPage } from '@/pages/admin/FeedbackInboxPage';
 import { HealthPage } from '@/pages/admin/HealthPage';
+import { PaymentGatewayConfigPage } from '@/pages/admin/PaymentGatewayConfigPage';
+import { PlatformAnalyticsPage } from '@/pages/admin/PlatformAnalyticsPage';
+import { RefundPolicyPage } from '@/pages/admin/RefundPolicyPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
@@ -307,6 +311,34 @@ const adminAuditRoute = createRoute({
   component: AuditLogPage,
 });
 
+const adminAnalyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/analytics',
+  beforeLoad: requirePlatformAdmin,
+  component: PlatformAnalyticsPage,
+});
+
+const adminPaymentGatewayRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/payment-gateways',
+  beforeLoad: requirePlatformAdmin,
+  component: PaymentGatewayConfigPage,
+});
+
+const adminEmailConfigRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/email-config',
+  beforeLoad: requirePlatformAdmin,
+  component: EmailConfigPage,
+});
+
+const adminRefundsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/refunds',
+  beforeLoad: requirePlatformAdmin,
+  component: RefundPolicyPage,
+});
+
 // Exported so tests can build a router over the real tree (see tests/support/render.tsx).
 export const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -343,7 +375,11 @@ export const routeTree = rootRoute.addChildren([
   ledgerRoute,
   adminLoginRoute,
   adminOverviewRoute,
+  adminAnalyticsRoute,
   adminTenantsRoute,
+  adminPaymentGatewayRoute,
+  adminEmailConfigRoute,
+  adminRefundsRoute,
   adminHealthRoute,
   adminBackupsRoute,
   adminFeedbackRoute,
