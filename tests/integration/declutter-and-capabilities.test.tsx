@@ -151,17 +151,33 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
       },
     });
 
-    apiMock.post.mockResolvedValueOnce(
-      jsonResponse({
-        message: 'Subscription upgraded and invoice generated successfully.',
-        invoice: {
-          id: 102,
-          invoice_number: 'INV-2026-CASH',
-          tier: 'family',
-          payment_method: 'cash',
-        },
-      }),
-    );
+    apiMock.post.mockImplementation(async (url) => {
+      if (url === '/v1/billing/change-plan-preview') {
+        return jsonResponse({
+          eligible: true,
+          days_elapsed: 0,
+          current_tier: 'starter',
+          target_tier: 'family',
+          target_period: 'monthly',
+          base_amount_cents: 1900,
+          discount_cents: 0,
+          final_amount_cents: 1900,
+          reason: 'First-time plan selection',
+        });
+      }
+      if (url === '/v1/billing/upgrade') {
+        return jsonResponse({
+          message: 'Subscription upgraded and invoice generated successfully.',
+          invoice: {
+            id: 102,
+            invoice_number: 'INV-2026-CASH',
+            tier: 'family',
+            payment_method: 'cash',
+          },
+        });
+      }
+      return jsonResponse({});
+    });
 
     renderApp('/billing');
 

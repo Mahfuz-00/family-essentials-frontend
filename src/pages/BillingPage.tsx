@@ -15,7 +15,7 @@ import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
 import { plans } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
-import type { AvailablePaymentMethods, Place, UserRef } from '@/types';
+import type { AvailablePaymentMethods, Place, PlanChangePreview, UserRef } from '@/types';
 
 interface InvoiceRecord {
   id: number;
@@ -69,6 +69,18 @@ export function BillingPage() {
   const invoicesQuery = useQuery({
     queryKey: ['billing', 'invoices'],
     queryFn: async () => (await api.get<InvoicesResponse>('/v1/billing/invoices')).data,
+  });
+
+  const previewQuery = useQuery({
+    queryKey: ['billing', 'change-preview', selectedTier, selectedPeriod],
+    queryFn: async () =>
+      (
+        await api.post<PlanChangePreview>('/v1/billing/change-plan-preview', {
+          tier: selectedTier,
+          billing_period: selectedPeriod,
+        })
+      ).data,
+    enabled: upgradeModalOpen,
   });
 
   const upgradeMutation = useMutation({
@@ -553,6 +565,12 @@ export function BillingPage() {
               </div>
             )}
 
+            {previewQuery.data && !previewQuery.data.eligible && (
+              <Alert tone="warning">
+                {previewQuery.data.reason}
+              </Alert>
+            )}
+
             {paymentMethod === 'cash' && paymentMethodsQuery.data?.cash?.enabled && (
               <div className="rounded-xl border border-secondary/30 bg-forest-soft/40 p-3.5 text-xs flex flex-col gap-1.5">
                 <div className="flex items-center gap-1.5 font-bold text-secondary">
@@ -564,7 +582,7 @@ export function BillingPage() {
                     'Cash payment upon in-person settlement or physical collection.'}
                 </p>
                 <p className="text-[11px] text-muted">
-                  Your household plan will be upgraded immediately. Your official invoice will be provided in person upon cash payment.
+                  Your cash payment request will be submitted to platform administration. The administrator collects the cash in person, hands you your physical printed invoice, and confirms payment in the software to upgrade your household plan.
                 </p>
               </div>
             )}
@@ -576,10 +594,18 @@ export function BillingPage() {
                   {paymentMethod === 'cash' ? 'Cash Settlement (In-Person)' : 'Test Card (•••• 4242)'}
                 </span>
               </div>
+              {previewQuery.data && previewQuery.data.discount_cents > 0 && (
+                <div className="flex justify-between font-semibold text-secondary">
+                  <span>Mid-Cycle Adjustment ({previewQuery.data.adjustment_percent}% Credit):</span>
+                  <span>-${(previewQuery.data.discount_cents / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-on-surface">
                 <span>Total Due:</span>
                 <span className="text-secondary text-sm">
-                  {selectedTier === 'plus'
+                  {previewQuery.data
+                    ? `$${(previewQuery.data.final_amount_cents / 100).toFixed(2)}`
+                    : selectedTier === 'plus'
                     ? selectedPeriod === 'annual' ? '$90.00/yr' : '$9.00/mo'
                     : selectedTier === 'family'
                     ? selectedPeriod === 'annual' ? '$190.00/yr' : '$19.00/mo'
@@ -595,7 +621,10 @@ export function BillingPage() {
               <Button
                 variant="primary"
                 onClick={handleSimulatePayment}
-                disabled={upgradeMutation.isPending}
+                disabled={
+                  upgradeMutation.isPending ||
+                  (previewQuery.data !== undefined && !previewQuery.data.eligible)
+                }
               >
                 <Icon name={paymentMethod === 'cash' ? 'payments' : 'check_circle'} className="text-[18px]" />
                 {upgradeMutation.isPending

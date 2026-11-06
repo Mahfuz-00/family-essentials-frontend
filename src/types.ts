@@ -668,9 +668,53 @@ export interface EmailSettings {
 export interface RefundPolicy {
   policy_markdown: string;
   refund_window_days: number;
+  monthly_refund_window_days?: number;
+  monthly_refund_percent?: number;
+  annual_refund_window_days?: number;
+  annual_refund_percent?: number;
+  monthly_change_lock_start_days?: number;
+  monthly_change_lock_end_days?: number;
+  monthly_change_adjustment_percent?: number;
+  annual_change_window_months?: number;
+  annual_change_window_days?: number;
   auto_approve_under_cents: number;
   pro_rata_enabled: boolean;
   contact_email: string;
+}
+
+export interface RefundEligibilityCheck {
+  eligible: boolean;
+  days_elapsed: number;
+  window_days: number;
+  billing_period: string;
+  refund_percent: number;
+  original_amount_cents: number;
+  recommended_refund_cents: number;
+  reason: string;
+  invoice: {
+    id: number;
+    invoice_number: string;
+    tier: string;
+    amount_cents: number;
+    payment_method: string;
+    status: string;
+    paid_at: string | null;
+    tenant_name: string;
+  };
+}
+
+export interface PlanChangePreview {
+  eligible: boolean;
+  days_elapsed: number;
+  current_tier?: string;
+  target_tier: string;
+  target_period: string;
+  base_amount_cents: number;
+  discount_cents: number;
+  adjustment_percent?: number;
+  final_amount_cents: number;
+  reason: string;
+  policy_code?: string;
 }
 
 export interface RefundRecord {

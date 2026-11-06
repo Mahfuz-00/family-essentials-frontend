@@ -216,25 +216,36 @@ export function AdminBillingPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-3">
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={rejectMutation.isPending}
-                      onClick={() => rejectMutation.mutate(invoice.id)}
+                      onClick={() => window.open(`/api/v1/platform/billing/invoices/${invoice.id}/download`, '_blank')}
+                      title="Download or print physical invoice for in-person handover"
                     >
-                      <Icon name="close" className="text-[16px]" />
-                      Decline
+                      <Icon name="print" className="text-[16px]" />
+                      Print Handover Invoice
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      disabled={approveMutation.isPending}
-                      onClick={() => approveMutation.mutate(invoice.id)}
-                    >
-                      <Icon name="check_circle" className="text-[16px]" />
-                      {approveMutation.isPending ? 'Approving…' : 'Approve & Mark Paid'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={rejectMutation.isPending}
+                        onClick={() => rejectMutation.mutate(invoice.id)}
+                      >
+                        <Icon name="close" className="text-[16px]" />
+                        Decline
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={approveMutation.isPending}
+                        onClick={() => approveMutation.mutate(invoice.id)}
+                      >
+                        <Icon name="check_circle" className="text-[16px]" />
+                        {approveMutation.isPending ? 'Approving…' : 'Approve & Mark Paid'}
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -369,28 +380,28 @@ export function AdminBillingPage() {
                       {new Date(invoice.created_at).toLocaleDateString()}
                     </TD>
                     <TD className="text-right">
-                      {invoice.status === 'pending' && invoice.payment_method === 'cash' ? (
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          disabled={approveMutation.isPending}
-                          onClick={() => approveMutation.mutate(invoice.id)}
-                        >
-                          <Icon name="check_circle" className="text-[14px]" />
-                          Approve Payment
-                        </Button>
-                      ) : invoice.payment_method !== 'cash' ? (
+                      <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`/api/v1/billing/invoices/${invoice.id}/download`, '_blank')}
+                          onClick={() => window.open(`/api/v1/platform/billing/invoices/${invoice.id}/download`, '_blank')}
+                          title={invoice.payment_method === 'cash' ? 'Download or print physical invoice for cash handover' : 'Download Invoice Receipt'}
                         >
-                          <Icon name="download" className="text-[14px]" />
-                          Receipt
+                          <Icon name={invoice.payment_method === 'cash' ? 'print' : 'download'} className="text-[14px]" />
+                          {invoice.payment_method === 'cash' ? 'Print' : 'Receipt'}
                         </Button>
-                      ) : (
-                        <span className="text-[11px] font-medium text-muted">In-Person Settled</span>
-                      )}
+                        {invoice.status === 'pending' && invoice.payment_method === 'cash' && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            disabled={approveMutation.isPending}
+                            onClick={() => approveMutation.mutate(invoice.id)}
+                          >
+                            <Icon name="check_circle" className="text-[14px]" />
+                            Approve
+                          </Button>
+                        )}
+                      </div>
                     </TD>
                   </TR>
                 ))}
