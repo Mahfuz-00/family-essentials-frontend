@@ -109,6 +109,45 @@ export function PaymentGatewayConfigPage() {
     }));
   };
 
+  const renderEnvToggle = (gateway: string) => {
+    const isSandbox = currentSettings?.gateways[gateway]?.sandbox ?? true;
+    return (
+      <div className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-low p-0.5 text-xs font-semibold">
+        <button
+          type="button"
+          onClick={() => updateGatewayField(gateway, 'sandbox', true)}
+          className={`rounded px-2.5 py-0.5 transition-all ${
+            isSandbox
+              ? 'bg-amber-500 text-white shadow-xs font-bold'
+              : 'text-muted hover:text-on-surface'
+          }`}
+          title={`Switch ${gateway} to Sandbox / Test mode`}
+        >
+          Sandbox
+        </button>
+        <button
+          type="button"
+          onClick={() => updateGatewayField(gateway, 'sandbox', false)}
+          className={`rounded px-2.5 py-0.5 transition-all ${
+            !isSandbox
+              ? 'bg-emerald-600 text-white shadow-xs font-bold'
+              : 'text-muted hover:text-on-surface'
+          }`}
+          title={`Switch ${gateway} to Live / Production mode`}
+        >
+          Live
+        </button>
+      </div>
+    );
+  };
+
+  const digitalGateways = currentSettings
+    ? Object.entries(currentSettings.gateways).filter(([k]) => !['cash', 'bank_transfer', 'mock'].includes(k))
+    : [];
+  const sandboxCount = digitalGateways.filter(([, v]) => v.sandbox ?? true).length;
+  const liveCount = digitalGateways.filter(([, v]) => !(v.sandbox ?? true)).length;
+  const hasAnySandbox = sandboxCount > 0 || (currentSettings?.gateways.mock?.enabled ?? true) || currentSettings?.mode === 'sandbox';
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-7xl">
@@ -128,41 +167,83 @@ export function PaymentGatewayConfigPage() {
             <Card className="flex flex-col gap-5 p-6 border-l-4 border-secondary bg-surface">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-headline-sm font-bold text-on-surface">Global Environment &amp; Billing Settings</h3>
+                  <h3 className="text-headline-sm font-bold text-on-surface">Payment Gateways &amp; Environment Controls</h3>
                   <p className="text-xs text-muted">
-                    Configure your platform billing mode, primary default gateway, and automated renewal triggers.
+                    Configure your platform billing mode, primary default gateway, and individual Sandbox vs Live settings per provider.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted">Environment:</span>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-1.5 text-xs">
+                    <span className="font-semibold text-muted">Providers:</span>
+                    <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                      {liveCount} Live
+                    </span>
+                    <span className="text-muted">·</span>
+                    <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
+                      <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                      {sandboxCount} Sandbox
+                    </span>
+                  </div>
+
                   <div className="flex rounded-xl border border-outline-variant/40 bg-surface-container-low p-1 text-xs">
                     <button
                       type="button"
-                      onClick={() => handleUpdate((prev) => ({ ...prev, mode: 'sandbox' }))}
+                      onClick={() => {
+                        handleUpdate((prev) => {
+                          const updated = { ...prev.gateways };
+                          Object.keys(updated).forEach((k) => {
+                            if (!['cash', 'bank_transfer'].includes(k)) {
+                              updated[k] = { ...updated[k], sandbox: true };
+                            }
+                          });
+                          return { ...prev, mode: 'sandbox', gateways: updated };
+                        });
+                      }}
                       className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold transition-all ${
                         currentSettings.mode === 'sandbox'
                           ? 'bg-amber-500 text-white shadow-sm'
                           : 'text-muted hover:text-on-surface'
                       }`}
+                      title="Set all gateways to Sandbox / Test mode"
                     >
                       <Icon name="science" className="text-[16px]" />
-                      Sandbox / Test Mode
+                      Set All Sandbox
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleUpdate((prev) => ({ ...prev, mode: 'live' }))}
+                      onClick={() => {
+                        handleUpdate((prev) => {
+                          const updated = { ...prev.gateways };
+                          Object.keys(updated).forEach((k) => {
+                            if (!['cash', 'bank_transfer'].includes(k)) {
+                              updated[k] = { ...updated[k], sandbox: false };
+                            }
+                          });
+                          return { ...prev, mode: 'live', gateways: updated };
+                        });
+                      }}
                       className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold transition-all ${
                         currentSettings.mode === 'live'
                           ? 'bg-emerald-600 text-white shadow-sm'
                           : 'text-muted hover:text-on-surface'
                       }`}
+                      title="Set all gateways to Live / Production mode"
                     >
                       <Icon name="verified" className="text-[16px]" />
-                      Live / Production
+                      Set All Live
                     </button>
                   </div>
                 </div>
+              </div>
+
+              {/* Informational banner explaining individual sandbox operation */}
+              <div className="flex items-center gap-2.5 rounded-xl border border-outline-variant/30 bg-sage-soft/40 p-3 text-xs text-on-surface">
+                <Icon name="info" className="text-[18px] text-secondary shrink-0" />
+                <p>
+                  <strong className="font-semibold text-secondary">Individual Gateway Environments:</strong> Each payment gateway can be individually set to <strong>Sandbox (Test Mode)</strong> or <strong>Live (Production)</strong>. You can process real customer checkouts with <strong>Stripe (Live)</strong> while simultaneously testing local providers like <strong>bKash</strong>, <strong>Razorpay</strong>, or <strong>Nagad</strong> in <strong>Sandbox</strong>.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-3 border-t border-outline-variant/20 pt-4">
@@ -243,12 +324,14 @@ export function PaymentGatewayConfigPage() {
             </Card>
 
             {/* Sandbox Testing Cheatsheet & Mock Simulator Helper */}
-            {currentSettings.mode === 'sandbox' && (
+            {hasAnySandbox && (
               <Card className="flex flex-col gap-3 p-5 border-amber-300 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                     <Icon name="science" className="text-[20px]" />
-                    <h4 className="text-sm font-bold">Sandbox Mode Active: Developer Test Cards &amp; Simulator Cheatsheet</h4>
+                    <h4 className="text-sm font-bold">
+                      Sandbox Simulator Active ({sandboxCount} Gateway{sandboxCount === 1 ? '' : 's'} in Test Mode): Test Cards Cheatsheet
+                    </h4>
                   </div>
                   <button
                     type="button"
@@ -343,15 +426,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'stripe' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.stripe?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('stripe', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('stripe')}
                       </div>
                     </div>
 
@@ -431,15 +506,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'paypal' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.paypal?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('paypal', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('paypal')}
                       </div>
                     </div>
 
@@ -519,15 +586,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'bkash' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.bkash?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('bkash', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('bkash')}
                       </div>
                     </div>
 
@@ -618,15 +677,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'nagad' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.nagad?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('nagad', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('nagad')}
                       </div>
                     </div>
 
@@ -697,15 +748,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'sslcommerz' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.sslcommerz?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('sslcommerz', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('sslcommerz')}
                       </div>
                     </div>
 
@@ -775,15 +818,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'razorpay' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.razorpay?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('razorpay', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('razorpay')}
                       </div>
                     </div>
 
@@ -844,15 +879,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'paystack' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.paystack?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('paystack', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('paystack')}
                       </div>
                     </div>
 
@@ -911,15 +938,7 @@ export function PaymentGatewayConfigPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {currentSettings.active_gateway === 'mollie' && <Badge tone="success">Primary Active</Badge>}
-                        <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-muted">
-                          <input
-                            type="checkbox"
-                            checked={currentSettings.gateways.mollie?.sandbox ?? true}
-                            onChange={(e) => updateGatewayField('mollie', 'sandbox', e.target.checked)}
-                            className="h-3.5 w-3.5 accent-amber-500"
-                          />
-                          <span>Sandbox</span>
-                        </label>
+                        {renderEnvToggle('mollie')}
                       </div>
                     </div>
 

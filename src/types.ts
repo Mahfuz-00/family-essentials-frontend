@@ -579,6 +579,7 @@ export type LedgerGrantRole = 'manager' | 'summary';
 export interface PaymentGatewayCredentials {
   enabled: boolean;
   sandbox?: boolean;
+  mode?: 'sandbox' | 'live';
   publishable_key?: string;
   secret_key?: string;
   webhook_secret?: string;
@@ -633,6 +634,7 @@ export interface AvailablePaymentMethods {
   currency: string;
   mode?: string;
   is_sandbox?: boolean;
+  gateways?: Record<string, { enabled: boolean; sandbox: boolean; mode: 'sandbox' | 'live' }>;
   cash: {
     enabled: boolean;
     instructions: string;
