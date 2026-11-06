@@ -497,6 +497,35 @@ export interface RecurringRule {
   ledger_id: number | null;
 }
 
+/* ------------------------------------------------------------- essentials --- */
+
+export interface Essential {
+  id: number;
+  name: string;
+  category: string | null;
+  default_store: string | null;
+  pack_size: string | null;
+  cadence_days: number;
+  threshold: number;
+  stock_level: number;
+  last_restocked_at: string | null;
+  is_active: boolean;
+  is_due?: boolean;
+  due_reason?: string | null;
+}
+
+export interface EssentialsSummary {
+  total: number;
+  due: number;
+  safety_stock: number;
+  cadence: number;
+}
+
+export interface EssentialsResponse {
+  data: Essential[];
+  summary: EssentialsSummary;
+}
+
 /* --------------------------------------------------------------- ledgers --- */
 
 /** What the caller may do with a ledger. `summary` sees totals, never entries. */
@@ -543,3 +572,232 @@ export interface LedgerEntry {
 
 /** The roles an owner may grant through the members endpoint. */
 export type LedgerGrantRole = 'manager' | 'summary';
+
+
+/* ---------------------------------------------------- platform administration --- */
+
+export interface PaymentGatewayCredentials {
+  enabled: boolean;
+  publishable_key?: string;
+  secret_key?: string;
+  webhook_secret?: string;
+  key_id?: string;
+  key_secret?: string;
+  store_id?: string;
+  store_passwd?: string;
+  client_id?: string;
+  client_secret?: string;
+}
+
+export interface PaymentGatewaySettings {
+  active_gateway: 'stripe' | 'razorpay' | 'sslcommerz' | 'paypal' | 'mock';
+  mode: 'sandbox' | 'live';
+  currency: string;
+  gateways: Record<string, PaymentGatewayCredentials>;
+  webhook_url: string;
+  auto_billing_enabled: boolean;
+}
+
+export interface EmailTemplateItem {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface EmailSettings {
+  mailer: 'smtp' | 'mailgun' | 'postmark' | 'ses' | 'sendgrid' | 'log';
+  host?: string;
+  port?: number;
+  encryption?: 'tls' | 'ssl' | 'none';
+  username?: string;
+  password?: string;
+  from_address: string;
+  from_name: string;
+  templates?: EmailTemplateItem[];
+}
+
+export interface RefundPolicy {
+  policy_markdown: string;
+  refund_window_days: number;
+  auto_approve_under_cents: number;
+  pro_rata_enabled: boolean;
+  contact_email: string;
+}
+
+export interface RefundRecord {
+  id: number;
+  tenant_id: number | null;
+  tenant_name: string;
+  user_id: number | null;
+  user_email: string | null;
+  amount_cents: number;
+  currency: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_notes: string | null;
+  processed_by: number | null;
+  processed_at: string | null;
+  created_at: string;
+  processor?: { id: number; name: string } | null;
+}
+
+export interface RefundStats {
+  total_refunded_cents: number;
+  pending_count: number;
+  approved_count: number;
+  rejected_count: number;
+  avg_turnaround_hours: number;
+}
+
+export interface RefundsPayload {
+  policy: RefundPolicy;
+  refunds: Paginated<RefundRecord>;
+  stats: RefundStats;
+}
+
+export interface PlatformAnalyticsTimeseriesPoint {
+  period: string;
+  signups: number;
+  requests_created: number;
+  requests_completed: number;
+  estimated_mrr: number;
+}
+
+export interface PlatformAnalytics {
+  overview: {
+    mrr_dollars: number;
+    arr_dollars: number;
+    total_households: number;
+    active_households: number;
+    trial_households: number;
+    suspended_households: number;
+    total_users: number;
+    active_members: number;
+  };
+  by_status: Record<string, number>;
+  by_tier: Record<string, number>;
+  errand_metrics: {
+    total_requests: number;
+    completed_requests: number;
+    in_progress_requests: number;
+    pending_requests: number;
+    completion_rate_percent: number;
+  };
+  infrastructure: {
+    saved_places: number;
+    geofence_triggers: number;
+    voice_escalations: number;
+    registered_devices: number;
+    ledger_entries: number;
+    total_expenses_cents: number;
+  };
+  timeseries: PlatformAnalyticsTimeseriesPoint[];
+}
+
+export interface TenantMemberDetail {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  status: string;
+  joined_at: string;
+}
+
+export interface TenantDetailPayload {
+  data: Tenant;
+  tenant: Tenant;
+  members: TenantMemberDetail[];
+  counts: {
+    members_count: number;
+    places_count: number;
+    requests_count: number;
+    requests_pending: number;
+    requests_completed: number;
+    ledgers_count: number;
+    essentials_count: number;
+    invitations_count: number;
+    total_expenses_cents: number;
+  };
+  quotas: QuotaReport;
+}
+
+export interface MaintenanceModeStatus {
+  enabled: boolean;
+  message: string;
+  started_at: string | null;
+  allowed_ips: string[];
+}
+
+/* ---------------------------------------------------- marketing console --- */
+
+export interface MarketingOverview {
+  total_leads: number;
+  new_leads: number;
+  converted_leads: number;
+  lead_conversion_rate: number;
+  active_promotions: number;
+  total_redemptions: number;
+  active_announcements: number;
+  total_impressions: number;
+  total_clicks: number;
+  banner_ctr_percent: number;
+}
+
+export interface MarketingPromotion {
+  id: number;
+  code: string;
+  description: string | null;
+  discount_type: 'percent' | 'fixed_amount';
+  discount_value: number;
+  currency: string;
+  duration: 'once' | 'repeating' | 'forever';
+  duration_in_months: number | null;
+  max_redemptions: number | null;
+  times_redeemed: number;
+  applicable_tiers: string[] | null;
+  starts_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface MarketingAnnouncement {
+  id: number;
+  title: string;
+  message: string;
+  cta_text: string | null;
+  cta_url: string | null;
+  tone: 'primary' | 'success' | 'warning' | 'info';
+  target_audience: 'all' | 'trial_only' | 'free_only' | 'paying_only';
+  is_active: boolean;
+  dismissable: boolean;
+  impressions_count: number;
+  clicks_count: number;
+  starts_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface MarketingLead {
+  id: number;
+  email: string;
+  name: string | null;
+  source: string;
+  campaign: string | null;
+  status: 'new' | 'contacted' | 'converted' | 'unsubscribed';
+  notes: string | null;
+  converted_tenant_id: number | null;
+  created_at: string;
+}
+
+export interface ReferralProgramSettings {
+  enabled: boolean;
+  reward_type: 'credit_minor' | 'free_months';
+  reward_value: number;
+  referrer_bonus_cents: number;
+  referee_discount_percent: number;
+  min_subscription_tier: string;
+  terms_markdown: string;
+}
+

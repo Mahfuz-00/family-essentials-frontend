@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" width="640" height="180" fill="none">
+  <defs>
+    <linearGradient id="forestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#376847"/>
+      <stop offset="100%" stop-color="#284E34"/>
+    </linearGradient>
+    <linearGradient id="coralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F28469"/>
+      <stop offset="100%" stop-color="#E76F51"/>
+    </linearGradient>
+    <filter id="iconGlow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#376847" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Left Emblem Container: 134x134 at (23, 23) -->
+  <g transform="translate(23, 23)">
+    <!-- Squircle Background -->
+    <rect x="0" y="0" width="134" height="134" rx="34" fill="url(#forestGrad)" filter="url(#iconGlow)"/>
+    <rect x="1.5" y="1.5" width="131" height="131" rx="33" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="1.5"/>
+
+    <!-- Two People Coming Together / Balanced Scale / Roof / Heart-Leaf -->
+    <g transform="translate(67, 67)">
+      <!-- Partner 1 (Left Head) -->
+      <circle cx="-21" cy="-25" r="8.5" fill="#FFFFFF"/>
+      
+      <!-- Partner 2 (Right Head) -->
+      <circle cx="21" cy="-25" r="8.5" fill="#FFFFFF"/>
+
+      <!-- Subtle Aura Base -->
+      <path d="M -31 18 C -33 -3, -28 -17, -19 -19 C -12 -21, -6 -13, 0 -6 C 6 -13, 12 -21, 19 -19 C 28 -17, 33 -3, 31 18 C 29 31, 18 36, 0 36 C -18 36, -29 31, -31 18 Z" fill="#FFFFFF" fill-opacity="0.22"/>
+
+      <!-- Converging Silhouettes & Balanced Embrace Arch -->
+      <path d="M -25 15 C -27 1, -23 -11, -15 -14 C -9 -16, -4 -9, 0 -3 C 4 -9, 9 -16, 15 -14 C 23 -11, 27 1, 25 15 C 23 27, 13 32, 0 32 C -13 32, -23 27, -25 15 Z" fill="#FFFFFF"/>
+
+      <!-- Inner Negative Space forming Heart & Leaf Sprout Cutout -->
+      <path d="M 0 5 C -6 -3, -14 -3, -14 6 C -14 14, 0 23, 0 23 C 0 23, 14 14, 14 6 C 14 -3, 6 -3, 0 5 Z" fill="url(#forestGrad)"/>
+
+      <!-- Radiant Coral Accent Center: Synchronized Heart-Seed -->
+      <circle cx="0" cy="10" r="5" fill="url(#coralGrad)"/>
+      <path d="M 0 4 C 2.2 2.3, 5 2.8, 5 5.8 C 5 8.2, 0 11.5, 0 11.5 C 0 11.5, -5 8.2, -5 5.8 C -5 2.8, -2.2 2.3, 0 4 Z" fill="url(#coralGrad)"/>
+    </g>
+  </g>
+
+  <!-- Typography: Wordmark 'FairShare' -->
+  <g transform="translate(185, 45)">
+    <g>
+      <text x="0" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="58" font-weight="800" letter-spacing="-1.8" fill="#2B2D42">Fair</text>
+      <text x="122" y="54" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="58" font-weight="700" letter-spacing="-1.4" fill="#376847">Share</text>
+      <circle cx="300" cy="48" r="6" fill="#E76F51"/>
+    </g>
+
+    <!-- Subtitle Badge -->
+    <g transform="translate(2, 74)">
+      <rect x="0" y="0" width="194" height="24" rx="12" fill="#EBF0ED"/>
+      <circle cx="10" cy="12" r="3.5" fill="#376847"/>
+      <text x="20" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.8" fill="#376847" text-transform="uppercase">SHARED HOUSEHOLD OS</text>
+      <text x="206" y="16.5" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="500" fill="#6C757D">Mutual Balance &amp; Daily Logistics</text>
+    </g>
+  </g>
+</svg>

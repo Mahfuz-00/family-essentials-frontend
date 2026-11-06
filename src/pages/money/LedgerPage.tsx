@@ -191,7 +191,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Money', ledger?.name ?? 'Ledger']}
           title={ledger?.name ?? 'Ledger'}
           description={
             ledger

@@ -127,17 +127,30 @@ export function RequestsPage() {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
 
+  const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
   const [query, setQuery] = useState('');
   const [assignee, setAssignee] = useState('all');
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
   const addOpen = useUiStore((state) => state.addRequestOpen);
+  const openAddRequest = useUiStore((state) => state.openAddRequest);
   const closeAddRequest = useUiStore((state) => state.closeAddRequest);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeTone, setNoticeTone] = useState<'success' | 'info'>('success');
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarCopied, setCalendarCopied] = useState(false);
+  const [nlpPrompt, setNlpPrompt] = useState('');
+
+  const calendarQuery = useQuery({
+    queryKey: ['calendar', 'feed-url'],
+    queryFn: async () =>
+      (await api.get<{ data: { feed_url: string; webcal_url: string; token: string } }>('/v1/calendar/feed-url'))
+        .data.data,
+    enabled: calendarModalOpen,
+  });
 
   const board = useQuery({
     queryKey: ['requests', 'board'],
@@ -163,6 +176,21 @@ export function RequestsPage() {
     setError(apiError(caught));
     setNotice(null);
   };
+
+  const nlpDispatcherMutation = useMutation({
+    mutationFn: async (text: string) =>
+      (await api.post<{ parsed: any; created: boolean }>('/v1/requests/parse-nlp', { text, execute: true })).data,
+    onSuccess: async (data) => {
+      setNlpPrompt('');
+      setNotice(
+        `AI Dispatcher created errand: "${data.parsed.title}" (${data.parsed.assignee_name ? `Assigned to ${data.parsed.assignee_name}` : 'Unassigned'}${data.parsed.store_name ? ` at ${data.parsed.store_name}` : ''})`
+      );
+      setNoticeTone('success');
+      setError(null);
+      await refresh();
+    },
+    onError,
+  });
 
   const create = useMutation({
     mutationFn: async () =>
@@ -248,7 +276,19 @@ export function RequestsPage() {
     onError,
   });
 
-  const busy = create.isPending || act.isPending || assign.isPending || snooze.isPending || escalate.isPending;
+  const thank = useMutation({
+    mutationFn: async (id: number) =>
+      (await api.post<{ message: string }>(`/v1/requests/${id}/thank`)).data,
+    onSuccess: (data) => {
+      setNotice(data.message);
+      setNoticeTone('success');
+      setError(null);
+      void refresh();
+    },
+    onError,
+  });
+
+  const busy = create.isPending || act.isPending || assign.isPending || snooze.isPending || escalate.isPending || thank.isPending;
   const memberList = members.data ?? [];
   const placeList = places.data ?? [];
   const firstName = user?.name?.split(' ')[0] ?? 'me';
@@ -328,6 +368,19 @@ export function RequestsPage() {
   const categories = useMemo(() => distinct((request) => request.category ?? 'uncategorised'), [board.data]);
   const stores = useMemo(() => distinct((request) => request.store_name), [board.data]);
 
+  const visibleColumns = useMemo(() => {
+    if (focusMode === 'today') {
+      return columns.filter((c) => c.key === 'overdue' || c.key === 'due_today' || c.key === 'assigned_to_me');
+    }
+    if (focusMode === 'backlog') {
+      return columns.filter((c) => c.key === 'backlog');
+    }
+    if (focusMode === 'completed') {
+      return columns.filter((c) => c.key === 'completed_today');
+    }
+    return columns;
+  }, [focusMode]);
+
   const overdueList = filtered?.overdue ?? [];
 
   const hasAnyCard = filtered
@@ -351,10 +404,59 @@ export function RequestsPage() {
           }
           title="Household Kanban & Errand Hub"
           description="Real-time domestic coordination for your household, synced across every paired device."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCalendarModalOpen(true)}
+              >
+                <Icon name="calendar_month" className="text-[18px]" />
+                Sync Calendar (.ics)
+              </Button>
+              <Button
+                variant="primary"
+                onClick={openAddRequest}
+              >
+                <Icon name="add" className="text-[18px]" />
+                New Errand
+              </Button>
+            </div>
+          }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone={noticeTone}>{notice}</Alert>}
+
+        {/* Gap G: AI Family Dispatcher Natural Language Quick-Add */}
+        <section className="relative overflow-hidden rounded-2xl border border-secondary/25 bg-forest-soft/30 p-3.5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+              <Icon name="psychology" className="text-[22px]" />
+            </span>
+            <div className="flex flex-1 flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={nlpPrompt}
+                onChange={(e) => setNlpPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && nlpPrompt.trim() && !nlpDispatcherMutation.isPending) {
+                    nlpDispatcherMutation.mutate(nlpPrompt.trim());
+                  }
+                }}
+                placeholder="AI Dispatcher: e.g. 'Pick up organic whole milk at Trader Joe\'s tomorrow 5pm for Sarah ASAP'"
+                className="h-10 flex-1 rounded-xl border border-outline-variant/40 bg-surface px-3.5 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 shadow-xs"
+              />
+              <Button
+                variant="primary"
+                disabled={!nlpPrompt.trim() || nlpDispatcherMutation.isPending}
+                onClick={() => nlpDispatcherMutation.mutate(nlpPrompt.trim())}
+              >
+                <Icon name="auto_awesome" className="text-[16px]" />
+                {nlpDispatcherMutation.isPending ? 'Dispatching...' : 'AI Quick-Dispatch'}
+              </Button>
+            </div>
+          </div>
+        </section>
 
         {/* Overdue banner */}
         {overdueList.length > 0 && (
@@ -406,6 +508,58 @@ export function RequestsPage() {
             </div>
           </section>
         )}
+
+        {/* Focus Mode Navigation */}
+        <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setFocusMode('all')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'all'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="view_kanban" className="text-[16px]" />
+            Full Board
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('today')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'today'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="bolt" className="text-[16px]" />
+            Today&apos;s Focus
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('backlog')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'backlog'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="inventory_2" className="text-[16px]" />
+            Backlog ({filtered?.backlog?.length ?? 0})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('completed')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'completed'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="check_circle" className="text-[16px]" />
+            Completed Archive ({filtered?.completed_today?.length ?? 0})
+          </button>
+        </div>
 
         {/* Filter bar */}
         <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3 shadow-e1 xl:flex-row xl:items-center xl:justify-between">
@@ -527,8 +681,12 @@ export function RequestsPage() {
         {board.isError && <Alert>{apiError(board.error)}</Alert>}
 
         {board.data && filtered && view === 'board' && (
-          <section className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {columns.map((column) => {
+          <section className={`grid grid-cols-1 items-start gap-4 ${
+            focusMode === 'today' ? 'md:grid-cols-3' :
+            focusMode === 'backlog' || focusMode === 'completed' ? 'grid-cols-1 max-w-3xl mx-auto w-full' :
+            'md:grid-cols-2 xl:grid-cols-5'
+          }`}>
+            {visibleColumns.map((column) => {
               const requests = filtered[column.key];
 
               return (
@@ -560,6 +718,7 @@ export function RequestsPage() {
                       onAction={(action) => act.mutate({ id: request.id, action })}
                       onHandover={(assigneeId) => assign.mutate({ id: request.id, assigneeId })}
                       onSnooze={() => snooze.mutate(request.id)}
+                      onThank={() => thank.mutate(request.id)}
                     />
                   ))}
                 </div>
@@ -579,6 +738,7 @@ export function RequestsPage() {
                     <th className="px-5 py-3 font-bold">Assignee</th>
                     <th className="px-5 py-3 font-bold">Due</th>
                     <th className="px-5 py-3 font-bold">Status</th>
+                    <th className="px-5 py-3 font-bold text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -619,6 +779,20 @@ export function RequestsPage() {
                           <Badge tone={request.status === 'completed' ? 'success' : 'neutral'}>
                             {request.status}
                           </Badge>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          {request.status === 'completed' && (
+                            <button
+                              type="button"
+                              onClick={() => thank.mutate(request.id)}
+                              disabled={busy}
+                              className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2.5 py-1 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs"
+                              title="Send appreciation"
+                            >
+                              <Icon name="favorite" className="text-[14px] text-error" />
+                              <span>Say Thanks 🙌</span>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -812,6 +986,75 @@ export function RequestsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Gap A: Calendar Feed (.ics) Sync Modal */}
+      <Modal
+        open={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
+        title="Shared Family Calendar &amp; External Sync (.ics)"
+      >
+        <div className="flex flex-col gap-4 p-1">
+          <p className="text-xs text-muted leading-relaxed">
+            Subscribe to your live household errands and schedule directly in Google Calendar, Apple Calendar, or Microsoft Outlook. Changes made in FairShare automatically sync to your calendar.
+          </p>
+
+          {calendarQuery.isLoading ? (
+            <div className="p-6 text-center text-xs text-muted">Generating tokenized feed link...</div>
+          ) : calendarQuery.data ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-on-surface">Subscription Feed URL (RFC 5545 iCalendar)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={calendarQuery.data.feed_url}
+                    className="h-9 flex-1 rounded-xl border border-outline-variant/40 bg-surface-container-low px-3 font-mono text-[11px] text-on-surface select-all"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(calendarQuery.data.feed_url);
+                      setCalendarCopied(true);
+                      setTimeout(() => setCalendarCopied(false), 2000);
+                    }}
+                  >
+                    <Icon name={calendarCopied ? 'check' : 'content_copy'} className="text-[14px]" />
+                    {calendarCopied ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3 text-xs flex flex-col gap-2">
+                <span className="font-bold text-secondary flex items-center gap-1.5">
+                  <Icon name="sync" className="text-[16px]" />
+                  One-Click 1-Tap Subscription
+                </span>
+                <p className="text-muted text-[11px]">
+                  Clicking below registers the live feed with Apple Calendar or your default device calendar client via the WebCal protocol.
+                </p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = calendarQuery.data.webcal_url;
+                  }}
+                >
+                  <Icon name="calendar_add_on" className="text-[16px]" />
+                  Subscribe in Default / Apple Calendar
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={() => setCalendarModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 }
@@ -853,6 +1096,7 @@ function TaskCard({
   onAction,
   onHandover,
   onSnooze,
+  onThank,
 }: {
   request: ServiceRequest;
   busy: boolean;
@@ -861,6 +1105,7 @@ function TaskCard({
   onAction: (action: string) => void;
   onHandover: (assigneeId: number) => void;
   onSnooze: () => void;
+  onThank?: () => void;
 }) {
   const isOpen = ['pending', 'accepted', 'in_progress'].includes(request.status);
   const isOverdue = request.due_at != null && new Date(request.due_at) < new Date() && isOpen;
@@ -969,10 +1214,24 @@ function TaskCard({
         )}
 
         {isDone && (
-          <span className="flex items-center gap-1.5 text-label-sm text-secondary">
-            <Icon name="check_circle" filled className="text-[16px]" />
-            Completed
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-label-sm text-secondary">
+              <Icon name="check_circle" filled className="text-[16px]" />
+              Completed
+            </span>
+            {onThank && (
+              <button
+                type="button"
+                onClick={onThank}
+                disabled={busy}
+                className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2 py-0.5 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs"
+                title="Send appreciation"
+              >
+                <Icon name="favorite" className="text-[13px] text-error" />
+                <span>Say Thanks 🙌</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </article>

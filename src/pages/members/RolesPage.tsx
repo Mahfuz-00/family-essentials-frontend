@@ -66,7 +66,6 @@ export function RolesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Members', 'Roles & Permissions']}
           title="Roles & Permissions"
           description="What each household role may do, and who holds which role."
           titleSize="headline"

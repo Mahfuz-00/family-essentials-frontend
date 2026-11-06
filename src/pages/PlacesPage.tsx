@@ -164,7 +164,6 @@ export function PlacesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Saved Places']}
           title="Saved places"
           description="The stores and places your family visits, each with the radius that arms its geofence."
           titleSize="headline"
@@ -242,14 +241,17 @@ export function PlacesPage() {
                       <Icon name={categoryIcon[place.category ?? 'other']} className="text-[20px]" />
                     </span>
                     <span className="flex min-w-0 flex-col">
-                      <h2 className="truncate text-headline-sm text-on-surface">{place.name}</h2>
-                      <span className="truncate text-body-sm text-muted">
+                      <h2 className="truncate text-base font-semibold text-on-surface">{place.name}</h2>
+                      <span className="truncate text-xs text-muted">
                         {place.address ??
                           `${place.latitude.toFixed(3)}, ${place.longitude.toFixed(3)}`}
                       </span>
                     </span>
                   </span>
-                  <Badge tone={(place.active_requests_count ?? 0) > 0 ? 'primary' : 'neutral'}>
+                  <Badge
+                    tone={(place.active_requests_count ?? 0) > 0 ? 'primary' : 'neutral'}
+                    className="shrink-0 text-[11px] font-medium px-2 py-0.5"
+                  >
                     {place.active_requests_count ?? 0} open
                   </Badge>
                 </div>

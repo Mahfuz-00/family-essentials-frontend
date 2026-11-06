@@ -131,8 +131,8 @@ export function Modal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h2 className="text-headline-md text-on-surface">{title}</h2>
-            {description && <p className="text-body-sm text-muted">{description}</p>}
+            <h2 className="text-lg font-bold text-on-surface">{title}</h2>
+            {description && <p className="text-xs text-muted leading-relaxed">{description}</p>}
           </div>
           <button
             type="button"

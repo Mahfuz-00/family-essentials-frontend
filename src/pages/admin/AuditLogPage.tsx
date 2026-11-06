@@ -154,7 +154,6 @@ export function AuditLogPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Security Oversight']}
           title="Global Audit & Security Log Explorer"
           description="Every privileged and security-relevant action, written to an append-only platform ledger."
           actions={

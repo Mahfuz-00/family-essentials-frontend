@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
-import type { Incident, IncidentSeverity, IncidentStatus, OpsHealth, OpsStatus } from '@/types';
+import type { Incident, IncidentSeverity, IncidentStatus, MaintenanceModeStatus, OpsHealth, OpsStatus } from '@/types';
 
 const statusTone: Record<OpsStatus, 'success' | 'warning' | 'danger'> = {
   ok: 'success',
@@ -91,6 +91,51 @@ export function HealthPage() {
       setError(null);
       setNotice('Incident updated.');
       await refresh();
+    },
+    onError,
+  });
+
+  const maintenanceQuery = useQuery({
+    queryKey: ['platform', 'health', 'maintenance'],
+    queryFn: async () =>
+      (await api.get<{ data: MaintenanceModeStatus }>('/v1/platform/health/maintenance')).data.data,
+  });
+
+  const toggleMaintenance = useMutation({
+    mutationFn: async (enabled: boolean) =>
+      (await api.post<{ message: string }>('/v1/platform/health/maintenance', { enabled })).data,
+    onSuccess: (res) => {
+      setNotice(res.message);
+      queryClient.invalidateQueries({ queryKey: ['platform', 'health', 'maintenance'] });
+    },
+    onError,
+  });
+
+  const clearCache = useMutation({
+    mutationFn: async () =>
+      (await api.post<{ message: string }>('/v1/platform/health/cache/clear')).data,
+    onSuccess: (res) => {
+      setNotice(res.message);
+    },
+    onError,
+  });
+
+  const retryAllJobs = useMutation({
+    mutationFn: async () =>
+      (await api.post<{ message: string }>('/v1/platform/health/failed-jobs/retry-all')).data,
+    onSuccess: (res) => {
+      setNotice(res.message);
+      refresh();
+    },
+    onError,
+  });
+
+  const flushJobs = useMutation({
+    mutationFn: async () =>
+      (await api.post<{ message: string }>('/v1/platform/health/failed-jobs/flush')).data,
+    onSuccess: (res) => {
+      setNotice(res.message);
+      refresh();
     },
     onError,
   });
@@ -227,6 +272,92 @@ export function HealthPage() {
             </ul>
           </Card>
         )}
+
+        {/* Platform Maintenance Mode & System Utilities */}
+        <Card className="flex flex-col gap-4 border-surface-container bg-surface-container-low p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span
+                className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                  maintenanceQuery.data?.enabled
+                    ? 'bg-coral-soft text-error'
+                    : 'bg-forest-soft text-secondary'
+                }`}
+              >
+                <Icon
+                  name={maintenanceQuery.data?.enabled ? 'construction' : 'verified_user'}
+                  className="text-[22px]"
+                />
+              </span>
+              <div>
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  Platform Maintenance &amp; Operator Controls
+                </h3>
+                <p className="text-body-sm text-muted">
+                  Control maintenance windows, flush application cache stores, and orchestrate queue retry policies.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Badge tone={maintenanceQuery.data?.enabled ? 'danger' : 'success'}>
+                {maintenanceQuery.data?.enabled ? 'Maintenance Active' : 'System Operational'}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-container pt-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={maintenanceQuery.data?.enabled ? 'primary' : 'outline'}
+                disabled={toggleMaintenance.isPending}
+                onClick={() => toggleMaintenance.mutate(!maintenanceQuery.data?.enabled)}
+              >
+                <Icon
+                  name={maintenanceQuery.data?.enabled ? 'power_settings_new' : 'build'}
+                  className="text-[16px]"
+                />
+                {maintenanceQuery.data?.enabled
+                  ? 'Disable Maintenance Mode'
+                  : 'Enable Maintenance Mode'}
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={clearCache.isPending}
+                onClick={() => clearCache.mutate()}
+              >
+                <Icon name="cached" className="text-[16px]" />
+                {clearCache.isPending ? 'Flushing…' : 'Flush App Cache'}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {(data?.failed_jobs ?? []).length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={retryAllJobs.isPending}
+                    onClick={() => retryAllJobs.mutate()}
+                  >
+                    <Icon name="replay" className="text-[16px]" />
+                    Retry All Failed Jobs
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={flushJobs.isPending}
+                    onClick={() => flushJobs.mutate()}
+                  >
+                    <Icon name="delete_sweep" className="text-[16px]" />
+                    Flush Failed Queue
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </Card>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {/* Failed jobs */}

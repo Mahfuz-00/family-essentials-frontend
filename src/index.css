@@ -65,6 +65,16 @@
   --text-display-lg--letter-spacing: -0.02em;
   --text-display-lg--font-weight: 700;
 
+  --text-display-md: 1.75rem;
+  --text-display-md--line-height: 2.25rem;
+  --text-display-md--letter-spacing: -0.015em;
+  --text-display-md--font-weight: 700;
+
+  --text-display-sm: 1.5rem;
+  --text-display-sm--line-height: 2rem;
+  --text-display-sm--letter-spacing: -0.01em;
+  --text-display-sm--font-weight: 700;
+
   --text-headline-lg: 1.5rem;
   --text-headline-lg--line-height: 2rem;
   --text-headline-lg--letter-spacing: -0.01em;
@@ -84,6 +94,8 @@
   --text-body-md--line-height: 1.25rem;
   --text-body-sm: 0.75rem;
   --text-body-sm--line-height: 1.125rem;
+  --text-body-xs: 0.6875rem;
+  --text-body-xs--line-height: 0.9375rem;
 
   --text-label-lg: 0.875rem;
   --text-label-lg--line-height: 1.25rem;
@@ -96,6 +108,10 @@
   --text-label-sm--line-height: 0.875rem;
   --text-label-sm--letter-spacing: 0.02em;
   --text-label-sm--font-weight: 700;
+  --text-label-xs: 0.625rem;
+  --text-label-xs--line-height: 0.8125rem;
+  --text-label-xs--letter-spacing: 0.03em;
+  --text-label-xs--font-weight: 700;
 
   /* Shape.
      Deliberately NOT overriding Tailwind's radius scale. The Stitch config's
@@ -144,6 +160,84 @@ body {
   outline: 2px solid var(--color-secondary);
   outline-offset: 2px;
   border-radius: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion Graphics & Animations
+--------------------------------------------------------------------------- */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.5deg);
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatSlow 5s ease-in-out 1.5s infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulseRing 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

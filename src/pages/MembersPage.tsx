@@ -71,7 +71,6 @@ export function MembersPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Family Members']}
           title="Family Members"
           description="Who is in the household circle, and what they are carrying this week."
           titleSize="headline"

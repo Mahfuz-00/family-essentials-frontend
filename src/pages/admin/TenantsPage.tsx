@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -207,7 +208,6 @@ export function TenantsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Platform Admin', 'Tenant Workspaces']}
           title="Tenant Workspaces & Client Families"
           description="Provision, suspend and inspect every client household workspace. Each tenant is isolated at the database row level."
         />
@@ -382,11 +382,13 @@ export function TenantsPage() {
                               {initials(tenant.name)}
                             </span>
                             <span className="flex flex-col">
-                              <span
-                                className={`text-label-lg text-on-surface ${suspended ? 'line-through' : ''}`}
+                              <Link
+                                to="/admin/tenants/$tenantId"
+                                params={{ tenantId: String(tenant.id) }}
+                                className={`text-label-lg font-semibold text-on-surface hover:text-secondary hover:underline ${suspended ? 'line-through' : ''}`}
                               >
                                 {tenant.name}
-                              </span>
+                              </Link>
                               <span className="font-mono text-body-sm text-muted">
                                 #{tenant.id} · {tenant.slug}
                               </span>
@@ -432,25 +434,39 @@ export function TenantsPage() {
                         </TD>
 
                         <TD className="text-right">
-                          {suspended ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={busy}
-                              onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'activate' })}
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to="/admin/tenants/$tenantId"
+                              params={{ tenantId: String(tenant.id) }}
                             >
-                              Reactivate
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={busy}
-                              onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'suspend' })}
-                            >
-                              Suspend
-                            </Button>
-                          )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Icon name="visibility" className="text-[16px]" />
+                                Details
+                              </Button>
+                            </Link>
+                            {suspended ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'activate' })}
+                              >
+                                Reactivate
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => setStatusOf.mutate({ id: tenant.id, action: 'suspend' })}
+                              >
+                                Suspend
+                              </Button>
+                            )}
+                          </div>
                         </TD>
                       </TR>
                     );

@@ -28,6 +28,9 @@ describe('system health console', () => {
       '/v1/auth/me': { data: landlord },
       '/v1/auth/tenants': { data: [] },
       '/v1/platform/health': opsHealth(),
+      '/v1/platform/health/maintenance': {
+        data: { enabled: false, message: 'Platform is running normally' },
+      },
     });
   });
 

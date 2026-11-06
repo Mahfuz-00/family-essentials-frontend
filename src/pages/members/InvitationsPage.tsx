@@ -90,7 +90,6 @@ export function InvitationsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Members', 'Invitations']}
           title="Invitations"
           description="Issue a magic link, and keep track of who has not accepted yet."
           titleSize="headline"

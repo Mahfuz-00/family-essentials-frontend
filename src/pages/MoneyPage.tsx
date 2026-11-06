@@ -28,13 +28,6 @@ const roleDetail: Record<LedgerRole, string> = {
   summary: 'Sees the totals for the period, not the individual entries.',
 };
 
-/**
- * Money: the household's ledgers, and the way into one.
- *
- * The ledger itself is its own screen because a `summary` member sees a
- * different page from an owner — the difference is decided by the API's
- * `my_role`, not by hiding controls here.
- */
 export function MoneyPage() {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -63,9 +56,6 @@ export function MoneyPage() {
   });
 
   const list = ledgers.data ?? [];
-
-  // With no ledgers the empty state carries "Set up a budget". Once the list is
-  // real the header carries it instead, so the same action never appears twice.
   const showHeaderAction = list.length > 0;
 
   const openCreate = () => {
@@ -76,23 +66,22 @@ export function MoneyPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Money']}
-          title="Money"
-          description="What the household has spent and taken in, held in ledgers you can share at the level you choose."
+          title="Household Money &amp; Budgets"
+          description="What the household has spent and taken in, held in shared ledgers with separate balances."
           titleSize="headline"
           actions={
-            showHeaderAction ? (
+            showHeaderAction && (
               <Button size="lg" onClick={openCreate}>
                 <Icon name="add" className="text-[18px]" />
                 Set up a budget
               </Button>
-            ) : undefined
+            )
           }
         />
 
-        {error && <Alert>{error}</Alert>}
+        {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
         {ledgers.isError && <Alert>{apiError(ledgers.error)}</Alert>}
 
@@ -123,66 +112,80 @@ export function MoneyPage() {
               <div className="flex items-start justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                    <Icon name="account_balance_wallet" className="text-[20px]" />
+                    <Icon name="account_balance_wallet" className="text-[22px]" />
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <Link
                       to="/money/$ledgerId"
                       params={{ ledgerId: String(ledger.id) }}
-                      className="truncate text-headline-sm text-on-surface hover:underline"
+                      className="hover:underline"
                     >
-                      {ledger.name}
+                      <h2 className="truncate text-headline-sm text-on-surface">{ledger.name}</h2>
                     </Link>
                     <span className="text-body-sm text-muted">
-                      {ledger.currency} · {ledger.member_count}{' '}
-                      {ledger.member_count === 1 ? 'member' : 'members'}
+                      {ledger.member_count ?? 1} {ledger.member_count === 1 ? 'member' : 'members'}
                     </span>
                   </span>
                 </span>
-                <Badge tone={ledger.my_role === 'summary' ? 'neutral' : 'primary'}>
-                  {roleLabel[ledger.my_role]}
-                </Badge>
+                {ledger.my_role && (
+                  <Badge tone={ledger.my_role === 'owner' ? 'primary' : 'neutral'}>
+                    {roleLabel[ledger.my_role]}
+                  </Badge>
+                )}
               </div>
 
-              <p className="text-body-sm text-on-surface-variant">{roleDetail[ledger.my_role]}</p>
+              <p className="text-body-sm text-muted">
+                {ledger.my_role ? roleDetail[ledger.my_role] : 'Shared household expense ledger.'}
+              </p>
+
+              <div className="flex items-center justify-between border-t border-outline-variant/30 pt-3">
+                <span className="text-xs text-muted">Currency: {ledger.currency}</span>
+                <Link to="/money/$ledgerId" params={{ ledgerId: String(ledger.id) }}>
+                  <Button variant="outline" size="sm">
+                    <Icon name="arrow_forward" className="text-[16px]" />
+                    Open Ledger
+                  </Button>
+                </Link>
+              </div>
             </Card>
           ))}
         </section>
-      </div>
 
-      {createOpen && (
-        <Modal
-          open
-          onClose={() => setCreateOpen(false)}
-          title="Set up a budget"
-          description="A ledger for the household's spending. You can invite people to it afterwards."
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                size="lg"
-                disabled={create.isPending || name.trim() === ''}
-                onClick={() => create.mutate()}
-              >
-                {create.isPending ? 'Creating…' : 'Create ledger'}
-              </Button>
-            </>
-          }
-        >
-          <div>
-            <Label htmlFor="ledger-name">What is this budget for?</Label>
-            <Input
-              id="ledger-name"
-              autoFocus
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Household spending"
-            />
-          </div>
-        </Modal>
-      )}
+        {/* Create Ledger Modal */}
+        {createOpen && (
+          <Modal
+            open
+            onClose={() => setCreateOpen(false)}
+            title="Set up a budget"
+            description="A ledger for the household's spending. You can invite people to it afterwards."
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="lg"
+                  disabled={create.isPending || name.trim() === ''}
+                  onClick={() => create.mutate()}
+                >
+                  {create.isPending ? 'Creating…' : 'Create ledger'}
+                </Button>
+              </>
+            }
+          >
+            <div>
+              <Label htmlFor="ledger-name">What is this budget for?</Label>
+              <Input
+                id="ledger-name"
+                autoFocus
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Household spending"
+              />
+            </div>
+          </Modal>
+        )}
+      </div>
     </AppLayout>
   );
 }

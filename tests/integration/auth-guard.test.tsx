@@ -22,8 +22,16 @@ vi.mock('@/lib/api', () => ({
 describe('route guards', () => {
   beforeEach(() => resetStores());
 
-  it('sends a signed-out visitor to the login page', async () => {
+  it('renders the public marketing website at root "/"', async () => {
     renderApp('/');
+
+    expect(
+      await screen.findByRole('heading', { name: /Household Logistics for Families/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('sends a signed-out visitor to login when they ask for the dashboard', async () => {
+    renderApp('/dashboard');
 
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
   });
@@ -38,7 +46,7 @@ describe('route guards', () => {
     signIn(tenantAdmin, 'dashboard-token');
     installGetRoutes(apiMock, sessionRoutes());
 
-    renderApp('/');
+    renderApp('/dashboard');
 
     expect(
       await screen.findByRole('heading', { name: "Today's Household Overview" }),
@@ -51,7 +59,7 @@ describe('route guards', () => {
 
     renderApp('/admin');
 
-    // requirePlatformAdmin redirects to '/', which resolves to the household dashboard.
+    // requirePlatformAdmin redirects to '/dashboard', which resolves to the household dashboard.
     expect(
       await screen.findByRole('heading', { name: "Today's Household Overview" }),
     ).toBeInTheDocument();
@@ -97,6 +105,14 @@ describe('route guards', () => {
 
     const { router } = renderApp('/requests');
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
+  });
+
+  it('shows Open Dashboard instead of Sign In / Get Started on the marketing navbar when signed in', async () => {
+    signIn(tenantAdmin, 'dashboard-token');
+    renderApp('/');
+
+    expect(await screen.findAllByRole('button', { name: /Open Dashboard/i })).not.toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /^Sign In$/i })).not.toBeInTheDocument();
   });
 });
