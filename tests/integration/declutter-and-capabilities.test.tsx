@@ -180,7 +180,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     expect(screen.getByText('Please pay cash at reception or during physical onboarding.')).toBeInTheDocument();
 
     // 3. Confirm upgrade
-    const confirmBtn = screen.getByRole('button', { name: /Confirm Cash Upgrade & Generate Invoice/i });
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Cash Upgrade/i });
     await userEvent.click(confirmBtn);
 
     expect(apiMock.post).toHaveBeenCalledWith('/v1/billing/upgrade', {
@@ -189,12 +189,14 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
       payment_method: 'cash',
     });
 
-    // 4. Invoices tab shows Cash badge
+    // 4. Invoices tab shows Cash badge and in-person invoice notice without PDF download
     const invoicesTab = screen.getByRole('button', { name: /Invoices & Receipts/i });
     await userEvent.click(invoicesTab);
 
     expect(await screen.findByText('INV-2026-CASH')).toBeInTheDocument();
     expect(screen.getByText('Cash / In-Person')).toBeInTheDocument();
+    expect(screen.getByText('In-Person Invoice')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /PDF Receipt/i })).not.toBeInTheDocument();
   });
 
   it('filters Focus Mode tabs and sends gratitude on completed errands', async () => {

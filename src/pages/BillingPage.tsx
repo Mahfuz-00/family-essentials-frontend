@@ -76,7 +76,9 @@ export function BillingPage() {
       (await api.post('/v1/billing/upgrade', payload)).data,
     onSuccess: (data: any) => {
       setNotice(
-        `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon ${data.invoice?.payment_method === 'cash' ? 'cash agreement' : 'payment'}.`
+        data.invoice?.payment_method === 'cash'
+          ? `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Your physical invoice will be issued in person upon cash settlement.`
+          : `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon payment.`
       );
       setError(null);
       setUpgradeModalOpen(false);
@@ -429,14 +431,21 @@ export function BillingPage() {
                             </Badge>
                           </TD>
                           <TD className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadInvoice(invoice.id)}
-                            >
-                              <Icon name="download" className="text-[14px]" />
-                              PDF Receipt
-                            </Button>
+                            {invoice.payment_method === 'cash' ? (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+                                <Icon name="receipt" className="text-[14px]" />
+                                In-Person Invoice
+                              </span>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadInvoice(invoice.id)}
+                              >
+                                <Icon name="download" className="text-[14px]" />
+                                PDF Receipt
+                              </Button>
+                            )}
                           </TD>
                         </TR>
                       ))}
@@ -553,7 +562,7 @@ export function BillingPage() {
                     'Cash payment upon in-person settlement or physical collection.'}
                 </p>
                 <p className="text-[11px] text-muted">
-                  Your household plan will be upgraded and an official receipt marked with payment method CASH will be generated.
+                  Your household plan will be upgraded immediately. Your official invoice will be provided in person upon cash payment.
                 </p>
               </div>
             )}
@@ -590,7 +599,7 @@ export function BillingPage() {
                 {upgradeMutation.isPending
                   ? 'Processing Upgrade...'
                   : paymentMethod === 'cash'
-                  ? 'Confirm Cash Upgrade & Generate Invoice'
+                  ? 'Confirm Cash Upgrade'
                   : 'Pay & Generate Invoice'}
               </Button>
             </div>
