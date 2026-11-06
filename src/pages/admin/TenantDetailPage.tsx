@@ -110,8 +110,8 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2">
+        {/* Navigation Action */}
+        <div>
           <Link
             to="/admin/tenants"
             className="inline-flex items-center gap-1.5 text-label-md font-semibold text-secondary hover:underline"
@@ -119,10 +119,6 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
             <Icon name="arrow_back" className="text-[18px]" />
             Back to Tenants
           </Link>
-          <span className="text-muted">/</span>
-          <span className="text-label-md text-muted">
-            {tenant ? tenant.name : `Tenant #${tenantId}`}
-          </span>
         </div>
 
         {notice && (

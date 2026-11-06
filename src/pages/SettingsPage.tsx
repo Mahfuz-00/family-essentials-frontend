@@ -61,7 +61,6 @@ export function SettingsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Settings']}
           title="Household settings"
           description="Your account, how the household reaches you, and the workspace itself."
           titleSize="headline"

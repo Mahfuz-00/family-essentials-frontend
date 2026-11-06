@@ -113,7 +113,6 @@ export function GeofenceConsolePage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Saved Places', 'Geofence console']}
           title="Geofence console"
           description="Zone geometry, boundary events, and the store list each zone will surface."
           titleSize="headline"

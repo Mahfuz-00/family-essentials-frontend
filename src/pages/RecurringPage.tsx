@@ -161,7 +161,6 @@ export function RecurringPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Recurring']}
           title="Recurring"
           description="The chores and errands that come round again, each with the day it next falls due."
           titleSize="headline"

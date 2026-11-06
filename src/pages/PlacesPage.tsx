@@ -164,7 +164,6 @@ export function PlacesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          breadcrumb={['Family Workspace', 'Saved Places']}
           title="Saved places"
           description="The stores and places your family visits, each with the radius that arms its geofence."
           titleSize="headline"
