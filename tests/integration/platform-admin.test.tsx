@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { installGetRoutes, jsonResponse } from '../support/api';
@@ -42,6 +42,11 @@ describe('platform admin console enhancements', () => {
             razorpay: { enabled: false, key_id: 'rzp_sample', key_secret: 'secret' },
             sslcommerz: { enabled: false, store_id: 'store_sample', store_passwd: 'pwd' },
             paypal: { enabled: false, client_id: 'sb_client', client_secret: 'secret' },
+            cash: {
+              enabled: true,
+              instructions: 'Cash payment upon in-person settlement or physical collection.',
+              auto_mark_paid: true,
+            },
           },
           webhook_url: 'https://api.fairshare.app/api/v1/webhooks/payment',
           auto_billing_enabled: true,
@@ -242,6 +247,32 @@ describe('platform admin console enhancements', () => {
 
     expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/test', expect.anything());
     expect(await screen.findByText('Successfully connected to stripe API endpoint in 240ms.')).toBeInTheDocument();
+  });
+
+  it('allows platform admin to configure cash payment option and test ping', async () => {
+    apiMock.post.mockResolvedValueOnce(
+      jsonResponse({
+        status: 'connected',
+        gateway: 'cash',
+        latency_ms: 0,
+        message: 'Cash payment and offline collection workflow is active and ready.',
+      }),
+    );
+
+    renderApp('/admin/payment-gateways');
+
+    expect(await screen.findByRole('heading', { name: 'Payment Gateway Configuration' })).toBeInTheDocument();
+    expect(await screen.findByText('Cash Payment & Offline Settlement')).toBeInTheDocument();
+    expect(screen.getByText('Cash Option Enabled')).toBeInTheDocument();
+
+    const cashInstructions = screen.getByLabelText(/Tenant Collection Instructions & Notes/i);
+    expect(cashInstructions).toHaveValue('Cash payment upon in-person settlement or physical collection.');
+
+    const pingCashBtn = screen.getByRole('button', { name: /Test Cash Payment Configuration/i });
+    await userEvent.click(pingCashBtn);
+
+    expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/test', { gateway: 'cash' });
+    expect(await screen.findByText('Cash payment and offline collection workflow is active and ready.')).toBeInTheDocument();
   });
 
   it('renders email configuration and dispatches test email', async () => {

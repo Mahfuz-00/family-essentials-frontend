@@ -587,15 +587,27 @@ export interface PaymentGatewayCredentials {
   store_passwd?: string;
   client_id?: string;
   client_secret?: string;
+  instructions?: string;
+  auto_mark_paid?: boolean;
 }
 
 export interface PaymentGatewaySettings {
-  active_gateway: 'stripe' | 'razorpay' | 'sslcommerz' | 'paypal' | 'mock';
+  active_gateway: 'stripe' | 'razorpay' | 'sslcommerz' | 'paypal' | 'mock' | 'cash';
   mode: 'sandbox' | 'live';
   currency: string;
   gateways: Record<string, PaymentGatewayCredentials>;
   webhook_url: string;
   auto_billing_enabled: boolean;
+}
+
+export interface AvailablePaymentMethods {
+  active_gateway: string;
+  currency: string;
+  cash: {
+    enabled: boolean;
+    instructions: string;
+    auto_mark_paid: boolean;
+  };
 }
 
 export interface EmailTemplateItem {

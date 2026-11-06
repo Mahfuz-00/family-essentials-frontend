@@ -15,7 +15,7 @@ import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
 import { plans } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
-import type { Place, UserRef } from '@/types';
+import type { AvailablePaymentMethods, Place, UserRef } from '@/types';
 
 interface InvoiceRecord {
   id: number;
@@ -46,6 +46,7 @@ export function BillingPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<'plus' | 'family' | 'enterprise'>('family');
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,17 +60,23 @@ export function BillingPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
+  const paymentMethodsQuery = useQuery({
+    queryKey: ['billing', 'payment-methods'],
+    queryFn: async () =>
+      (await api.get<{ data: AvailablePaymentMethods }>('/v1/billing/payment-methods')).data.data,
+  });
+
   const invoicesQuery = useQuery({
     queryKey: ['billing', 'invoices'],
     queryFn: async () => (await api.get<InvoicesResponse>('/v1/billing/invoices')).data,
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: async (payload: { tier: string; billing_period: string }) =>
+    mutationFn: async (payload: { tier: string; billing_period: string; payment_method?: string }) =>
       (await api.post('/v1/billing/upgrade', payload)).data,
     onSuccess: (data: any) => {
       setNotice(
-        `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon payment.`
+        `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon ${data.invoice?.payment_method === 'cash' ? 'cash agreement' : 'payment'}.`
       );
       setError(null);
       setUpgradeModalOpen(false);
@@ -133,6 +140,7 @@ export function BillingPage() {
     upgradeMutation.mutate({
       tier: selectedTier,
       billing_period: selectedPeriod,
+      payment_method: paymentMethod,
     });
   };
 
@@ -398,10 +406,17 @@ export function BillingPage() {
                             ${(invoice.amount_cents / 100).toFixed(2)}
                           </TD>
                           <TD className="text-xs text-muted">
-                            <span className="inline-flex items-center gap-1.5">
-                              <Icon name="credit_card" className="text-[14px]" />
-                              •••• {invoice.last4 || '4242'}
-                            </span>
+                            {invoice.payment_method === 'cash' ? (
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-secondary">
+                                <Icon name="payments" className="text-[14px]" />
+                                Cash / In-Person
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Icon name="credit_card" className="text-[14px]" />
+                                •••• {invoice.last4 || '4242'}
+                              </span>
+                            )}
                           </TD>
                           <TD className="text-xs text-muted">
                             {invoice.paid_at
@@ -495,10 +510,60 @@ export function BillingPage() {
               </div>
             </div>
 
+            {paymentMethodsQuery.data?.cash?.enabled && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-on-surface">Payment Method</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-semibold transition-colors ${
+                      paymentMethod === 'card'
+                        ? 'border-secondary bg-forest-soft/70 text-secondary'
+                        : 'border-outline-variant/40 hover:bg-sage-soft'
+                    }`}
+                  >
+                    <Icon name="credit_card" className="text-[16px]" />
+                    Online Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-semibold transition-colors ${
+                      paymentMethod === 'cash'
+                        ? 'border-secondary bg-forest-soft/70 text-secondary'
+                        : 'border-outline-variant/40 hover:bg-sage-soft'
+                    }`}
+                  >
+                    <Icon name="payments" className="text-[16px]" />
+                    Cash Payment
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'cash' && paymentMethodsQuery.data?.cash?.enabled && (
+              <div className="rounded-xl border border-secondary/30 bg-forest-soft/40 p-3.5 text-xs flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-secondary">
+                  <Icon name="info" className="text-[16px]" />
+                  <span>Cash Payment &amp; In-Person Settlement Instructions</span>
+                </div>
+                <p className="text-on-surface text-[12px] leading-relaxed">
+                  {paymentMethodsQuery.data.cash.instructions ||
+                    'Cash payment upon in-person settlement or physical collection.'}
+                </p>
+                <p className="text-[11px] text-muted">
+                  Your household plan will be upgraded and an official receipt marked with payment method CASH will be generated.
+                </p>
+              </div>
+            )}
+
             <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3 text-xs flex flex-col gap-1.5">
               <div className="flex justify-between font-medium">
                 <span>Payment Method:</span>
-                <span className="font-mono text-muted">Test Card (•••• 4242)</span>
+                <span className="font-mono text-muted">
+                  {paymentMethod === 'cash' ? 'Cash Settlement (In-Person)' : 'Test Card (•••• 4242)'}
+                </span>
               </div>
               <div className="flex justify-between font-bold text-on-surface">
                 <span>Total Due:</span>
@@ -521,8 +586,12 @@ export function BillingPage() {
                 onClick={handleSimulatePayment}
                 disabled={upgradeMutation.isPending}
               >
-                <Icon name="check_circle" className="text-[18px]" />
-                {upgradeMutation.isPending ? 'Processing Payment...' : 'Pay & Generate Invoice'}
+                <Icon name={paymentMethod === 'cash' ? 'payments' : 'check_circle'} className="text-[18px]" />
+                {upgradeMutation.isPending
+                  ? 'Processing Upgrade...'
+                  : paymentMethod === 'cash'
+                  ? 'Confirm Cash Upgrade & Generate Invoice'
+                  : 'Pay & Generate Invoice'}
               </Button>
             </div>
           </div>

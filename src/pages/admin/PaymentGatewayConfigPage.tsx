@@ -122,6 +122,7 @@ export function PaymentGatewayConfigPage() {
                     <option value="razorpay">Razorpay</option>
                     <option value="sslcommerz">SSLCommerz</option>
                     <option value="paypal">PayPal Commerce</option>
+                    <option value="cash">Cash Payment (In-Person / Offline)</option>
                     <option value="mock">Internal Sandbox / Mock</option>
                   </Select>
                 </div>
@@ -367,6 +368,131 @@ export function PaymentGatewayConfigPage() {
                   >
                     <Icon name="bolt" className="text-[16px]" />
                     {testing ? 'Testing…' : 'Ping Provider API'}
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Cash Payment & Offline Settlement Card */}
+              <Card className="flex flex-col gap-4 p-5 lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                      <Icon name="payments" className="text-[20px]" />
+                    </span>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">Cash Payment &amp; Offline Settlement</h4>
+                      <p className="text-body-xs text-muted">Allow households to pay in-person or via manual cash handover</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {currentSettings.active_gateway === 'cash' ? (
+                      <Badge tone="success">Primary Active Gateway</Badge>
+                    ) : (currentSettings.gateways.cash?.enabled ?? false) ? (
+                      <Badge tone="success">Cash Option Enabled</Badge>
+                    ) : (
+                      <Badge tone="neutral">Disabled</Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low p-3.5">
+                    <input
+                      type="checkbox"
+                      id="cash-enabled"
+                      checked={currentSettings.gateways.cash?.enabled ?? false}
+                      onChange={(e) =>
+                        handleUpdate((prev) => ({
+                          ...prev,
+                          gateways: {
+                            ...prev.gateways,
+                            cash: {
+                              ...prev.gateways.cash,
+                              enabled: e.target.checked,
+                              instructions: prev.gateways.cash?.instructions ?? 'Cash payment upon in-person settlement or physical invoice collection.',
+                              auto_mark_paid: prev.gateways.cash?.auto_mark_paid ?? true,
+                            },
+                          },
+                        }))
+                      }
+                      className="h-4 w-4 cursor-pointer accent-secondary"
+                    />
+                    <div>
+                      <Label htmlFor="cash-enabled" className="cursor-pointer font-bold text-on-surface">
+                        Enable Cash Payment for Household Plan Upgrades
+                      </Label>
+                      <p className="text-body-xs text-muted">
+                        When enabled, tenants will see &ldquo;Cash Payment / In-Person&rdquo; as a payment option on the billing upgrade modal.
+                      </p>
+                    </div>
+                  </div>
+
+                  {(currentSettings.gateways.cash?.enabled ?? false) && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="flex flex-col gap-1.5 md:col-span-2">
+                        <Label htmlFor="cash-instructions">Tenant Collection Instructions &amp; Notes</Label>
+                        <textarea
+                          id="cash-instructions"
+                          rows={3}
+                          value={currentSettings.gateways.cash?.instructions ?? ''}
+                          onChange={(e) =>
+                            handleUpdate((prev) => ({
+                              ...prev,
+                              gateways: {
+                                ...prev.gateways,
+                                cash: {
+                                  ...prev.gateways.cash,
+                                  enabled: true,
+                                  instructions: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-full rounded-xl border border-outline-variant/50 bg-surface p-3 text-body-sm text-on-surface focus:border-secondary focus:outline-none"
+                          placeholder="e.g. Please hand physical cash to your community manager at the central clubhouse or office desk."
+                        />
+                        <p className="text-body-xs text-muted">
+                          These instructions will be displayed to the tenant in the checkout modal when they choose Cash Payment.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="cash-auto-paid"
+                          checked={currentSettings.gateways.cash?.auto_mark_paid ?? true}
+                          onChange={(e) =>
+                            handleUpdate((prev) => ({
+                              ...prev,
+                              gateways: {
+                                ...prev.gateways,
+                                cash: {
+                                  ...prev.gateways.cash,
+                                  enabled: true,
+                                  auto_mark_paid: e.target.checked,
+                                },
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 cursor-pointer accent-secondary"
+                        />
+                        <Label htmlFor="cash-auto-paid" className="cursor-pointer text-body-sm text-on-surface">
+                          Mark cash invoices as Paid immediately upon checkout
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-2 flex items-center justify-between border-t border-surface-container pt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={testing}
+                    onClick={() => runTest('cash')}
+                  >
+                    <Icon name="bolt" className="text-[16px]" />
+                    {testing ? 'Testing…' : 'Test Cash Payment Configuration'}
                   </Button>
                 </div>
               </Card>
