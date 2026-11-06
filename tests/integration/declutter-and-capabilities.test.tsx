@@ -215,4 +215,64 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     expect(await screen.findByText('Subscription Tier & Access Controls')).toBeInTheDocument();
     expect(screen.getByText('Extend Trial Access')).toBeInTheDocument();
   });
+
+  it('renders dashboard as a gateway and software summary with low-stock replenishment', async () => {
+    installGetRoutes(apiMock, {
+      ...sessionRoutes(),
+      '/v1/essentials': {
+        data: [
+          {
+            id: 42,
+            name: 'Organic Whole Milk',
+            category: 'dairy',
+            default_store: 'Whole Foods',
+            pack_size: '1 Gallon',
+            cadence_days: 7,
+            threshold: 2,
+            stock_level: 1,
+            last_restocked_at: '2026-10-30T10:00:00Z',
+            is_active: true,
+            is_due: true,
+            due_reason: 'safety_stock',
+          },
+        ],
+        summary: { total: 8, due: 1, safety_stock: 1, cadence: 0 },
+      },
+    });
+
+    apiMock.post.mockImplementation((url) => {
+      if (url === '/v1/essentials/42/create-errand') {
+        return jsonResponse({
+          message: 'Restock errand for Organic Whole Milk added to household board!',
+        });
+      }
+      return Promise.reject(new Error(`Unstubbed POST ${url}`));
+    });
+
+    renderApp('/dashboard');
+
+    // 1. Executive Summary & Pulse Metrics
+    expect(await screen.findByRole('heading', { name: "Today's Household Overview" })).toBeInTheDocument();
+    expect(await screen.findByText('Active Errands & Tasks')).toBeInTheDocument();
+    expect(screen.getByText('Saved Stores & Geofences')).toBeInTheDocument();
+    expect(screen.getByText('Shared Ledgers & Budget')).toBeInTheDocument();
+
+    // 2. Gateway Navigation Launchpad
+    expect(screen.getByText('Household Operations Gateway')).toBeInTheDocument();
+    expect(screen.getByText('Store Geofences')).toBeInTheDocument();
+    expect(screen.getByText('Recurring Chores')).toBeInTheDocument();
+    expect(screen.getByText('Pantry Stock')).toBeInTheDocument();
+
+    // 3. Pantry Restock 1-Tap Widget Action
+    expect(screen.getAllByText('Organic Whole Milk').length).toBeGreaterThanOrEqual(1);
+    const restockBtn = screen.getByRole('button', { name: /\+ Errand/i });
+    await userEvent.click(restockBtn);
+
+    await waitFor(() => {
+      expect(apiMock.post).toHaveBeenCalledWith('/v1/essentials/42/create-errand');
+      expect(
+        screen.getByText(/Restock errand for Organic Whole Milk added to household board!/i),
+      ).toBeInTheDocument();
+    });
+  });
 });

@@ -497,6 +497,35 @@ export interface RecurringRule {
   ledger_id: number | null;
 }
 
+/* ------------------------------------------------------------- essentials --- */
+
+export interface Essential {
+  id: number;
+  name: string;
+  category: string | null;
+  default_store: string | null;
+  pack_size: string | null;
+  cadence_days: number;
+  threshold: number;
+  stock_level: number;
+  last_restocked_at: string | null;
+  is_active: boolean;
+  is_due?: boolean;
+  due_reason?: string | null;
+}
+
+export interface EssentialsSummary {
+  total: number;
+  due: number;
+  safety_stock: number;
+  cadence: number;
+}
+
+export interface EssentialsResponse {
+  data: Essential[];
+  summary: EssentialsSummary;
+}
+
 /* --------------------------------------------------------------- ledgers --- */
 
 /** What the caller may do with a ledger. `summary` sees totals, never entries. */

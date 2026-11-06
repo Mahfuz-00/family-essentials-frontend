@@ -502,6 +502,12 @@ export function sessionRoutes() {
     '/v1/tenant/quotas': quotaReport(),
     '/v1/feedback': { data: [], summary: { total: 0, open: 0, last_sent_at: null } },
     '/v1/places': { data: [] },
+    '/v1/recurring-rules': { data: [recurringRule()] },
+    '/v1/essentials': {
+      data: [],
+      summary: { total: 0, due: 0, safety_stock: 0, cadence: 0 },
+    },
+    '/v1/ledgers': { data: [] },
     '/v1/voice-calls/quota': {
       used_today: 0,
       daily_budget: 10,

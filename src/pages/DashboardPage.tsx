@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
+import { Alert } from '@/components/ui/alert';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,57 +12,141 @@ import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { useQuota } from '@/hooks/useQuota';
-import { api } from '@/lib/api';
+import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import { useUiStore } from '@/stores/ui';
-import type { RequestBoard, ServiceRequest } from '@/types';
+import type {
+  EssentialsResponse,
+  Ledger,
+  Place,
+  RecurringRule,
+  RequestBoard,
+  ServiceRequest,
+} from '@/types';
+
+type TaskFilterTab = 'focus' | 'my' | 'completed' | 'all';
 
 export function DashboardPage() {
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const active = useTenantStore((state) => state.active);
   const openAddRequest = useUiStore((state) => state.openAddRequest);
 
+  const [taskFilter, setTaskFilter] = useState<TaskFilterTab>('focus');
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const quota = useQuota({ enabled: user?.is_platform_admin !== true });
 
+  // 1. Board and Errands Query
   const board = useQuery({
     queryKey: ['requests', 'board'],
     queryFn: async () => (await api.get<RequestBoard>('/v1/requests/board')).data,
   });
 
+  // 2. Saved Places and Geofences Query
+  const placesQuery = useQuery({
+    queryKey: ['places'],
+    queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
+  });
+
+  // 3. Recurring Staples Query
+  const recurringQuery = useQuery({
+    queryKey: ['recurring-rules'],
+    queryFn: async () =>
+      (await api.get<{ data: RecurringRule[] }>('/v1/recurring-rules')).data.data,
+  });
+
+  // 4. Pantry Essentials Query
+  const essentialsQuery = useQuery({
+    queryKey: ['essentials'],
+    queryFn: async () => (await api.get<EssentialsResponse>('/v1/essentials')).data,
+  });
+
+  // 5. Shared Ledgers Query
+  const ledgersQuery = useQuery({
+    queryKey: ['ledgers'],
+    queryFn: async () => (await api.get<{ data: Ledger[] }>('/v1/ledgers')).data.data,
+  });
+
+  // 1-Tap Replenish Errand Mutation
+  const createRestockErrand = useMutation({
+    mutationFn: async (essentialId: number) => {
+      return (await api.post(`/v1/essentials/${essentialId}/create-errand`)).data;
+    },
+    onSuccess: (data: any) => {
+      setNotice(data.message ?? 'Restock errand added to household board!');
+      setError(null);
+      void queryClient.invalidateQueries({ queryKey: ['requests', 'board'] });
+      void queryClient.invalidateQueries({ queryKey: ['essentials'] });
+    },
+    onError: (err: any) => {
+      setError(apiError(err));
+      setNotice(null);
+    },
+  });
+
   const counts = board.data?.counts;
-
-  // Filter prioritized items for today (overdue, due today, assigned to me)
-  const todayTasks = useMemo(() => {
-    if (!board.data) return [];
-    const map = new Map<number, ServiceRequest>();
-    for (const item of board.data.overdue ?? []) {
-      map.set(item.id, item);
-    }
-    for (const item of board.data.due_today ?? []) {
-      map.set(item.id, item);
-    }
-    for (const item of board.data.assigned_to_me ?? []) {
-      map.set(item.id, item);
-    }
-    return Array.from(map.values()).slice(0, 5);
-  }, [board.data]);
-
   const overdueCount = counts?.overdue ?? 0;
   const dueTodayCount = counts?.due_today ?? 0;
   const assignedToMeCount = counts?.assigned_to_me ?? 0;
+  const backlogCount = counts?.backlog ?? 0;
   const completedTodayCount = counts?.completed_today ?? 0;
+  const totalOpenCount = overdueCount + dueTodayCount + backlogCount;
+
+  const places = placesQuery.data ?? [];
+  const recurringRules = recurringQuery.data ?? [];
+  const essentials = essentialsQuery.data?.data ?? [];
+  const essentialsSummary = essentialsQuery.data?.summary ?? {
+    total: essentials.length,
+    due: essentials.filter((e) => e.is_due || e.stock_level <= e.threshold).length,
+    safety_stock: 0,
+    cadence: 0,
+  };
+  const lowStockItems = useMemo(() => {
+    return essentials
+      .filter((e) => e.is_due || e.stock_level <= e.threshold)
+      .slice(0, 4);
+  }, [essentials]);
+
+  const ledgers = ledgersQuery.data ?? [];
 
   const seatsUsed = quota.data?.usage.members ?? active?.member_count ?? 1;
   const seatCap = quota.seatCap ?? 5;
   const seatPercent = Math.min(100, Math.round((seatsUsed / seatCap) * 100));
 
-  const nextUrgentTask = board.data?.overdue?.[0] ?? board.data?.due_today?.[0];
+  // Filter tasks based on selected tab
+  const displayedTasks = useMemo(() => {
+    if (!board.data) return [];
+    if (taskFilter === 'focus') {
+      const map = new Map<number, ServiceRequest>();
+      for (const item of board.data.overdue ?? []) map.set(item.id, item);
+      for (const item of board.data.due_today ?? []) map.set(item.id, item);
+      return Array.from(map.values()).slice(0, 6);
+    }
+    if (taskFilter === 'my') {
+      return (board.data.assigned_to_me ?? []).slice(0, 6);
+    }
+    if (taskFilter === 'completed') {
+      return (board.data.completed_today ?? []).slice(0, 6);
+    }
+    // 'all'
+    const all = [
+      ...(board.data.overdue ?? []),
+      ...(board.data.due_today ?? []),
+      ...(board.data.assigned_to_me ?? []),
+      ...(board.data.backlog ?? []),
+    ];
+    const unique = new Map<number, ServiceRequest>();
+    for (const item of all) unique.set(item.id, item);
+    return Array.from(unique.values()).slice(0, 6);
+  }, [board.data, taskFilter]);
 
   return (
     <AppLayout>
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        {/* Page Header with Breadcrumb & Action Controls */}
+        {/* Page Header as Executive Household Gateway */}
         <PageHeader
           eyebrow={
             <div className="flex items-center gap-2">
@@ -69,41 +154,51 @@ export function DashboardPage() {
                 <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary" />
               </span>
-              <span className="text-xs font-semibold text-secondary">{active?.name ?? 'Household'} · Live Real-time Sync</span>
+              <span className="text-xs font-semibold text-secondary">
+                {active?.name ?? 'Household'} · Live Operations Gateway
+              </span>
             </div>
           }
           title="Today's Household Overview"
-          description={`${quota.planLabel} · ${seatsUsed} of ${seatCap} family members in sync`}
+          description={`Central executive summary for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
           actions={
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={openAddRequest}
+                className="gap-2 shadow-xs transition-transform hover:scale-[1.02] active:scale-95"
+              >
+                <Icon name="add" className="text-[18px]" />
+                <span>Quick Add Errand</span>
+              </Button>
               <Link to="/requests" className="inline-flex">
-                <Button variant="primary" size="md" className="gap-2 shadow-sm transition-transform hover:scale-[1.02] active:scale-95">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="gap-2 transition-transform hover:scale-[1.02] active:scale-95"
+                >
                   <Icon name="view_kanban" className="text-[18px]" />
                   <span>Open Kanban</span>
                 </Button>
               </Link>
-              <button
-                type="button"
-                onClick={openAddRequest}
-                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-sage-soft px-3.5 text-xs font-semibold text-secondary transition-all hover:bg-forest-soft hover:scale-[1.02] active:scale-95 shadow-xs"
-              >
-                <Icon name="add" className="text-[18px]" />
-                <span>Quick Add</span>
-              </button>
             </div>
           }
         />
 
+        {notice && <Alert tone="success">{notice}</Alert>}
+        {error && <Alert tone="error">{error}</Alert>}
+
         {board.isError && (
           <QueryError
             error={board.error}
-            what="today's numbers"
+            what="today's operational summary"
             onRetry={() => void board.refetch()}
           />
         )}
 
         {/* -------------------------------------------------------------------
-            ROW 1: Floating Metric Cards with Motion & Squircles
+            ROW 1: Top Operational Pulse Strip (Summary of Software Metrics)
         -------------------------------------------------------------------- */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {board.isLoading ? (
@@ -115,16 +210,16 @@ export function DashboardPage() {
             </>
           ) : (
             <>
-              {/* Card 1: Overdue Attention */}
+              {/* Metric 1: Active Errands & Chores */}
               <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[104px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Overdue Errands
+                      Active Errands & Tasks
                     </span>
                     <div className="mt-2 flex items-center gap-2.5">
-                      <span className={`text-2xl sm:text-3xl font-extrabold tracking-tight leading-none ${overdueCount > 0 ? 'text-error' : 'text-on-surface'}`}>
-                        {overdueCount}
+                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                        {totalOpenCount}
                       </span>
                       {overdueCount > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
@@ -132,83 +227,101 @@ export function DashboardPage() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
                           </span>
-                          Needs Action
+                          {overdueCount} Overdue
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                          All Clear
+                          {dueTodayCount} Due Today
                         </span>
                       )}
                     </div>
+                    <span className="mt-1 text-xs text-muted">
+                      {completedTodayCount} completed today
+                    </span>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-error to-tertiary text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="warning" className="text-[20px]" />
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                    <Icon name="view_kanban" className="text-[22px]" />
                   </div>
                 </div>
               </Link>
 
-              {/* Card 2: Due Today */}
+              {/* Metric 2: Pantry & Safety Stock */}
               <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[104px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Due Today
+                      Pantry & Staples
                     </span>
                     <div className="mt-2 flex items-center gap-2.5">
                       <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {dueTodayCount}
+                        {essentialsSummary.total}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
-                        Scheduled
-                      </span>
+                      {essentialsSummary.due > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                          {essentialsSummary.due} Low / Due
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                          Well Stocked
+                        </span>
+                      )}
                     </div>
+                    <span className="mt-1 text-xs text-muted">
+                      {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
+                    </span>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-warning to-amber-600 text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="schedule" className="text-[20px]" />
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                    <Icon name="inventory_2" className="text-[22px]" />
                   </div>
                 </div>
               </Link>
 
-              {/* Card 3: Assigned to Me */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[104px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+              {/* Metric 3: Saved Stores & Geofences */}
+              <Link to="/places" className="group block">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Assigned to Me
+                      Saved Stores & Geofences
                     </span>
                     <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-secondary">
-                        {assignedToMeCount}
+                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                        {places.length}
+                      </span>
+                      <span className="inline-flex items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
+                        Active Bounds
+                      </span>
+                    </div>
+                    <span className="mt-1 text-xs text-muted">
+                      Arrival triggers & store routing
+                    </span>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                    <Icon name="pin_drop" className="text-[22px]" />
+                  </div>
+                </div>
+              </Link>
+
+              {/* Metric 4: Shared Household Ledgers */}
+              <Link to="/money" className="group block">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                      Shared Ledgers & Budget
+                    </span>
+                    <div className="mt-2 flex items-center gap-2.5">
+                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                        {ledgers.length}
                       </span>
                       <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                        My Tasks
+                        Active
                       </span>
                     </div>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-primary text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="assignment_ind" className="text-[20px]" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* Card 4: Completed Today */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[104px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Completed Today
+                    <span className="mt-1 text-xs text-muted">
+                      Domestic expenses & shared totals
                     </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {completedTodayCount}
-                      </span>
-                      <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                        Done
-                      </span>
-                    </div>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-success to-emerald-700 text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="task_alt" className="text-[20px]" />
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                    <Icon name="account_balance_wallet" className="text-[22px]" />
                   </div>
                 </div>
               </Link>
@@ -217,191 +330,240 @@ export function DashboardPage() {
         </section>
 
         {/* -------------------------------------------------------------------
-            ROW 2: Purity UI Style Featured Hero Banner + Urgent Focus Widget
+            ROW 2: Software Gateway Navigation Hub (Gateway to All Modules)
         -------------------------------------------------------------------- */}
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Left: "Built for Family Logistics" Hero Feature Card (Purity UI style) */}
-          <div className="relative overflow-hidden rounded-3xl border border-secondary/20 bg-gradient-to-br from-surface via-forest-soft/30 to-sage-soft/50 p-6 shadow-e1 lg:col-span-7 sm:p-8">
-            <div className="relative z-10 flex flex-col justify-between h-full">
-              <div>
-                <div className="flex items-center gap-2 text-label-sm font-bold uppercase tracking-wider text-secondary">
-                  <span>Household Live Sync</span>
-                  <span>•</span>
-                  <span>{active?.name ?? 'Family Workspace'}</span>
-                </div>
-
-                <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-on-surface leading-snug">
-                  Domestic Coordination Without the Mental Load
-                </h2>
-
-                <p className="mt-2.5 max-w-xl text-body-md text-on-surface-variant leading-relaxed">
-                  From grocery runs and urgent prescriptions to automated recurring staples, Family Essentials keeps everyone aligned with single named ownership and store geofencing.
-                </p>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link
-                  to="/requests"
-                  className="inline-flex items-center gap-1.5 text-label-md font-bold text-secondary transition-transform hover:translate-x-1"
-                >
-                  <span>Open Errand Kanban</span>
-                  <Icon name="arrow_forward" className="text-[16px]" />
-                </Link>
-
-                <span className="text-muted">•</span>
-
-                <Link
-                  to="/places"
-                  className="inline-flex items-center gap-1.5 text-label-md font-semibold text-on-surface-variant hover:text-secondary"
-                >
-                  <span>Store Geofences</span>
-                </Link>
-
-                <span className="text-muted">•</span>
-
-                <Link
-                  to="/recurring"
-                  className="inline-flex items-center gap-1.5 text-label-md font-semibold text-on-surface-variant hover:text-secondary"
-                >
-                  <span>Recurring Staples</span>
-                </Link>
-              </div>
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-headline-sm font-bold text-on-surface">
+                Household Operations Gateway
+              </h2>
+              <p className="text-body-sm text-muted">
+                Direct access and real-time status across all household coordination modules
+              </p>
             </div>
-
-            {/* Decorative background element */}
-            <div className="pointer-events-none absolute -bottom-12 -right-12 h-64 w-64 rounded-full bg-secondary/5 blur-2xl" />
+            <span className="text-xs font-semibold text-secondary">
+              6 Modules Active
+            </span>
           </div>
 
-          {/* Right: Urgent Priority Task Widget (Purity UI "Work with the rockets" card style) */}
-          <div className="relative overflow-hidden rounded-3xl border border-outline-variant/30 bg-surface p-6 shadow-e1 lg:col-span-5 flex flex-col justify-between transition-all duration-300 hover:shadow-e2">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  {nextUrgentTask?.priority === 'urgent' && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
-                  )}
-                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${nextUrgentTask?.priority === 'urgent' ? 'bg-error' : 'bg-secondary'}`} />
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6">
+            {/* Gateway 1: Errands */}
+            <Link
+              to="/requests"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
+                  <Icon name="view_kanban" className="text-[18px]" />
                 </span>
-                <h3 className="text-headline-sm font-bold text-on-surface">
-                  Immediate Priority
-                </h3>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
               </div>
-              {nextUrgentTask ? (
-                <Badge tone={nextUrgentTask.priority === 'urgent' ? 'danger' : 'warning'}>
-                  {nextUrgentTask.priority.toUpperCase()}
-                </Badge>
-              ) : (
-                <Badge tone="success">ALL CLEAR</Badge>
-              )}
-            </div>
-
-            {nextUrgentTask ? (
-              <div className="my-4 flex flex-col gap-2">
-                <span className="text-headline-sm font-bold text-on-surface">
-                  {nextUrgentTask.title}
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Errands & Tasks
                 </span>
-                <div className="flex flex-wrap items-center gap-2 text-body-sm text-muted">
-                  {nextUrgentTask.store_name && (
-                    <span className="inline-flex items-center gap-1 text-primary">
-                      <Icon name="storefront" className="text-[14px]" />
-                      {nextUrgentTask.store_name}
-                    </span>
-                  )}
-                  {nextUrgentTask.assignee?.name && (
-                    <span className="inline-flex items-center gap-1">
-                      <Icon name="person" className="text-[14px]" />
-                      {nextUrgentTask.assignee.name}
-                    </span>
-                  )}
-                  {nextUrgentTask.due_at && (
-                    <span className="inline-flex items-center gap-1 text-error font-medium">
-                      <Icon name="schedule" className="text-[14px]" />
-                      {new Date(nextUrgentTask.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2.5">
-                  <Link
-                    to="/requests"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-label-md font-bold text-white shadow-xs hover:bg-primary transition-all hover:scale-[1.02] active:scale-95"
-                  >
-                    <span>View &amp; Check Off</span>
-                    <Icon name="arrow_forward" className="text-[16px]" />
-                  </Link>
-
-                  <Link
-                    to="/requests"
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-secondary/30 bg-forest-soft px-3.5 py-2 text-label-md font-bold text-secondary shadow-xs hover:bg-secondary hover:text-white transition-all active:scale-95"
-                  >
-                    <Icon name="phone" className="text-[16px]" />
-                    <span>Call {nextUrgentTask.assignee?.name ? nextUrgentTask.assignee.name.split(' ')[0] : 'Assignee'}</span>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="my-6 flex flex-col items-center justify-center text-center">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                  <Icon name="check_circle" className="text-[24px]" />
+                <span className="text-xs text-muted">
+                  {totalOpenCount} open errands
                 </span>
-                <span className="mt-2 text-body-md font-bold text-on-surface">All caught up</span>
-                <p className="text-body-sm text-muted">No urgent tasks or overdue chores pending right now.</p>
               </div>
-            )}
+            </Link>
 
-            {/* Micro status strip */}
-            <div className="border-t border-outline-variant/15 pt-3 flex items-center justify-between text-xs text-muted">
-              <span>Sync status: Active</span>
-              <span className="text-secondary font-medium">Auto-refreshed</span>
-            </div>
+            {/* Gateway 2: Geofencing */}
+            <Link
+              to="/places"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
+                  <Icon name="pin_drop" className="text-[18px]" />
+                </span>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
+              </div>
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Store Geofences
+                </span>
+                <span className="text-xs text-muted">
+                  {places.length} saved places
+                </span>
+              </div>
+            </Link>
+
+            {/* Gateway 3: Recurring Staples */}
+            <Link
+              to="/recurring"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
+                  <Icon name="event_repeat" className="text-[18px]" />
+                </span>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
+              </div>
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Recurring Chores
+                </span>
+                <span className="text-xs text-muted">
+                  {recurringRules.length} standing rules
+                </span>
+              </div>
+            </Link>
+
+            {/* Gateway 4: Pantry & Safety Stock */}
+            <Link
+              to="/requests"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
+                  <Icon name="inventory_2" className="text-[18px]" />
+                </span>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
+              </div>
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Pantry Stock
+                </span>
+                <span className="text-xs text-muted">
+                  {essentialsSummary.due > 0 ? `${essentialsSummary.due} items low` : 'All stocked'}
+                </span>
+              </div>
+            </Link>
+
+            {/* Gateway 5: Ledgers & Money */}
+            <Link
+              to="/money"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
+                  <Icon name="account_balance_wallet" className="text-[18px]" />
+                </span>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
+              </div>
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Shared Ledgers
+                </span>
+                <span className="text-xs text-muted">
+                  {ledgers.length} family ledgers
+                </span>
+              </div>
+            </Link>
+
+            {/* Gateway 6: Family & Roles */}
+            <Link
+              to="/members"
+              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
+                  <Icon name="group" className="text-[18px]" />
+                </span>
+                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
+              </div>
+              <div className="mt-3 flex flex-col">
+                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
+                  Family Members
+                </span>
+                <span className="text-xs text-muted">
+                  {seatsUsed} of {seatCap} seats
+                </span>
+              </div>
+            </Link>
           </div>
         </section>
 
         {/* -------------------------------------------------------------------
-            ROW 3: Purity UI Style "Active Tasks" List + Household Capacity Gauge
+            ROW 3: Active Operations Hub (Tasks List + Operational Widgets)
         -------------------------------------------------------------------- */}
         <section className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-          {/* Left (8 Cols): Today's Active Tasks Table / List */}
+          {/* Left (8 Cols): Today's Active Errands & Chores Hub */}
           <div className="rounded-3xl border border-outline-variant/30 bg-surface p-6 shadow-e1 lg:col-span-8">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
               <div>
-                <h3 className="text-headline-sm font-bold text-on-surface">
-                  Today&apos;s Active Errands
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-headline-sm font-bold text-on-surface">
+                    Today&apos;s Active Errands
+                  </h3>
+                  <Badge tone={overdueCount > 0 ? 'danger' : 'neutral'}>
+                    {displayedTasks.length} Shown
+                  </Badge>
+                </div>
                 <p className="text-body-sm text-muted">
-                  High-priority tasks scheduled for your family today
+                  Real-time status of domestic chores, assigned owners, and locations
                 </p>
               </div>
 
-              <Link
-                to="/requests"
-                className="flex items-center gap-1 text-label-md font-bold text-secondary hover:underline"
-              >
-                <span>View All In Kanban</span>
-                <Icon name="arrow_forward" className="text-[14px]" />
-              </Link>
+              {/* Segmented Filter Pills */}
+              <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTaskFilter('focus')}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                    taskFilter === 'focus'
+                      ? 'bg-surface text-secondary shadow-xs'
+                      : 'text-muted hover:text-on-surface'
+                  }`}
+                >
+                  Immediate Focus ({overdueCount + dueTodayCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskFilter('my')}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                    taskFilter === 'my'
+                      ? 'bg-surface text-secondary shadow-xs'
+                      : 'text-muted hover:text-on-surface'
+                  }`}
+                >
+                  Assigned to Me ({assignedToMeCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskFilter('completed')}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                    taskFilter === 'completed'
+                      ? 'bg-surface text-secondary shadow-xs'
+                      : 'text-muted hover:text-on-surface'
+                  }`}
+                >
+                  Done Today ({completedTodayCount})
+                </button>
+              </div>
             </div>
 
             <div className="pt-4">
-              {todayTasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
+              {displayedTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
                     <Icon name="task_alt" className="text-[28px]" />
                   </span>
-                  <span className="mt-3 text-body-md font-bold text-on-surface">No pending tasks today</span>
-                  <p className="mt-1 text-body-sm text-muted">Enjoy your day or add a new household need.</p>
-                  <button
-                    type="button"
+                  <span className="mt-3 text-body-md font-bold text-on-surface">
+                    {taskFilter === 'completed'
+                      ? 'No tasks completed yet today'
+                      : 'All caught up in this view!'}
+                  </span>
+                  <p className="mt-1 text-body-sm text-muted max-w-sm">
+                    {taskFilter === 'completed'
+                      ? 'Completed chores and groceries will show here with appreciation records.'
+                      : 'No pending errands requiring attention. You can add a new household need anytime.'}
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="md"
                     onClick={openAddRequest}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-label-md font-bold text-white shadow-xs hover:bg-primary"
+                    className="mt-4 gap-1.5"
                   >
                     <Icon name="add" className="text-[18px]" />
-                    <span>Add Request</span>
-                  </button>
+                    <span>Add Household Request</span>
+                  </Button>
                 </div>
               ) : (
                 <div className="flex flex-col divide-y divide-outline-variant/15">
-                  {todayTasks.map((task) => (
+                  {displayedTasks.map((task) => (
                     <div
                       key={task.id}
                       className="group -mx-2 flex items-center justify-between rounded-xl px-3 py-3 transition-colors hover:bg-sage-soft/40"
@@ -412,7 +574,7 @@ export function DashboardPage() {
                           title="View task in Kanban"
                           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-outline-variant/60 bg-surface transition-colors hover:border-secondary hover:text-secondary group-hover:border-secondary"
                         >
-                          <span className="h-2 w-2 rounded-full bg-transparent group-hover:bg-secondary/20" />
+                          <span className="h-2 w-2 rounded-full bg-transparent group-hover:bg-secondary/40" />
                         </Link>
 
                         <div className="flex min-w-0 flex-col">
@@ -450,6 +612,12 @@ export function DashboardPage() {
                                 </span>
                               </span>
                             )}
+                            {task.status === 'completed' && (
+                              <span className="inline-flex items-center gap-1 text-success font-medium">
+                                <Icon name="check" className="text-[14px]" />
+                                Completed
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -479,66 +647,156 @@ export function DashboardPage() {
               )}
             </div>
 
-            {/* Purity UI Bottom Summary Strip */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-outline-variant/15 pt-5 text-center">
-              <div>
-                <span className="text-xs uppercase text-muted font-bold tracking-wider">Total Items</span>
-                <p className="mt-1 text-lg font-extrabold text-on-surface">
-                  {(board.data?.overdue?.length ?? 0) + (board.data?.due_today?.length ?? 0) + (board.data?.assigned_to_me?.length ?? 0) + (board.data?.backlog?.length ?? 0)}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs uppercase text-muted font-bold tracking-wider">Stores Active</span>
-                <p className="mt-1 text-lg font-extrabold text-primary">
-                  {quota.data?.usage.places ?? 2}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs uppercase text-muted font-bold tracking-wider">Seats In Sync</span>
-                <p className="mt-1 text-lg font-extrabold text-secondary">
-                  {seatsUsed} / {seatCap}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs uppercase text-muted font-bold tracking-wider">Phone Calling</span>
-                <p className="mt-1 text-base font-extrabold text-on-surface flex items-center justify-center gap-1">
-                  <Icon name="phone" className="text-[15px] text-primary" />
-                  <span>Direct Native</span>
-                </p>
-              </div>
+            {/* Bottom Link to Full Kanban */}
+            <div className="mt-6 flex items-center justify-between border-t border-outline-variant/15 pt-4 text-xs">
+              <span className="text-muted">
+                Looking for the full backlog or multi-lane board?
+              </span>
+              <Link
+                to="/requests"
+                className="inline-flex items-center gap-1 font-bold text-secondary hover:underline"
+              >
+                <span>Go to Errand Kanban</span>
+                <Icon name="arrow_forward" className="text-[14px]" />
+              </Link>
             </div>
           </div>
 
-          {/* Right (4 Cols): Household Capacity & Quota (Purity UI "Orders overview" card style) */}
+          {/* Right (4 Cols): Operational Summary Widgets */}
           <div className="flex flex-col gap-6 lg:col-span-4">
-            {/* Household Capacity Card */}
-            <Card className="rounded-3xl p-6 shadow-e1">
-              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-                    <Icon name="cottage" className="text-[20px]" />
-                  </div>
+            {/* Widget 1: Pantry & Low-Stock Alert with 1-Tap Errand Creation */}
+            <Card className="rounded-3xl p-5 shadow-e1">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sage-soft text-primary">
+                    <Icon name="inventory_2" className="text-[18px]" />
+                  </span>
                   <div>
-                    <h3 className="text-headline-sm font-bold text-on-surface">
+                    <h4 className="text-sm font-bold text-on-surface">Pantry & Staples</h4>
+                    <span className="text-[11px] text-muted">Safety stock thresholds</span>
+                  </div>
+                </div>
+                <Badge tone={lowStockItems.length > 0 ? 'warning' : 'success'}>
+                  {lowStockItems.length > 0 ? `${lowStockItems.length} Due` : 'Stocked'}
+                </Badge>
+              </div>
+
+              <div className="mt-3.5 flex flex-col gap-2.5">
+                {lowStockItems.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-forest-soft text-secondary">
+                      <Icon name="done_all" className="text-[18px]" />
+                    </span>
+                    <p className="mt-1.5 text-xs font-semibold text-on-surface">Pantry is well-stocked</p>
+                    <p className="text-[11px] text-muted">No items are below minimum safety levels.</p>
+                  </div>
+                ) : (
+                  lowStockItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-low p-2.5"
+                    >
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-xs font-bold text-on-surface">
+                          {item.name}
+                        </span>
+                        <span className="text-[11px] text-muted">
+                          Stock: {item.stock_level} (Safety: {item.threshold})
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="soft"
+                        disabled={createRestockErrand.isPending}
+                        onClick={() => createRestockErrand.mutate(item.id)}
+                        className="h-7 text-[11px] px-2.5"
+                      >
+                        + Errand
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
+            {/* Widget 2: Upcoming Recurring Chores */}
+            <Card className="rounded-3xl p-5 shadow-e1">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                    <Icon name="event_repeat" className="text-[18px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface">Standing Chores</h4>
+                    <span className="text-[11px] text-muted">Upcoming recurring cadences</span>
+                  </div>
+                </div>
+                <Link
+                  to="/recurring"
+                  className="text-xs font-bold text-secondary hover:underline"
+                >
+                  Manage →
+                </Link>
+              </div>
+
+              <div className="mt-3.5 flex flex-col gap-2">
+                {recurringRules.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-muted">
+                    No recurring habits configured yet.
+                  </div>
+                ) : (
+                  recurringRules.slice(0, 3).map((rule) => (
+                    <div
+                      key={rule.id}
+                      className="flex items-center justify-between rounded-xl bg-surface-container-low p-2.5 text-xs"
+                    >
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate font-semibold text-on-surface">
+                          {rule.title}
+                        </span>
+                        <span className="text-[11px] capitalize text-muted">
+                          {rule.cadence} · Next: {rule.next_run_on ?? 'Scheduled'}
+                        </span>
+                      </div>
+                      {rule.assignee && (
+                        <span className="truncate text-[11px] font-medium text-secondary">
+                          {(rule.assignee.name ?? 'Member').split(' ')[0]}
+                        </span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+
+            {/* Widget 3: Household Sync & Subscription Quotas */}
+            <Card className="rounded-3xl p-5 shadow-e1">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sage-soft text-primary">
+                    <Icon name="cottage" className="text-[18px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface">
                       {active?.name ?? 'Household'}
-                    </h3>
-                    <span className="text-label-sm text-muted">
+                    </h4>
+                    <span className="text-[11px] text-muted">
                       {quota.planLabel}
                     </span>
                   </div>
                 </div>
-                {active && (
-                  <Badge tone={active.status === 'suspended' ? 'danger' : 'success'}>
-                    {active.status}
-                  </Badge>
-                )}
+                <Link
+                  to="/billing"
+                  className="text-xs font-bold text-secondary hover:underline"
+                >
+                  Plan →
+                </Link>
               </div>
 
-              {/* Seat Capacity Gauge */}
-              <div className="mt-5 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-label-sm">
-                  <span className="font-semibold text-on-surface">Family Member Seats</span>
-                  <span className="text-muted font-medium">
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-on-surface">Family Seats</span>
+                  <span className="text-muted">
                     {seatsUsed} of {seatCap} used
                   </span>
                 </div>
@@ -550,75 +808,14 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              {/* Direct Fast Navigation Links */}
-              <div className="mt-6 flex flex-col gap-1 border-t border-outline-variant/15 pt-4">
-                <Link
-                  to="/requests"
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-body-md font-medium text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon name="shopping_bag" className="text-[18px] text-primary" />
-                    <span>Shopping Mode &amp; Pantry</span>
-                  </span>
-                  <Icon name="chevron_right" className="text-[16px] text-muted" />
-                </Link>
-
-                <Link
-                  to="/places"
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-body-md font-medium text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon name="pin_drop" className="text-[18px] text-primary" />
-                    <span>Saved Stores &amp; Geofences</span>
-                  </span>
-                  <Icon name="chevron_right" className="text-[16px] text-muted" />
-                </Link>
-
-                <Link
-                  to="/recurring"
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-body-md font-medium text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon name="event_repeat" className="text-[18px] text-primary" />
-                    <span>Recurring Staples</span>
-                  </span>
-                  <Icon name="chevron_right" className="text-[16px] text-muted" />
-                </Link>
-
-                <Link
-                  to="/members"
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-body-md font-medium text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon name="group" className="text-[18px] text-primary" />
-                    <span>Family Roles &amp; Invites</span>
-                  </span>
-                  <Icon name="chevron_right" className="text-[16px] text-muted" />
+              <div className="mt-4 flex items-center justify-between border-t border-outline-variant/15 pt-3 text-xs text-muted">
+                <span>Places: {places.length}</span>
+                <span>Ledgers: {ledgers.length}</span>
+                <Link to="/settings" className="font-semibold text-secondary hover:underline">
+                  Settings →
                 </Link>
               </div>
             </Card>
-
-            {/* Profile Snapshot Card */}
-            <div className="flex items-center justify-between rounded-3xl border border-outline-variant/30 bg-surface p-4.5 shadow-e1">
-              <div className="flex items-center gap-3">
-                <Avatar name={user?.name ?? 'User'} size="md" />
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-label-lg font-bold text-on-surface">
-                    {user?.name}
-                  </span>
-                  <span className="truncate text-body-sm text-muted">
-                    {user?.email}
-                  </span>
-                </div>
-              </div>
-              <Link
-                to="/settings"
-                title="Account Settings"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
-              >
-                <Icon name="tune" className="text-[18px]" />
-              </Link>
-            </div>
           </div>
         </section>
       </div>
