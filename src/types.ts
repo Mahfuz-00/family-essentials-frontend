@@ -578,6 +578,7 @@ export type LedgerGrantRole = 'manager' | 'summary';
 
 export interface PaymentGatewayCredentials {
   enabled: boolean;
+  sandbox?: boolean;
   publishable_key?: string;
   secret_key?: string;
   webhook_secret?: string;
@@ -587,12 +588,39 @@ export interface PaymentGatewayCredentials {
   store_passwd?: string;
   client_id?: string;
   client_secret?: string;
+  webhook_id?: string;
+  app_key?: string;
+  app_secret?: string;
+  username?: string;
+  password?: string;
+  merchant_id?: string;
+  public_key?: string;
+  private_key?: string;
+  api_key?: string;
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+  routing_code?: string;
+  swift_bic?: string;
   instructions?: string;
   auto_mark_paid?: boolean;
+  simulate_failure?: boolean;
+  latency_ms?: number;
 }
 
 export interface PaymentGatewaySettings {
-  active_gateway: 'stripe' | 'razorpay' | 'sslcommerz' | 'paypal' | 'mock' | 'cash';
+  active_gateway:
+    | 'stripe'
+    | 'paypal'
+    | 'razorpay'
+    | 'sslcommerz'
+    | 'bkash'
+    | 'nagad'
+    | 'paystack'
+    | 'mollie'
+    | 'bank_transfer'
+    | 'mock'
+    | 'cash';
   mode: 'sandbox' | 'live';
   currency: string;
   gateways: Record<string, PaymentGatewayCredentials>;
@@ -603,10 +631,18 @@ export interface PaymentGatewaySettings {
 export interface AvailablePaymentMethods {
   active_gateway: string;
   currency: string;
+  mode?: string;
+  is_sandbox?: boolean;
   cash: {
     enabled: boolean;
     instructions: string;
     auto_mark_paid: boolean;
+  };
+  bank_transfer?: {
+    enabled: boolean;
+    instructions: string;
+    bank_name?: string;
+    account_number?: string;
   };
 }
 
