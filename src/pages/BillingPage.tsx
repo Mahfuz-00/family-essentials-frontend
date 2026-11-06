@@ -76,7 +76,9 @@ export function BillingPage() {
       (await api.post('/v1/billing/upgrade', payload)).data,
     onSuccess: (data: any) => {
       setNotice(
-        data.invoice?.payment_method === 'cash'
+        data.invoice?.payment_method === 'cash' && data.invoice?.status === 'pending'
+          ? `Cash payment request submitted for ${data.invoice?.tier ?? selectedTier} plan! Invoice ${data.invoice?.invoice_number} is pending in-person collection. Platform admin has been notified and will approve and issue your invoice upon payment.`
+          : data.invoice?.payment_method === 'cash'
           ? `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Your physical invoice will be issued in person upon cash settlement.`
           : `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon payment.`
       );

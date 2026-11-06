@@ -610,6 +610,43 @@ export interface AvailablePaymentMethods {
   };
 }
 
+export interface PlatformBillingInvoice {
+  id: number;
+  tenant_id: number;
+  invoice_number: string;
+  amount_cents: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'failed' | 'refunded';
+  tier: string;
+  billing_period: string;
+  paid_at: string | null;
+  payment_method: string;
+  last4: string | null;
+  created_at: string;
+  tenant?: {
+    id: number;
+    name: string;
+    slug: string;
+    subscription_tier?: string;
+    status?: string;
+  };
+}
+
+export interface PlatformNotificationsResponse {
+  total_pending: number;
+  pending_cash_count: number;
+  pending_refund_count: number;
+  cash_settlements: PlatformBillingInvoice[];
+  refund_requests: Array<{
+    id: number;
+    tenant_name: string;
+    user_email: string;
+    amount_cents: number;
+    reason: string;
+    status: string;
+  }>;
+}
+
 export interface EmailTemplateItem {
   id: string;
   name: string;

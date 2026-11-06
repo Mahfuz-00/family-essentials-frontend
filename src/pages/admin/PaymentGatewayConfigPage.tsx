@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -484,7 +485,7 @@ export function PaymentGatewayConfigPage() {
                   )}
                 </div>
 
-                <div className="mt-2 flex items-center justify-between border-t border-surface-container pt-3">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-surface-container pt-3">
                   <Button
                     size="sm"
                     variant="outline"
@@ -494,6 +495,13 @@ export function PaymentGatewayConfigPage() {
                     <Icon name="bolt" className="text-[16px]" />
                     {testing ? 'Testing…' : 'Test Cash Payment Configuration'}
                   </Button>
+
+                  <Link to="/admin/billing">
+                    <Button size="sm" variant="outline">
+                      <Icon name="receipt_long" className="text-[16px]" />
+                      Open Cash Settlement Queue &rarr;
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             </div>

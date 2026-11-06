@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
@@ -9,6 +10,7 @@ import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import { useUiStore } from '@/stores/ui';
+import type { PlatformNotificationsResponse } from '@/types';
 
 type RoutePath =
   | '/'
@@ -29,6 +31,7 @@ type RoutePath =
   | '/admin'
   | '/admin/analytics'
   | '/admin/tenants'
+  | '/admin/billing'
   | '/admin/payment-gateways'
   | '/admin/email-config'
   | '/admin/refunds'
@@ -101,6 +104,7 @@ const platformSections: NavSection[] = [
     title: 'System & Finance Controls',
     items: [
       { to: '/admin/settings', label: 'System Settings', icon: 'settings_suggest', exact: true },
+      { to: '/admin/billing', label: 'Invoices & Settlements', icon: 'receipt_long', exact: true },
       { to: '/admin/payment-gateways', label: 'Payment Gateways', icon: 'payments', exact: true },
       { to: '/admin/refunds', label: 'Refund Policy & Requests', icon: 'currency_exchange', exact: true },
       { to: '/admin/email-config', label: 'Email Configuration', icon: 'mail', exact: true },
@@ -138,6 +142,7 @@ const routeLabels: Record<string, string> = {
   '/admin': 'Global Analytics Overview',
   '/admin/analytics': 'Platform Analytics',
   '/admin/tenants': 'Tenant Workspaces & Client Families',
+  '/admin/billing': 'Invoices & Cash Settlements',
   '/admin/settings': 'System & Platform Settings',
   '/admin/profile': 'Admin Profile Management',
   '/admin/health': 'System Health',
@@ -163,9 +168,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
 
   const isPlatformAdmin = user?.is_platform_admin === true;
+
+  const notificationsQuery = useQuery({
+    queryKey: ['platform', 'notifications'],
+    queryFn: async () => (await api.get<PlatformNotificationsResponse>('/v1/platform/notifications')).data,
+    enabled: isPlatformAdmin,
+    refetchInterval: 15000,
+  });
+
+  const pendingNotifCount = notificationsQuery.data?.total_pending ?? 0;
+  const pendingCashCount = notificationsQuery.data?.pending_cash_count ?? 0;
 
   const location = useLocation();
   const path = location.pathname;
@@ -174,18 +191,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
     routeLabels[`/${path.split('/')[1] ?? ''}`] ??
     (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
 
-  // Keyboard close for mobile drawer and click outside for profile dropdown
+  // Keyboard close for mobile drawer and click outside for dropdowns
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMobileMenuOpen(false);
         setProfileDropdownOpen(false);
+        setNotifDropdownOpen(false);
       }
     };
 
     const onClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setProfileDropdownOpen(false);
+      }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
+        setNotifDropdownOpen(false);
       }
     };
 
@@ -290,7 +311,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   }}
                 >
                   <Icon name={item.icon} className="text-[20px] shrink-0" />
-                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  {!sidebarCollapsed && <span className="truncate flex-1">{item.label}</span>}
+                  {!sidebarCollapsed && item.to === '/admin/billing' && pendingCashCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-xs">
+                      {pendingCashCount}
+                    </span>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -381,7 +407,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       }}
                     >
                       <Icon name={item.icon} className="text-[20px]" />
-                      <span>{item.label}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {item.to === '/admin/billing' && pendingCashCount > 0 && (
+                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-xs">
+                          {pendingCashCount}
+                        </span>
+                      )}
                     </Link>
                   ))}
                 </nav>
@@ -486,6 +517,116 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <Icon name="add" className="text-[18px]" />
                 <span className="inline">Add Request</span>
               </button>
+            )}
+
+            {/* Platform Admin Notification Bell */}
+            {isPlatformAdmin && (
+              <div className="relative" ref={notifDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
+                  aria-label="Platform Notifications"
+                  aria-expanded={notifDropdownOpen}
+                  className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-outline-variant/40 bg-surface text-on-surface transition-colors hover:bg-sage-soft active:scale-95"
+                >
+                  <Icon name="notifications" className="text-[20px]" />
+                  {pendingNotifCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow-xs">
+                      {pendingNotifCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-outline-variant/30 bg-surface p-3 shadow-e3 z-50">
+                    <div className="flex items-center justify-between border-b border-outline-variant/20 pb-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Icon name="notifications_active" className="text-[18px] text-secondary" />
+                        <span className="text-xs font-bold text-on-surface uppercase tracking-wider">
+                          Admin Action Items
+                        </span>
+                      </div>
+                      <Badge tone={pendingNotifCount > 0 ? 'warning' : 'neutral'}>
+                        {pendingNotifCount} Pending
+                      </Badge>
+                    </div>
+
+                    <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
+                      {/* Cash Settlements */}
+                      {(notificationsQuery.data?.cash_settlements ?? []).map((cs) => (
+                        <div
+                          key={`cs-${cs.id}`}
+                          className="flex flex-col gap-1.5 rounded-xl border border-amber-300 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/30 p-2.5 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-on-surface flex items-center gap-1">
+                              <Icon name="payments" className="text-[14px] text-amber-600" />
+                              {cs.tenant?.name ?? `Household #${cs.tenant_id}`}
+                            </span>
+                            <Badge tone="warning">Pending Cash</Badge>
+                          </div>
+                          <p className="text-[11px] text-muted">
+                            Requested <strong>{cs.tier}</strong> plan (${(cs.amount_cents / 100).toFixed(2)}). Awaiting in-person cash collection.
+                          </p>
+                          <div className="flex justify-end pt-1">
+                            <Link
+                              to="/admin/billing"
+                              onClick={() => setNotifDropdownOpen(false)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-semibold text-on-secondary hover:bg-primary transition-colors"
+                            >
+                              <Icon name="check_circle" className="text-[12px]" />
+                              Review &amp; Approve
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Refund Requests */}
+                      {(notificationsQuery.data?.refund_requests ?? []).map((rr) => (
+                        <div
+                          key={`rr-${rr.id}`}
+                          className="flex flex-col gap-1.5 rounded-xl border border-outline-variant/40 bg-surface-container-low p-2.5 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-on-surface">{rr.tenant_name}</span>
+                            <Badge tone="neutral">Refund Request</Badge>
+                          </div>
+                          <p className="text-[11px] text-muted">
+                            ${(rr.amount_cents / 100).toFixed(2)} refund requested: &ldquo;{rr.reason}&rdquo;
+                          </p>
+                          <div className="flex justify-end pt-1">
+                            <Link
+                              to="/admin/refunds"
+                              onClick={() => setNotifDropdownOpen(false)}
+                              className="text-[11px] font-semibold text-secondary hover:underline"
+                            >
+                              Review Refund &rarr;
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+
+                      {pendingNotifCount === 0 && (
+                        <div className="py-6 text-center text-muted">
+                          <Icon name="done_all" className="mx-auto text-[24px] text-secondary opacity-60 mb-1" />
+                          <p className="text-xs font-medium">All caught up!</p>
+                          <p className="text-[11px]">No pending cash settlements or refund requests.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-t border-outline-variant/20 pt-2 mt-2 text-center">
+                      <Link
+                        to="/admin/billing"
+                        onClick={() => setNotifDropdownOpen(false)}
+                        className="text-xs font-semibold text-secondary hover:underline"
+                      >
+                        View Full Cash Settlement Queue &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Top Bar Profile Dropdown */}

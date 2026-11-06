@@ -29,6 +29,7 @@ import { RolesPage } from '@/pages/members/RolesPage';
 import { LedgerPage } from '@/pages/money/LedgerPage';
 import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
 import { EscalationPage } from '@/pages/requests/EscalationPage';
+import { AdminBillingPage } from '@/pages/admin/AdminBillingPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
 import { AuditLogPage } from '@/pages/admin/AuditLogPage';
 import { BackupsPage } from '@/pages/admin/BackupsPage';
@@ -334,6 +335,13 @@ const adminAnalyticsRoute = createRoute({
   component: PlatformAnalyticsPage,
 });
 
+const adminBillingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/billing',
+  beforeLoad: requirePlatformAdmin,
+  component: AdminBillingPage,
+});
+
 const adminPaymentGatewayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/payment-gateways',
@@ -415,6 +423,7 @@ export const routeTree = rootRoute.addChildren([
   adminAnalyticsRoute,
   adminTenantsRoute,
   adminTenantDetailRoute,
+  adminBillingRoute,
   adminPaymentGatewayRoute,
   adminEmailConfigRoute,
   adminRefundsRoute,

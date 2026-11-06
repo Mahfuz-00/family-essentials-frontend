@@ -27,6 +27,80 @@ describe('platform admin console enhancements', () => {
     installGetRoutes(apiMock, {
       '/v1/auth/me': { data: landlord },
       '/v1/auth/tenants': { data: [] },
+      '/v1/platform/notifications': {
+        total_pending: 1,
+        pending_cash_count: 1,
+        pending_refund_count: 0,
+        cash_settlements: [
+          {
+            id: 88,
+            tenant_id: 1,
+            invoice_number: 'INV-2026-PENDING-CASH',
+            amount_cents: 1900,
+            currency: 'USD',
+            status: 'pending',
+            tier: 'family',
+            billing_period: 'monthly',
+            paid_at: null,
+            payment_method: 'cash',
+            last4: 'CASH',
+            created_at: '2026-11-06T10:00:00Z',
+            tenant: { id: 1, name: 'The Tanvir Household', slug: 'the-tanvir-household' },
+          },
+        ],
+        refund_requests: [],
+      },
+      '/v1/platform/billing/pending-cash': {
+        data: [
+          {
+            id: 88,
+            tenant_id: 1,
+            invoice_number: 'INV-2026-PENDING-CASH',
+            amount_cents: 1900,
+            currency: 'USD',
+            status: 'pending',
+            tier: 'family',
+            billing_period: 'monthly',
+            paid_at: null,
+            payment_method: 'cash',
+            last4: 'CASH',
+            created_at: '2026-11-06T10:00:00Z',
+            tenant: { id: 1, name: 'The Tanvir Household', slug: 'the-tanvir-household' },
+          },
+        ],
+        count: 1,
+      },
+      '/v1/platform/billing/invoices': {
+        invoices: {
+          data: [
+            {
+              id: 88,
+              tenant_id: 1,
+              invoice_number: 'INV-2026-PENDING-CASH',
+              amount_cents: 1900,
+              currency: 'USD',
+              status: 'pending',
+              tier: 'family',
+              billing_period: 'monthly',
+              paid_at: null,
+              payment_method: 'cash',
+              last4: 'CASH',
+              created_at: '2026-11-06T10:00:00Z',
+              tenant: { id: 1, name: 'The Tanvir Household', slug: 'the-tanvir-household' },
+            },
+          ],
+          total: 1,
+          current_page: 1,
+          last_page: 1,
+        },
+        stats: {
+          total_count: 1,
+          paid_count: 0,
+          pending_cash_count: 1,
+          pending_cash_cents: 1900,
+          total_revenue_cents: 0,
+        },
+      },
       '/v1/platform/settings/payment': {
         data: {
           active_gateway: 'stripe',
@@ -273,6 +347,40 @@ describe('platform admin console enhancements', () => {
 
     expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/test', { gateway: 'cash' });
     expect(await screen.findByText('Cash payment and offline collection workflow is active and ready.')).toBeInTheDocument();
+  });
+
+  it('displays platform admin notification bell and allows approving pending cash payments at /admin/billing', async () => {
+    apiMock.post.mockResolvedValueOnce(
+      jsonResponse({
+        message: 'Cash payment of $19.00 approved. Invoice INV-2026-PENDING-CASH is now Paid and the household plan has been upgraded.',
+        invoice: {
+          id: 88,
+          invoice_number: 'INV-2026-PENDING-CASH',
+          status: 'paid',
+        },
+      }),
+    );
+
+    renderApp('/admin/billing');
+
+    expect(await screen.findByRole('heading', { name: 'Billing, Invoices & Cash Settlements' })).toBeInTheDocument();
+    expect(await screen.findByText(/Pending In-Person Cash Settlements \(1\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText('INV-2026-PENDING-CASH').length).toBeGreaterThanOrEqual(1);
+
+    // Check notification bell on top bar
+    const bellBtn = screen.getByRole('button', { name: /Platform Notifications/i });
+    expect(bellBtn).toBeInTheDocument();
+    await userEvent.click(bellBtn);
+
+    expect(await screen.findByText('Admin Action Items')).toBeInTheDocument();
+    expect(screen.getAllByText(/Awaiting in-person cash collection/i).length).toBeGreaterThanOrEqual(1);
+
+    // Click Approve & Mark Paid button on the pending cash settlement card
+    const approveBtn = screen.getByRole('button', { name: /Approve & Mark Paid/i });
+    await userEvent.click(approveBtn);
+
+    expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/billing/invoices/88/approve-cash');
+    expect(await screen.findByText(/Cash payment of \$19\.00 approved/i)).toBeInTheDocument();
   });
 
   it('renders email configuration and dispatches test email', async () => {
