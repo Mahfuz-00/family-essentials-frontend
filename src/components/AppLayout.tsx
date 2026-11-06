@@ -262,35 +262,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Scrollable Navigation Body */}
         <div className="flex-1 overflow-y-auto px-3 py-3">
-          {/* Scope indicator */}
-          <div className="mb-2">
-            {sidebarCollapsed ? (
-              <div
-                title={isPlatformAdmin ? 'Scope: All tenants' : `Active: ${active?.name ?? 'None'}`}
-                className="flex h-10 w-full items-center justify-center rounded-xl bg-surface-container-low transition-colors hover:bg-sage-soft"
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-secondary" />
-              </div>
-            ) : (
-              <div className="flex items-center justify-between rounded-xl bg-surface-container-low px-3.5 py-2 transition-colors hover:bg-sage-soft/70">
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-secondary" />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {isPlatformAdmin ? 'Scope' : 'Active Household'}
-                    </span>
-                    <span className="truncate text-label-sm font-semibold text-on-surface">
-                      {isPlatformAdmin ? 'All tenants' : (active?.name ?? 'None selected')}
-                    </span>
-                  </span>
-                </span>
-                {!isPlatformAdmin && (
-                  <Icon name="unfold_more" className="text-[16px] text-on-surface-variant" />
-                )}
-              </div>
-            )}
-          </div>
-
           {sections.map((section) => (
             <nav key={section.title} className="flex flex-col gap-1 py-1">
               {!sidebarCollapsed && (
@@ -392,22 +363,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
-              <div className="mb-2">
-                <div className="flex items-center justify-between rounded-xl bg-surface-container-low px-4 py-2.5">
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-secondary" />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-label-sm uppercase tracking-wider text-muted">
-                        {isPlatformAdmin ? 'Scope' : 'Active Household'}
-                      </span>
-                      <span className="truncate text-label-lg font-semibold text-on-surface">
-                        {isPlatformAdmin ? 'All tenants' : (active?.name ?? 'None selected')}
-                      </span>
-                    </span>
-                  </span>
-                </div>
-              </div>
-
               {sections.map((section) => (
                 <nav key={section.title} className="flex flex-col gap-1 py-1.5">
                   <span className="px-3 py-1 text-label-sm font-bold uppercase tracking-wider text-muted">
