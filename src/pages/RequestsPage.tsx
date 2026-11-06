@@ -127,6 +127,7 @@ export function RequestsPage() {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
 
+  const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
   const [query, setQuery] = useState('');
   const [assignee, setAssignee] = useState('all');
@@ -275,7 +276,19 @@ export function RequestsPage() {
     onError,
   });
 
-  const busy = create.isPending || act.isPending || assign.isPending || snooze.isPending || escalate.isPending;
+  const thank = useMutation({
+    mutationFn: async (id: number) =>
+      (await api.post<{ message: string }>(`/v1/requests/${id}/thank`)).data,
+    onSuccess: (data) => {
+      setNotice(data.message);
+      setNoticeTone('success');
+      setError(null);
+      void refresh();
+    },
+    onError,
+  });
+
+  const busy = create.isPending || act.isPending || assign.isPending || snooze.isPending || escalate.isPending || thank.isPending;
   const memberList = members.data ?? [];
   const placeList = places.data ?? [];
   const firstName = user?.name?.split(' ')[0] ?? 'me';
@@ -354,6 +367,19 @@ export function RequestsPage() {
 
   const categories = useMemo(() => distinct((request) => request.category ?? 'uncategorised'), [board.data]);
   const stores = useMemo(() => distinct((request) => request.store_name), [board.data]);
+
+  const visibleColumns = useMemo(() => {
+    if (focusMode === 'today') {
+      return columns.filter((c) => c.key === 'overdue' || c.key === 'due_today' || c.key === 'assigned_to_me');
+    }
+    if (focusMode === 'backlog') {
+      return columns.filter((c) => c.key === 'backlog');
+    }
+    if (focusMode === 'completed') {
+      return columns.filter((c) => c.key === 'completed_today');
+    }
+    return columns;
+  }, [focusMode]);
 
   const overdueList = filtered?.overdue ?? [];
 
@@ -483,6 +509,58 @@ export function RequestsPage() {
           </section>
         )}
 
+        {/* Focus Mode Navigation */}
+        <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setFocusMode('all')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'all'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="view_kanban" className="text-[16px]" />
+            Full Board
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('today')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'today'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="bolt" className="text-[16px]" />
+            Today&apos;s Focus
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('backlog')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'backlog'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="inventory_2" className="text-[16px]" />
+            Backlog ({filtered?.backlog?.length ?? 0})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFocusMode('completed')}
+            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+              focusMode === 'completed'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="check_circle" className="text-[16px]" />
+            Completed Archive ({filtered?.completed_today?.length ?? 0})
+          </button>
+        </div>
+
         {/* Filter bar */}
         <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3 shadow-e1 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -603,8 +681,12 @@ export function RequestsPage() {
         {board.isError && <Alert>{apiError(board.error)}</Alert>}
 
         {board.data && filtered && view === 'board' && (
-          <section className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {columns.map((column) => {
+          <section className={`grid grid-cols-1 items-start gap-4 ${
+            focusMode === 'today' ? 'md:grid-cols-3' :
+            focusMode === 'backlog' || focusMode === 'completed' ? 'grid-cols-1 max-w-3xl mx-auto w-full' :
+            'md:grid-cols-2 xl:grid-cols-5'
+          }`}>
+            {visibleColumns.map((column) => {
               const requests = filtered[column.key];
 
               return (
@@ -636,6 +718,7 @@ export function RequestsPage() {
                       onAction={(action) => act.mutate({ id: request.id, action })}
                       onHandover={(assigneeId) => assign.mutate({ id: request.id, assigneeId })}
                       onSnooze={() => snooze.mutate(request.id)}
+                      onThank={() => thank.mutate(request.id)}
                     />
                   ))}
                 </div>
@@ -655,6 +738,7 @@ export function RequestsPage() {
                     <th className="px-5 py-3 font-bold">Assignee</th>
                     <th className="px-5 py-3 font-bold">Due</th>
                     <th className="px-5 py-3 font-bold">Status</th>
+                    <th className="px-5 py-3 font-bold text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -695,6 +779,20 @@ export function RequestsPage() {
                           <Badge tone={request.status === 'completed' ? 'success' : 'neutral'}>
                             {request.status}
                           </Badge>
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          {request.status === 'completed' && (
+                            <button
+                              type="button"
+                              onClick={() => thank.mutate(request.id)}
+                              disabled={busy}
+                              className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2.5 py-1 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs"
+                              title="Send appreciation"
+                            >
+                              <Icon name="favorite" className="text-[14px] text-error" />
+                              <span>Say Thanks 🙌</span>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -998,6 +1096,7 @@ function TaskCard({
   onAction,
   onHandover,
   onSnooze,
+  onThank,
 }: {
   request: ServiceRequest;
   busy: boolean;
@@ -1006,6 +1105,7 @@ function TaskCard({
   onAction: (action: string) => void;
   onHandover: (assigneeId: number) => void;
   onSnooze: () => void;
+  onThank?: () => void;
 }) {
   const isOpen = ['pending', 'accepted', 'in_progress'].includes(request.status);
   const isOverdue = request.due_at != null && new Date(request.due_at) < new Date() && isOpen;
@@ -1114,10 +1214,24 @@ function TaskCard({
         )}
 
         {isDone && (
-          <span className="flex items-center gap-1.5 text-label-sm text-secondary">
-            <Icon name="check_circle" filled className="text-[16px]" />
-            Completed
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 text-label-sm text-secondary">
+              <Icon name="check_circle" filled className="text-[16px]" />
+              Completed
+            </span>
+            {onThank && (
+              <button
+                type="button"
+                onClick={onThank}
+                disabled={busy}
+                className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2 py-0.5 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs"
+                title="Send appreciation"
+              >
+                <Icon name="favorite" className="text-[13px] text-error" />
+                <span>Say Thanks 🙌</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </article>

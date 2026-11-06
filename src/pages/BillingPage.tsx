@@ -42,6 +42,7 @@ export function BillingPage() {
   const queryClient = useQueryClient();
   const active = useTenantStore((state) => state.active);
 
+  const [activeTab, setActiveTab] = useState<'plan' | 'invoices'>('plan');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<'plus' | 'family' | 'enterprise'>('family');
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'annual'>('monthly');
@@ -155,248 +156,282 @@ export function BillingPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
         {error && <Alert tone="error">{error}</Alert>}
 
-        {/* Invoicing Confirmation Note */}
-        <div className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-forest-soft/70 p-4 text-xs text-on-surface">
-          <Icon name="receipt_long" className="text-[22px] text-secondary shrink-0" />
-          <div className="flex flex-col gap-0.5">
-            <span className="font-bold text-secondary">Automatic Invoicing Guarantee</span>
-            <span>
-              An official tax invoice is automatically generated and permanently recorded in your household vault upon every subscription payment and plan upgrade.
-            </span>
-          </div>
+        {/* Tab Switcher */}
+        <div className="flex border-b border-outline-variant/30 gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('plan')}
+            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
+              activeTab === 'plan'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="credit_card" className="text-[18px]" />
+            Plan &amp; Quotas
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('invoices')}
+            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
+              activeTab === 'invoices'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="receipt_long" className="text-[18px]" />
+            Invoices &amp; Receipts ({invoicesList.length})
+          </button>
         </div>
 
-        {/* ---------------------- active subscription overview ---------------------- */}
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {usage.map((meter) => (
-              <SkeletonCard key={meter.label} />
-            ))}
-          </div>
-        ) : (
-          <Card className="p-6">
-            <div className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                    <Icon name="verified_user" className="text-[24px]" />
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-headline-md text-on-surface">{quota.planLabel}</h2>
-                      <Badge tone={active?.status === 'suspended' ? 'danger' : 'success'}>
-                        {active?.status === 'suspended' ? 'Suspended' : 'Active membership'}
-                      </Badge>
-                    </span>
-                    <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted">
-                      <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 font-mono">
-                        tier: {quota.plan?.key ?? active?.subscription_tier ?? '—'}
-                      </span>
-                      {quota.plan && (
-                        <span className="rounded-full bg-surface-container-low px-2.5 py-0.5">
-                          {quota.plan.price} {quota.plan.cadence}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setUpgradeModalOpen(true)}
-                  >
-                    <Icon name="credit_card" className="text-[16px]" />
-                    Change Plan
-                  </Button>
-                  <Link to="/members">
-                    <Button variant="soft">
-                      <Icon name="group" className="text-[16px]" />
-                      Manage seats
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {activeTab === 'plan' && (
+          <div className="flex flex-col gap-6">
+            {/* ---------------------- active subscription overview ---------------------- */}
+            {loading ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {usage.map((meter) => (
-                  <div
-                    key={meter.label}
-                    className="flex flex-col gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
-                  >
-                    <span className="flex items-center justify-between">
-                      <span className="text-label-sm text-muted">{meter.label}</span>
-                      <Icon name={meter.icon} className="text-[18px] text-primary" />
-                    </span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {meter.used}
-                      {meter.cap !== null && (
-                        <span className="text-body-md font-normal text-muted"> of {meter.cap}</span>
-                      )}
-                    </span>
-                    {meter.cap !== null && (
-                      <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
-                        <span
-                          className="block h-1.5 rounded-full bg-secondary"
-                          style={{ width: `${Math.min(100, (meter.used / meter.cap) * 100)}%` }}
-                        />
-                      </span>
-                    )}
-                    <span className="text-body-sm text-muted">{meter.note}</span>
-                  </div>
+                  <SkeletonCard key={meter.label} />
                 ))}
               </div>
-            </div>
-          </Card>
+            ) : (
+              <Card className="p-6">
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                        <Icon name="verified_user" className="text-[24px]" />
+                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-headline-md text-on-surface">{quota.planLabel}</h2>
+                          <Badge tone={active?.status === 'suspended' ? 'danger' : 'success'}>
+                            {active?.status === 'suspended' ? 'Suspended' : 'Active membership'}
+                          </Badge>
+                        </span>
+                        <span className="flex flex-wrap items-center gap-2 text-label-sm text-muted">
+                          <span className="rounded-full bg-surface-container-low px-2.5 py-0.5 font-mono">
+                            tier: {quota.plan?.key ?? active?.subscription_tier ?? '—'}
+                          </span>
+                          {quota.plan && (
+                            <span className="rounded-full bg-surface-container-low px-2.5 py-0.5">
+                              {quota.plan.price} {quota.plan.cadence}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setUpgradeModalOpen(true)}
+                      >
+                        <Icon name="credit_card" className="text-[16px]" />
+                        Change Plan
+                      </Button>
+                      <Link to="/members">
+                        <Button variant="soft">
+                          <Icon name="group" className="text-[16px]" />
+                          Manage seats
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {usage.map((meter) => (
+                      <div
+                        key={meter.label}
+                        className="flex flex-col gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
+                      >
+                        <span className="flex items-center justify-between">
+                          <span className="text-label-sm text-muted">{meter.label}</span>
+                          <Icon name={meter.icon} className="text-[18px] text-primary" />
+                        </span>
+                        <span className="text-headline-md font-bold text-on-surface">
+                          {meter.used}
+                          {meter.cap !== null && (
+                            <span className="text-body-md font-normal text-muted"> of {meter.cap}</span>
+                          )}
+                        </span>
+                        {meter.cap !== null && (
+                          <span className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                            <span
+                              className="block h-1.5 rounded-full bg-secondary"
+                              style={{ width: `${Math.min(100, (meter.used / meter.cap) * 100)}%` }}
+                            />
+                          </span>
+                        )}
+                        <span className="text-body-sm text-muted">{meter.note}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* ----------------------------- plan comparison ---------------------------- */}
+            <section className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-headline-md text-on-surface">Available Plan Tiers</h2>
+                <p className="text-body-sm text-muted">
+                  Select a tier that fits your household's coordination, geofencing, and voice escalation needs.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                {plans
+                  .filter((tier) => tier.key !== 'enterprise')
+                  .map((tier) => {
+                    const isCurrent = tier.key === active?.subscription_tier;
+
+                    return (
+                      <Card
+                        key={tier.key}
+                        className={`flex flex-col gap-4 p-5 ${
+                          isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex flex-col gap-0.5">
+                            <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
+                            <span className="text-body-sm text-muted">{tier.tagline}</span>
+                          </div>
+                          {isCurrent && <Badge tone="primary">Current plan</Badge>}
+                        </div>
+
+                        <div className="text-xl font-extrabold text-on-surface">
+                          {tier.key === 'starter' ? '$9' : tier.key === 'pilot' ? '$19' : '$49'} <span className="text-xs font-normal text-muted">/ month</span>
+                        </div>
+
+                        <Button
+                          variant={isCurrent ? 'soft' : 'outline'}
+                          onClick={() => {
+                            setSelectedTier(tier.key as any);
+                            setUpgradeModalOpen(true);
+                          }}
+                          className="mt-auto w-full"
+                        >
+                          {isCurrent ? 'Active Plan' : `Upgrade to ${tier.label}`}
+                        </Button>
+                      </Card>
+                    );
+                  })}
+              </div>
+            </section>
+          </div>
         )}
 
-        {/* ----------------------------- Invoices & Receipts Vault (Gap F) ---------------------------- */}
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-headline-sm font-bold text-on-surface">Payment History &amp; Invoices</h2>
-              <p className="text-xs text-muted">
-                Official billing records, payment verification, and downloadable tax receipts for this household.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['billing', 'invoices'] })}
-            >
-              <Icon name="refresh" className="text-[16px]" />
-              Refresh Invoices
-            </Button>
-          </div>
-
-          <Card className="overflow-hidden p-0">
-            {invoicesQuery.isLoading ? (
-              <div className="p-8 text-center text-xs text-muted">Loading payment records...</div>
-            ) : invoicesList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-container text-muted">
-                  <Icon name="receipt" className="text-[24px]" />
+        {activeTab === 'invoices' && (
+          <div className="flex flex-col gap-6">
+            {/* Invoicing Confirmation Note */}
+            <div className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-forest-soft/70 p-4 text-xs text-on-surface">
+              <Icon name="receipt_long" className="text-[22px] text-secondary shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-secondary">Automatic Invoicing Guarantee</span>
+                <span>
+                  An official tax invoice is automatically generated and permanently recorded in your household vault upon every subscription payment and plan upgrade.
                 </span>
-                <span className="text-sm font-semibold text-on-surface">No invoices issued yet</span>
-                <p className="max-w-md text-xs text-muted">
-                  Invoices are generated upon subscription upgrade and renewal. Upgrade your plan to test invoice generation.
-                </p>
-                <Button variant="outline" size="sm" onClick={() => setUpgradeModalOpen(true)}>
-                  Upgrade Plan to Generate First Invoice
+              </div>
+            </div>
+
+            {/* ----------------------------- Invoices & Receipts Vault (Gap F) ---------------------------- */}
+            <section className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-headline-sm font-bold text-on-surface">Payment History &amp; Invoices</h2>
+                  <p className="text-xs text-muted">
+                    Official billing records, payment verification, and downloadable tax receipts for this household.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['billing', 'invoices'] })}
+                >
+                  <Icon name="refresh" className="text-[16px]" />
+                  Refresh Invoices
                 </Button>
               </div>
-            ) : (
-              <Table>
-                <THead>
-                  <TR>
-                    <TH>Invoice #</TH>
-                    <TH>Plan Tier</TH>
-                    <TH>Billing Cadence</TH>
-                    <TH>Amount Paid</TH>
-                    <TH>Payment Method</TH>
-                    <TH>Date Issued</TH>
-                    <TH>Status</TH>
-                    <TH className="text-right">Receipt</TH>
-                  </TR>
-                </THead>
-                <tbody>
-                  {invoicesList.map((invoice) => (
-                    <TR key={invoice.id}>
-                      <TD className="font-mono font-bold text-secondary text-xs">
-                        {invoice.invoice_number}
-                      </TD>
-                      <TD className="capitalize font-semibold text-xs">
-                        {invoice.tier.replace('_', ' ')}
-                      </TD>
-                      <TD className="capitalize text-xs text-muted">
-                        {invoice.billing_period}
-                      </TD>
-                      <TD className="font-bold text-xs">
-                        ${(invoice.amount_cents / 100).toFixed(2)}
-                      </TD>
-                      <TD className="text-xs text-muted">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon name="credit_card" className="text-[14px]" />
-                          •••• {invoice.last4 || '4242'}
-                        </span>
-                      </TD>
-                      <TD className="text-xs text-muted">
-                        {invoice.paid_at
-                          ? new Date(invoice.paid_at).toLocaleDateString()
-                          : new Date(invoice.created_at).toLocaleDateString()}
-                      </TD>
-                      <TD>
-                        <Badge tone={invoice.status === 'paid' ? 'success' : 'neutral'}>
-                          {invoice.status.toUpperCase()}
-                        </Badge>
-                      </TD>
-                      <TD className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadInvoice(invoice.id)}
-                        >
-                          <Icon name="download" className="text-[14px]" />
-                          PDF Receipt
-                        </Button>
-                      </TD>
-                    </TR>
-                  ))}
-                </tbody>
-              </Table>
-            )}
-          </Card>
-        </section>
 
-        {/* ----------------------------- plan comparison ---------------------------- */}
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-headline-md text-on-surface">Available Plan Tiers</h2>
-            <p className="text-body-sm text-muted">
-              Select a tier that fits your household's coordination, geofencing, and voice escalation needs.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {plans
-              .filter((tier) => tier.key !== 'enterprise')
-              .map((tier) => {
-                const isCurrent = tier.key === active?.subscription_tier;
-
-                return (
-                  <Card
-                    key={tier.key}
-                    className={`flex flex-col gap-4 p-5 ${
-                      isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-col gap-0.5">
-                        <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
-                        <span className="text-body-sm text-muted">{tier.tagline}</span>
-                      </div>
-                      {isCurrent && <Badge tone="primary">Current plan</Badge>}
-                    </div>
-
-                    <div className="text-xl font-extrabold text-on-surface">
-                      {tier.key === 'starter' ? '$9' : tier.key === 'pilot' ? '$19' : '$49'} <span className="text-xs font-normal text-muted">/ month</span>
-                    </div>
-
-                    <Button
-                      variant={isCurrent ? 'soft' : 'outline'}
-                      onClick={() => {
-                        setSelectedTier(tier.key as any);
-                        setUpgradeModalOpen(true);
-                      }}
-                      className="mt-auto w-full"
-                    >
-                      {isCurrent ? 'Active Plan' : `Upgrade to ${tier.label}`}
+              <Card className="overflow-hidden p-0">
+                {invoicesQuery.isLoading ? (
+                  <div className="p-8 text-center text-xs text-muted">Loading payment records...</div>
+                ) : invoicesList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-container text-muted">
+                      <Icon name="receipt" className="text-[24px]" />
+                    </span>
+                    <span className="text-sm font-semibold text-on-surface">No invoices issued yet</span>
+                    <p className="max-w-md text-xs text-muted">
+                      Invoices are generated upon subscription upgrade and renewal. Upgrade your plan to test invoice generation.
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => setUpgradeModalOpen(true)}>
+                      Upgrade Plan to Generate First Invoice
                     </Button>
-                  </Card>
-                );
-              })}
+                  </div>
+                ) : (
+                  <Table>
+                    <THead>
+                      <TH>Invoice #</TH>
+                      <TH>Plan Tier</TH>
+                      <TH>Billing Cadence</TH>
+                      <TH>Amount Paid</TH>
+                      <TH>Payment Method</TH>
+                      <TH>Date Issued</TH>
+                      <TH>Status</TH>
+                      <TH className="text-right">Receipt</TH>
+                    </THead>
+                    <tbody>
+                      {invoicesList.map((invoice) => (
+                        <TR key={invoice.id}>
+                          <TD className="font-mono font-bold text-secondary text-xs">
+                            {invoice.invoice_number}
+                          </TD>
+                          <TD className="capitalize font-semibold text-xs">
+                            {invoice.tier.replace('_', ' ')}
+                          </TD>
+                          <TD className="capitalize text-xs text-muted">
+                            {invoice.billing_period}
+                          </TD>
+                          <TD className="font-bold text-xs">
+                            ${(invoice.amount_cents / 100).toFixed(2)}
+                          </TD>
+                          <TD className="text-xs text-muted">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Icon name="credit_card" className="text-[14px]" />
+                              •••• {invoice.last4 || '4242'}
+                            </span>
+                          </TD>
+                          <TD className="text-xs text-muted">
+                            {invoice.paid_at
+                              ? new Date(invoice.paid_at).toLocaleDateString()
+                              : new Date(invoice.created_at).toLocaleDateString()}
+                          </TD>
+                          <TD>
+                            <Badge tone={invoice.status === 'paid' ? 'success' : 'neutral'}>
+                              {invoice.status.toUpperCase()}
+                            </Badge>
+                          </TD>
+                          <TD className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadInvoice(invoice.id)}
+                            >
+                              <Icon name="download" className="text-[14px]" />
+                              PDF Receipt
+                            </Button>
+                          </TD>
+                        </TR>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
+              </Card>
+            </section>
           </div>
-        </section>
+        )}
 
         {/* Upgrade / Payment Simulation Modal */}
         <Modal

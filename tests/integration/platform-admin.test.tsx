@@ -309,6 +309,10 @@ describe('platform admin console enhancements', () => {
 
     expect(await screen.findByText('Household: The Tanvir Household')).toBeInTheDocument();
     expect(await screen.findByText('tanvir@familyessentials.app')).toBeInTheDocument();
+
+    const quotasTab = screen.getByRole('button', { name: /Quotas & Telemetry/i });
+    await userEvent.click(quotasTab);
+
     expect(screen.getByText('Resource Allocations & Live Telemetry')).toBeInTheDocument();
     expect(screen.getByText('Subscription Quota & Capacity Limits')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Back to Tenants/i })).toBeInTheDocument();

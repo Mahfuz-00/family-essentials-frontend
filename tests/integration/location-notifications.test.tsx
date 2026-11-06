@@ -44,6 +44,9 @@ describe('location notifications', () => {
 
     renderApp('/settings');
 
+    const alertsTab = await screen.findByRole('button', { name: /Alerts & Reachability/i });
+    await userEvent.click(alertsTab);
+
     const toggle = await screen.findByLabelText('Enable arrival notifications');
 
     expect(toggle).not.toBeChecked();
