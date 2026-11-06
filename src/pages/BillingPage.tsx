@@ -148,8 +148,24 @@ export function BillingPage() {
   const loading = quota.isLoading || members.isLoading || places.isLoading;
   const invoicesList = invoicesQuery.data?.data ?? [];
 
-  const handleDownloadInvoice = (invoiceId: number) => {
-    window.open(`/api/v1/billing/invoices/${invoiceId}/download`, '_blank');
+  const [viewInvoiceHtml, setViewInvoiceHtml] = useState<string | null>(null);
+  const [viewInvoiceNumber, setViewInvoiceNumber] = useState<string>('');
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<number | null>(null);
+
+  const handleDownloadInvoice = async (invoiceId: number, invoiceNum?: string) => {
+    setDownloadingInvoiceId(invoiceId);
+    setError(null);
+    try {
+      const resp = await api.get<string>(`/v1/billing/invoices/${invoiceId}/download`, {
+        responseType: 'text' as any,
+      });
+      setViewInvoiceHtml(resp.data);
+      setViewInvoiceNumber(invoiceNum || `INV-${invoiceId}`);
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
   };
 
   const handleSimulatePayment = () => {
@@ -454,10 +470,11 @@ export function BillingPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDownloadInvoice(invoice.id)}
+                                disabled={downloadingInvoiceId === invoice.id}
+                                onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
                               >
                                 <Icon name="download" className="text-[14px]" />
-                                PDF Receipt
+                                {downloadingInvoiceId === invoice.id ? 'Loading…' : 'PDF Receipt'}
                               </Button>
                             )}
                           </TD>
@@ -633,6 +650,56 @@ export function BillingPage() {
                   ? 'Confirm Cash Upgrade'
                   : 'Pay & Generate Invoice'}
               </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Invoice Receipt Viewer & Print Modal */}
+        <Modal
+          open={viewInvoiceHtml !== null}
+          onClose={() => setViewInvoiceHtml(null)}
+          title={`Official Invoice Receipt — ${viewInvoiceNumber}`}
+          className="max-w-4xl"
+          footer={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!viewInvoiceHtml) return;
+                  const blob = new Blob([viewInvoiceHtml], { type: 'text/html' });
+                  window.open(URL.createObjectURL(blob), '_blank');
+                }}
+              >
+                <Icon name="open_in_new" className="text-[16px]" />
+                Open in New Window
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const frame = document.getElementById('tenant-invoice-frame') as HTMLIFrameElement;
+                  if (frame?.contentWindow) {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                  }
+                }}
+              >
+                <Icon name="print" className="text-[16px]" />
+                Print / Save as PDF
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-muted">
+              Official tax receipt for your household subscription records. You can print directly or save as PDF.
+            </p>
+            <div className="h-[520px] w-full rounded-2xl border border-outline-variant/30 bg-white shadow-inner overflow-hidden">
+              <iframe
+                id="tenant-invoice-frame"
+                title="Official Invoice Receipt"
+                srcDoc={viewInvoiceHtml ?? ''}
+                className="h-full w-full border-0"
+              />
             </div>
           </div>
         </Modal>

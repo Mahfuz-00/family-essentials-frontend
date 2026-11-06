@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -36,6 +37,27 @@ export function AdminBillingPage() {
   const [methodFilter, setMethodFilter] = useState<'all' | 'cash' | 'card'>('all');
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Invoice Print / Preview Modal State
+  const [invoiceModalHtml, setInvoiceModalHtml] = useState<string | null>(null);
+  const [invoiceModalNumber, setInvoiceModalNumber] = useState<string>('');
+  const [fetchingInvoiceId, setFetchingInvoiceId] = useState<number | null>(null);
+
+  const handlePrintOrPreview = async (invoiceId: number, invoiceNumber: string) => {
+    setFetchingInvoiceId(invoiceId);
+    setError(null);
+    try {
+      const resp = await api.get<string>(`/v1/platform/billing/invoices/${invoiceId}/download`, {
+        responseType: 'text' as any,
+      });
+      setInvoiceModalHtml(resp.data);
+      setInvoiceModalNumber(invoiceNumber);
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setFetchingInvoiceId(null);
+    }
+  };
 
   const billingQuery = useQuery({
     queryKey: ['platform', 'billing', 'invoices', statusFilter, methodFilter, search],
@@ -220,11 +242,12 @@ export function AdminBillingPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(`/api/v1/platform/billing/invoices/${invoice.id}/download`, '_blank')}
+                      onClick={() => handlePrintOrPreview(invoice.id, invoice.invoice_number)}
+                      disabled={fetchingInvoiceId === invoice.id}
                       title="Download or print physical invoice for in-person handover"
                     >
                       <Icon name="print" className="text-[16px]" />
-                      Print Handover Invoice
+                      {fetchingInvoiceId === invoice.id ? 'Loading Invoice…' : 'Print Handover Invoice'}
                     </Button>
                     <div className="flex items-center gap-2">
                       <Button
@@ -384,11 +407,16 @@ export function AdminBillingPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`/api/v1/platform/billing/invoices/${invoice.id}/download`, '_blank')}
+                          onClick={() => handlePrintOrPreview(invoice.id, invoice.invoice_number)}
+                          disabled={fetchingInvoiceId === invoice.id}
                           title={invoice.payment_method === 'cash' ? 'Download or print physical invoice for cash handover' : 'Download Invoice Receipt'}
                         >
                           <Icon name={invoice.payment_method === 'cash' ? 'print' : 'download'} className="text-[14px]" />
-                          {invoice.payment_method === 'cash' ? 'Print' : 'Receipt'}
+                          {fetchingInvoiceId === invoice.id
+                            ? 'Loading…'
+                            : invoice.payment_method === 'cash'
+                            ? 'Print'
+                            : 'Receipt'}
                         </Button>
                         {invoice.status === 'pending' && invoice.payment_method === 'cash' && (
                           <Button
@@ -409,6 +437,56 @@ export function AdminBillingPage() {
             </Table>
           )}
         </Card>
+
+        {/* Invoice Viewer & Print Handover Modal */}
+        <Modal
+          open={invoiceModalHtml !== null}
+          onClose={() => setInvoiceModalHtml(null)}
+          title={`Official Invoice Voucher — ${invoiceModalNumber}`}
+          className="max-w-4xl"
+          footer={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!invoiceModalHtml) return;
+                  const blob = new Blob([invoiceModalHtml], { type: 'text/html' });
+                  window.open(URL.createObjectURL(blob), '_blank');
+                }}
+              >
+                <Icon name="open_in_new" className="text-[16px]" />
+                Open in New Window
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const frame = document.getElementById('admin-invoice-frame') as HTMLIFrameElement;
+                  if (frame?.contentWindow) {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                  }
+                }}
+              >
+                <Icon name="print" className="text-[16px]" />
+                Print Handover Document
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-muted">
+              Official printed invoice voucher for in-person cash settlement. Review details below and click print to hand to the tenant.
+            </p>
+            <div className="h-[520px] w-full rounded-2xl border border-outline-variant/30 bg-white shadow-inner overflow-hidden">
+              <iframe
+                id="admin-invoice-frame"
+                title="Official Invoice Voucher"
+                srcDoc={invoiceModalHtml ?? ''}
+                className="h-full w-full border-0"
+              />
+            </div>
+          </div>
+        </Modal>
       </div>
     </AppLayout>
   );
