@@ -578,6 +578,8 @@ export type LedgerGrantRole = 'manager' | 'summary';
 
 export interface PaymentGatewayCredentials {
   enabled: boolean;
+  sandbox?: boolean;
+  mode?: 'sandbox' | 'live';
   publishable_key?: string;
   secret_key?: string;
   webhook_secret?: string;
@@ -587,15 +589,100 @@ export interface PaymentGatewayCredentials {
   store_passwd?: string;
   client_id?: string;
   client_secret?: string;
+  webhook_id?: string;
+  app_key?: string;
+  app_secret?: string;
+  username?: string;
+  password?: string;
+  merchant_id?: string;
+  public_key?: string;
+  private_key?: string;
+  api_key?: string;
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+  routing_code?: string;
+  swift_bic?: string;
+  instructions?: string;
+  auto_mark_paid?: boolean;
+  simulate_failure?: boolean;
+  latency_ms?: number;
 }
 
 export interface PaymentGatewaySettings {
-  active_gateway: 'stripe' | 'razorpay' | 'sslcommerz' | 'paypal' | 'mock';
+  active_gateway:
+    | 'stripe'
+    | 'paypal'
+    | 'razorpay'
+    | 'sslcommerz'
+    | 'bkash'
+    | 'nagad'
+    | 'paystack'
+    | 'mollie'
+    | 'bank_transfer'
+    | 'mock'
+    | 'cash';
   mode: 'sandbox' | 'live';
   currency: string;
   gateways: Record<string, PaymentGatewayCredentials>;
   webhook_url: string;
   auto_billing_enabled: boolean;
+}
+
+export interface AvailablePaymentMethods {
+  active_gateway: string;
+  currency: string;
+  mode?: string;
+  is_sandbox?: boolean;
+  gateways?: Record<string, { enabled: boolean; sandbox: boolean; mode: 'sandbox' | 'live' }>;
+  cash: {
+    enabled: boolean;
+    instructions: string;
+    auto_mark_paid: boolean;
+  };
+  bank_transfer?: {
+    enabled: boolean;
+    instructions: string;
+    bank_name?: string;
+    account_number?: string;
+  };
+}
+
+export interface PlatformBillingInvoice {
+  id: number;
+  tenant_id: number;
+  invoice_number: string;
+  amount_cents: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'failed' | 'refunded';
+  tier: string;
+  billing_period: string;
+  paid_at: string | null;
+  payment_method: string;
+  last4: string | null;
+  created_at: string;
+  tenant?: {
+    id: number;
+    name: string;
+    slug: string;
+    subscription_tier?: string;
+    status?: string;
+  };
+}
+
+export interface PlatformNotificationsResponse {
+  total_pending: number;
+  pending_cash_count: number;
+  pending_refund_count: number;
+  cash_settlements: PlatformBillingInvoice[];
+  refund_requests: Array<{
+    id: number;
+    tenant_name: string;
+    user_email: string;
+    amount_cents: number;
+    reason: string;
+    status: string;
+  }>;
 }
 
 export interface EmailTemplateItem {
@@ -619,9 +706,53 @@ export interface EmailSettings {
 export interface RefundPolicy {
   policy_markdown: string;
   refund_window_days: number;
+  monthly_refund_window_days?: number;
+  monthly_refund_percent?: number;
+  annual_refund_window_days?: number;
+  annual_refund_percent?: number;
+  monthly_change_lock_start_days?: number;
+  monthly_change_lock_end_days?: number;
+  monthly_change_adjustment_percent?: number;
+  annual_change_window_months?: number;
+  annual_change_window_days?: number;
   auto_approve_under_cents: number;
   pro_rata_enabled: boolean;
   contact_email: string;
+}
+
+export interface RefundEligibilityCheck {
+  eligible: boolean;
+  days_elapsed: number;
+  window_days: number;
+  billing_period: string;
+  refund_percent: number;
+  original_amount_cents: number;
+  recommended_refund_cents: number;
+  reason: string;
+  invoice: {
+    id: number;
+    invoice_number: string;
+    tier: string;
+    amount_cents: number;
+    payment_method: string;
+    status: string;
+    paid_at: string | null;
+    tenant_name: string;
+  };
+}
+
+export interface PlanChangePreview {
+  eligible: boolean;
+  days_elapsed: number;
+  current_tier?: string;
+  target_tier: string;
+  target_period: string;
+  base_amount_cents: number;
+  discount_cents: number;
+  adjustment_percent?: number;
+  final_amount_cents: number;
+  reason: string;
+  policy_code?: string;
 }
 
 export interface RefundRecord {

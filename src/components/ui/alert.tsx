@@ -7,13 +7,14 @@ export function Alert({
   className,
 }: {
   children: ReactNode;
-  tone?: 'error' | 'success' | 'info';
+  tone?: 'error' | 'success' | 'info' | 'warning';
   className?: string;
 }) {
   const tones = {
     error: 'bg-coral-soft text-tertiary',
     success: 'bg-forest-soft text-secondary',
     info: 'bg-sage-soft text-primary',
+    warning: 'bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-800',
   } as const;
 
   return (

@@ -15,7 +15,7 @@ import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
 import { plans } from '@/lib/plans';
 import { useTenantStore } from '@/stores/tenant';
-import type { Place, UserRef } from '@/types';
+import type { AvailablePaymentMethods, Place, PlanChangePreview, UserRef } from '@/types';
 
 interface InvoiceRecord {
   id: number;
@@ -46,6 +46,7 @@ export function BillingPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<'plus' | 'family' | 'enterprise'>('family');
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,17 +60,39 @@ export function BillingPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
+  const paymentMethodsQuery = useQuery({
+    queryKey: ['billing', 'payment-methods'],
+    queryFn: async () =>
+      (await api.get<{ data: AvailablePaymentMethods }>('/v1/billing/payment-methods')).data.data,
+  });
+
   const invoicesQuery = useQuery({
     queryKey: ['billing', 'invoices'],
     queryFn: async () => (await api.get<InvoicesResponse>('/v1/billing/invoices')).data,
   });
 
+  const previewQuery = useQuery({
+    queryKey: ['billing', 'change-preview', selectedTier, selectedPeriod],
+    queryFn: async () =>
+      (
+        await api.post<PlanChangePreview>('/v1/billing/change-plan-preview', {
+          tier: selectedTier,
+          billing_period: selectedPeriod,
+        })
+      ).data,
+    enabled: upgradeModalOpen,
+  });
+
   const upgradeMutation = useMutation({
-    mutationFn: async (payload: { tier: string; billing_period: string }) =>
+    mutationFn: async (payload: { tier: string; billing_period: string; payment_method?: string }) =>
       (await api.post('/v1/billing/upgrade', payload)).data,
     onSuccess: (data: any) => {
       setNotice(
-        `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon payment.`
+        data.invoice?.payment_method === 'cash' && data.invoice?.status === 'pending'
+          ? `Cash payment request submitted for ${data.invoice?.tier ?? selectedTier} plan! Invoice ${data.invoice?.invoice_number} is pending in-person collection. Platform admin has been notified and will approve and issue your invoice upon payment.`
+          : data.invoice?.payment_method === 'cash'
+          ? `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Your physical invoice will be issued in person upon cash settlement.`
+          : `Plan upgraded to ${data.invoice?.tier ?? selectedTier}! Official invoice ${data.invoice?.invoice_number} generated upon payment.`
       );
       setError(null);
       setUpgradeModalOpen(false);
@@ -125,14 +148,31 @@ export function BillingPage() {
   const loading = quota.isLoading || members.isLoading || places.isLoading;
   const invoicesList = invoicesQuery.data?.data ?? [];
 
-  const handleDownloadInvoice = (invoiceId: number) => {
-    window.open(`/api/v1/billing/invoices/${invoiceId}/download`, '_blank');
+  const [viewInvoiceHtml, setViewInvoiceHtml] = useState<string | null>(null);
+  const [viewInvoiceNumber, setViewInvoiceNumber] = useState<string>('');
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<number | null>(null);
+
+  const handleDownloadInvoice = async (invoiceId: number, invoiceNum?: string) => {
+    setDownloadingInvoiceId(invoiceId);
+    setError(null);
+    try {
+      const resp = await api.get<string>(`/v1/billing/invoices/${invoiceId}/download`, {
+        responseType: 'text' as any,
+      });
+      setViewInvoiceHtml(resp.data);
+      setViewInvoiceNumber(invoiceNum || `INV-${invoiceId}`);
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
   };
 
   const handleSimulatePayment = () => {
     upgradeMutation.mutate({
       tier: selectedTier,
       billing_period: selectedPeriod,
+      payment_method: paymentMethod,
     });
   };
 
@@ -398,10 +438,17 @@ export function BillingPage() {
                             ${(invoice.amount_cents / 100).toFixed(2)}
                           </TD>
                           <TD className="text-xs text-muted">
-                            <span className="inline-flex items-center gap-1.5">
-                              <Icon name="credit_card" className="text-[14px]" />
-                              •••• {invoice.last4 || '4242'}
-                            </span>
+                            {invoice.payment_method === 'cash' ? (
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-secondary">
+                                <Icon name="payments" className="text-[14px]" />
+                                Cash / In-Person
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Icon name="credit_card" className="text-[14px]" />
+                                •••• {invoice.last4 || '4242'}
+                              </span>
+                            )}
                           </TD>
                           <TD className="text-xs text-muted">
                             {invoice.paid_at
@@ -414,14 +461,22 @@ export function BillingPage() {
                             </Badge>
                           </TD>
                           <TD className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadInvoice(invoice.id)}
-                            >
-                              <Icon name="download" className="text-[14px]" />
-                              PDF Receipt
-                            </Button>
+                            {invoice.payment_method === 'cash' ? (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+                                <Icon name="receipt" className="text-[14px]" />
+                                In-Person Invoice
+                              </span>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={downloadingInvoiceId === invoice.id}
+                                onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
+                              >
+                                <Icon name="download" className="text-[14px]" />
+                                {downloadingInvoiceId === invoice.id ? 'Loading…' : 'PDF Receipt'}
+                              </Button>
+                            )}
                           </TD>
                         </TR>
                       ))}
@@ -495,15 +550,79 @@ export function BillingPage() {
               </div>
             </div>
 
+            {paymentMethodsQuery.data?.cash?.enabled && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-on-surface">Payment Method</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-semibold transition-colors ${
+                      paymentMethod === 'card'
+                        ? 'border-secondary bg-forest-soft/70 text-secondary'
+                        : 'border-outline-variant/40 hover:bg-sage-soft'
+                    }`}
+                  >
+                    <Icon name="credit_card" className="text-[16px]" />
+                    Online Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-semibold transition-colors ${
+                      paymentMethod === 'cash'
+                        ? 'border-secondary bg-forest-soft/70 text-secondary'
+                        : 'border-outline-variant/40 hover:bg-sage-soft'
+                    }`}
+                  >
+                    <Icon name="payments" className="text-[16px]" />
+                    Cash Payment
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {previewQuery.data && !previewQuery.data.eligible && (
+              <Alert tone="warning">
+                {previewQuery.data.reason}
+              </Alert>
+            )}
+
+            {paymentMethod === 'cash' && paymentMethodsQuery.data?.cash?.enabled && (
+              <div className="rounded-xl border border-secondary/30 bg-forest-soft/40 p-3.5 text-xs flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-secondary">
+                  <Icon name="info" className="text-[16px]" />
+                  <span>Cash Payment &amp; In-Person Settlement Instructions</span>
+                </div>
+                <p className="text-on-surface text-[12px] leading-relaxed">
+                  {paymentMethodsQuery.data.cash.instructions ||
+                    'Cash payment upon in-person settlement or physical collection.'}
+                </p>
+                <p className="text-[11px] text-muted">
+                  Your cash payment request will be submitted to platform administration. The administrator collects the cash in person, hands you your physical printed invoice, and confirms payment in the software to upgrade your household plan.
+                </p>
+              </div>
+            )}
+
             <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-3 text-xs flex flex-col gap-1.5">
               <div className="flex justify-between font-medium">
                 <span>Payment Method:</span>
-                <span className="font-mono text-muted">Test Card (•••• 4242)</span>
+                <span className="font-mono text-muted">
+                  {paymentMethod === 'cash' ? 'Cash Settlement (In-Person)' : 'Test Card (•••• 4242)'}
+                </span>
               </div>
+              {previewQuery.data && previewQuery.data.discount_cents > 0 && (
+                <div className="flex justify-between font-semibold text-secondary">
+                  <span>Mid-Cycle Adjustment ({previewQuery.data.adjustment_percent}% Credit):</span>
+                  <span>-${(previewQuery.data.discount_cents / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-on-surface">
                 <span>Total Due:</span>
                 <span className="text-secondary text-sm">
-                  {selectedTier === 'plus'
+                  {previewQuery.data
+                    ? `$${(previewQuery.data.final_amount_cents / 100).toFixed(2)}`
+                    : selectedTier === 'plus'
                     ? selectedPeriod === 'annual' ? '$90.00/yr' : '$9.00/mo'
                     : selectedTier === 'family'
                     ? selectedPeriod === 'annual' ? '$190.00/yr' : '$19.00/mo'
@@ -519,11 +638,68 @@ export function BillingPage() {
               <Button
                 variant="primary"
                 onClick={handleSimulatePayment}
-                disabled={upgradeMutation.isPending}
+                disabled={
+                  upgradeMutation.isPending ||
+                  (previewQuery.data !== undefined && !previewQuery.data.eligible)
+                }
               >
-                <Icon name="check_circle" className="text-[18px]" />
-                {upgradeMutation.isPending ? 'Processing Payment...' : 'Pay & Generate Invoice'}
+                <Icon name={paymentMethod === 'cash' ? 'payments' : 'check_circle'} className="text-[18px]" />
+                {upgradeMutation.isPending
+                  ? 'Processing Upgrade...'
+                  : paymentMethod === 'cash'
+                  ? 'Confirm Cash Upgrade'
+                  : 'Pay & Generate Invoice'}
               </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Invoice Receipt Viewer & Print Modal */}
+        <Modal
+          open={viewInvoiceHtml !== null}
+          onClose={() => setViewInvoiceHtml(null)}
+          title={`Official Invoice Receipt — ${viewInvoiceNumber}`}
+          className="max-w-4xl"
+          footer={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!viewInvoiceHtml) return;
+                  const blob = new Blob([viewInvoiceHtml], { type: 'text/html' });
+                  window.open(URL.createObjectURL(blob), '_blank');
+                }}
+              >
+                <Icon name="open_in_new" className="text-[16px]" />
+                Open in New Window
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const frame = document.getElementById('tenant-invoice-frame') as HTMLIFrameElement;
+                  if (frame?.contentWindow) {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                  }
+                }}
+              >
+                <Icon name="print" className="text-[16px]" />
+                Print / Save as PDF
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-xs text-muted">
+              Official tax receipt for your household subscription records. You can print directly or save as PDF.
+            </p>
+            <div className="h-[520px] w-full rounded-2xl border border-outline-variant/30 bg-white shadow-inner overflow-hidden">
+              <iframe
+                id="tenant-invoice-frame"
+                title="Official Invoice Receipt"
+                srcDoc={viewInvoiceHtml ?? ''}
+                className="h-full w-full border-0"
+              />
             </div>
           </div>
         </Modal>

@@ -114,6 +114,107 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     expect(screen.getByText('$14.99')).toBeInTheDocument();
   });
 
+  it('allows tenant to select cash payment method during plan upgrade and renders cash invoices', async () => {
+    installGetRoutes(apiMock, {
+      ...sessionRoutes(),
+      '/v1/tenant/quotas': quotaReport(),
+      '/v1/billing/payment-methods': {
+        data: {
+          active_gateway: 'stripe',
+          currency: 'USD',
+          cash: {
+            enabled: true,
+            instructions: 'Please pay cash at reception or during physical onboarding.',
+            auto_mark_paid: true,
+          },
+        },
+      },
+      '/v1/billing/invoices': {
+        data: [
+          {
+            id: 102,
+            tenant_id: 1,
+            invoice_number: 'INV-2026-CASH',
+            amount_cents: 1900,
+            currency: 'USD',
+            status: 'paid',
+            tier: 'family',
+            billing_period: 'monthly',
+            paid_at: '2026-11-06T00:00:00Z',
+            payment_method: 'cash',
+            last4: 'CASH',
+            created_at: '2026-11-06T00:00:00Z',
+          },
+        ],
+        total: 1,
+        current_page: 1,
+      },
+    });
+
+    apiMock.post.mockImplementation(async (url) => {
+      if (url === '/v1/billing/change-plan-preview') {
+        return jsonResponse({
+          eligible: true,
+          days_elapsed: 0,
+          current_tier: 'starter',
+          target_tier: 'family',
+          target_period: 'monthly',
+          base_amount_cents: 1900,
+          discount_cents: 0,
+          final_amount_cents: 1900,
+          reason: 'First-time plan selection',
+        });
+      }
+      if (url === '/v1/billing/upgrade') {
+        return jsonResponse({
+          message: 'Subscription upgraded and invoice generated successfully.',
+          invoice: {
+            id: 102,
+            invoice_number: 'INV-2026-CASH',
+            tier: 'family',
+            payment_method: 'cash',
+          },
+        });
+      }
+      return jsonResponse({});
+    });
+
+    renderApp('/billing');
+
+    expect(await screen.findByRole('heading', { name: 'Billing & Subscription Portal' })).toBeInTheDocument();
+
+    // 1. Open upgrade modal
+    const upgradeBtn = screen.getByRole('button', { name: /Upgrade \/ Change Tier/i });
+    await userEvent.click(upgradeBtn);
+
+    expect(await screen.findByText(/Upgrade Household Plan/i)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Cash Payment/i })).toBeInTheDocument();
+
+    // 2. Select Cash Payment
+    await userEvent.click(screen.getByRole('button', { name: /Cash Payment/i }));
+    expect(await screen.findByText('Cash Payment & In-Person Settlement Instructions')).toBeInTheDocument();
+    expect(screen.getByText('Please pay cash at reception or during physical onboarding.')).toBeInTheDocument();
+
+    // 3. Confirm upgrade
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Cash Upgrade/i });
+    await userEvent.click(confirmBtn);
+
+    expect(apiMock.post).toHaveBeenCalledWith('/v1/billing/upgrade', {
+      tier: 'family',
+      billing_period: 'monthly',
+      payment_method: 'cash',
+    });
+
+    // 4. Invoices tab shows Cash badge and in-person invoice notice without PDF download
+    const invoicesTab = screen.getByRole('button', { name: /Invoices & Receipts/i });
+    await userEvent.click(invoicesTab);
+
+    expect(await screen.findByText('INV-2026-CASH')).toBeInTheDocument();
+    expect(screen.getByText('Cash / In-Person')).toBeInTheDocument();
+    expect(screen.getByText('In-Person Invoice')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /PDF Receipt/i })).not.toBeInTheDocument();
+  });
+
   it('filters Focus Mode tabs and sends gratitude on completed errands', async () => {
     const completedItem = serviceRequest({
       id: 99,

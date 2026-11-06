@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
-import type { RefundPolicy, RefundRecord, RefundsPayload } from '@/types';
+import type { RefundEligibilityCheck, RefundPolicy, RefundRecord, RefundsPayload } from '@/types';
 
 export function RefundPolicyPage() {
   const queryClient = useQueryClient();
@@ -28,6 +28,12 @@ export function RefundPolicyPage() {
   const [rejectModal, setRejectModal] = useState<RefundRecord | null>(null);
   const [manualRefundOpen, setManualRefundOpen] = useState(false);
   const [adminNote, setAdminNote] = useState('');
+
+  // Policy Evaluation State
+  const [evalInput, setEvalInput] = useState('');
+  const [evalResult, setEvalResult] = useState<RefundEligibilityCheck | null>(null);
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [evalError, setEvalError] = useState<string | null>(null);
 
   // Manual refund form
   const [manualForm, setManualForm] = useState({
@@ -102,6 +108,23 @@ export function RefundPolicyPage() {
       setError(apiError(err));
     },
   });
+
+  const handleCheckEligibility = async () => {
+    if (!evalInput.trim()) return;
+    setEvalLoading(true);
+    setEvalError(null);
+    setEvalResult(null);
+    try {
+      const isNum = /^\d+$/.test(evalInput.trim());
+      const payload = isNum ? { invoice_id: Number(evalInput.trim()) } : { invoice_number: evalInput.trim() };
+      const res = await api.post<RefundEligibilityCheck>('/v1/platform/refunds/eligibility', payload);
+      setEvalResult(res.data);
+    } catch (err: any) {
+      setEvalError(apiError(err));
+    } finally {
+      setEvalLoading(false);
+    }
+  };
 
   const createManualMutation = useMutation({
     mutationFn: async () => (await api.post('/v1/platform/refunds', manualForm)).data,
@@ -220,6 +243,94 @@ export function RefundPolicyPage() {
                 </span>
               </Card>
             </div>
+
+            {/* SaaS Policy Refund Calculator & Eligibility Evaluator */}
+            <Card className="flex flex-col gap-3 p-4 bg-forest-soft/30 border border-secondary/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-forest-soft text-secondary">
+                    <Icon name="verified_user" className="text-[18px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface">SaaS Policy Refund Eligibility Evaluator</h4>
+                    <p className="text-[11px] text-muted">
+                      Evaluates 7-day monthly (100%) and 30-day annual (80%) money-back guarantees against official invoices.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={evalInput}
+                    onChange={(e) => setEvalInput(e.target.value)}
+                    placeholder="Invoice # (e.g. INV-2026-00001)"
+                    className="h-9 w-60 text-xs font-mono"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCheckEligibility();
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={evalLoading || !evalInput.trim()}
+                    onClick={handleCheckEligibility}
+                  >
+                    <Icon name="rule" className="text-[16px]" />
+                    {evalLoading ? 'Checking…' : 'Check Eligibility'}
+                  </Button>
+                </div>
+              </div>
+
+              {evalError && <Alert tone="error">{evalError}</Alert>}
+
+              {evalResult && (
+                <div className="rounded-xl border border-outline-variant/30 bg-surface p-3.5 text-xs flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge tone={evalResult.eligible ? 'success' : 'danger'}>
+                        {evalResult.eligible ? 'REFUND ELIGIBLE' : 'POLICY INELIGIBLE'}
+                      </Badge>
+                      <span className="font-bold text-on-surface">
+                        {evalResult.invoice.tenant_name} — {evalResult.invoice.invoice_number}
+                      </span>
+                    </div>
+                    <span className="font-mono text-muted text-[11px]">
+                      Elapsed: {evalResult.days_elapsed} of {evalResult.window_days} days
+                    </span>
+                  </div>
+
+                  <p className="text-on-surface leading-relaxed">{evalResult.reason}</p>
+
+                  <div className="flex flex-wrap items-center justify-between border-t border-outline-variant/20 pt-2 text-[11px]">
+                    <span className="text-muted">
+                      Original: ${(evalResult.original_amount_cents / 100).toFixed(2)} ({evalResult.billing_period}) · Recommended Refund:{' '}
+                      <strong className="text-secondary">
+                        ${(evalResult.recommended_refund_cents / 100).toFixed(2)} ({evalResult.refund_percent}%)
+                      </strong>
+                    </span>
+                    {evalResult.eligible && (
+                      <Button
+                        size="sm"
+                        variant="soft"
+                        onClick={() => {
+                          setManualForm({
+                            tenant_name: evalResult.invoice.tenant_name,
+                            user_email: '',
+                            amount_cents: evalResult.recommended_refund_cents,
+                            currency: 'USD',
+                            reason: `Policy refund (${evalResult.refund_percent}%) for invoice ${evalResult.invoice.invoice_number}`,
+                            admin_notes: evalResult.reason,
+                          });
+                          setManualRefundOpen(true);
+                        }}
+                      >
+                        <Icon name="add" className="text-[14px]" />
+                        Pre-fill Manual Refund Form
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
 
             {/* Toolbar */}
             <Card className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -393,24 +504,147 @@ export function RefundPolicyPage() {
             {/* Side Settings */}
             <div className="flex flex-col gap-6">
               <Card className="flex flex-col gap-4 p-5">
-                <h4 className="text-label-lg font-bold text-on-surface">Eligibility Rules</h4>
+                <h4 className="text-label-lg font-bold text-on-surface">SaaS Refund &amp; Proration Policy Rules</h4>
 
-                <div>
-                  <Label htmlFor="window-days">Money-Back Guarantee Window (Days)</Label>
-                  <Input
-                    id="window-days"
-                    type="number"
-                    value={currentPolicy.refund_window_days}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...currentPolicy,
-                        refund_window_days: Number(e.target.value),
-                      })
-                    }
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="m-window-days">Monthly Refund Window (Days)</Label>
+                    <Input
+                      id="m-window-days"
+                      type="number"
+                      value={currentPolicy.monthly_refund_window_days ?? currentPolicy.refund_window_days ?? 7}
+                      onChange={(e) =>
+                        setPolicyForm({
+                          ...currentPolicy,
+                          monthly_refund_window_days: Number(e.target.value),
+                          refund_window_days: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="text-[10px] text-muted">Refund blocked after this window</span>
+                  </div>
+                  <div>
+                    <Label htmlFor="m-refund-pct">Monthly Refund Rate (%)</Label>
+                    <Input
+                      id="m-refund-pct"
+                      type="number"
+                      value={currentPolicy.monthly_refund_percent ?? 100}
+                      onChange={(e) =>
+                        setPolicyForm({
+                          ...currentPolicy,
+                          monthly_refund_percent: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="text-[10px] text-muted">100% full money-back guarantee</span>
+                  </div>
                 </div>
 
-                <div>
+                <div className="grid grid-cols-2 gap-3 border-t border-outline-variant/20 pt-3">
+                  <div>
+                    <Label htmlFor="a-window-days">Annual Refund Window (Days)</Label>
+                    <Input
+                      id="a-window-days"
+                      type="number"
+                      value={currentPolicy.annual_refund_window_days ?? 30}
+                      onChange={(e) =>
+                        setPolicyForm({
+                          ...currentPolicy,
+                          annual_refund_window_days: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="text-[10px] text-muted">First month (30 days) window</span>
+                  </div>
+                  <div>
+                    <Label htmlFor="a-refund-pct">Annual Refund Rate (%)</Label>
+                    <Input
+                      id="a-refund-pct"
+                      type="number"
+                      value={currentPolicy.annual_refund_percent ?? 80}
+                      onChange={(e) =>
+                        setPolicyForm({
+                          ...currentPolicy,
+                          annual_refund_percent: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="text-[10px] text-muted">80% refund (20% setup retained)</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-outline-variant/20 pt-3 flex flex-col gap-3">
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-secondary">
+                    Plan Modification &amp; Proration Windows
+                  </h5>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="lock-start">Monthly Grace Lock (Days)</Label>
+                      <Input
+                        id="lock-start"
+                        type="number"
+                        value={currentPolicy.monthly_change_lock_start_days ?? 3}
+                        onChange={(e) =>
+                          setPolicyForm({
+                            ...currentPolicy,
+                            monthly_change_lock_start_days: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <span className="text-[10px] text-muted">Plan change blocked before Day 3</span>
+                    </div>
+                    <div>
+                      <Label htmlFor="lock-end">Cycle Freeze Day (Monthly)</Label>
+                      <Input
+                        id="lock-end"
+                        type="number"
+                        value={currentPolicy.monthly_change_lock_end_days ?? 20}
+                        onChange={(e) =>
+                          setPolicyForm({
+                            ...currentPolicy,
+                            monthly_change_lock_end_days: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <span className="text-[10px] text-muted">Plan change blocked after Day 20</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="adj-pct">Mid-Cycle Adjustment (%)</Label>
+                      <Input
+                        id="adj-pct"
+                        type="number"
+                        value={currentPolicy.monthly_change_adjustment_percent ?? 50}
+                        onChange={(e) =>
+                          setPolicyForm({
+                            ...currentPolicy,
+                            monthly_change_adjustment_percent: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <span className="text-[10px] text-muted">50% discount between Days 3–20</span>
+                    </div>
+                    <div>
+                      <Label htmlFor="ann-change-days">Annual Change Cap (Days)</Label>
+                      <Input
+                        id="ann-change-days"
+                        type="number"
+                        value={currentPolicy.annual_change_window_days ?? 90}
+                        onChange={(e) =>
+                          setPolicyForm({
+                            ...currentPolicy,
+                            annual_change_window_days: Number(e.target.value),
+                          })
+                        }
+                      />
+                      <span className="text-[10px] text-muted">3 months (90 days) modification cap</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-outline-variant/20 pt-3">
                   <Label htmlFor="contact-email">Billing Support Email</Label>
                   <Input
                     id="contact-email"
@@ -450,7 +684,7 @@ export function RefundPolicyPage() {
                     onClick={() => updatePolicyMutation.mutate(currentPolicy)}
                   >
                     <Icon name="save" className="text-[18px]" />
-                    {updatePolicyMutation.isPending ? 'Saving Policy…' : 'Save Refund Policy'}
+                    {updatePolicyMutation.isPending ? 'Saving Policy…' : 'Save Refund & Proration Policy'}
                   </Button>
                 </div>
               </Card>
