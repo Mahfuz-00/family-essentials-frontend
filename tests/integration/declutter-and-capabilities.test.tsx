@@ -257,11 +257,9 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     expect(screen.getByText('Saved Stores & Geofences')).toBeInTheDocument();
     expect(screen.getByText('Shared Ledgers & Budget')).toBeInTheDocument();
 
-    // 2. Gateway Navigation Launchpad
-    expect(screen.getByText('Household Operations Gateway')).toBeInTheDocument();
-    expect(screen.getByText('Store Geofences')).toBeInTheDocument();
-    expect(screen.getByText('Recurring Chores')).toBeInTheDocument();
-    expect(screen.getByText('Pantry Stock')).toBeInTheDocument();
+    // 2. Actionable Operational Widgets (Each shown once)
+    expect(screen.getByText('Standing Chores')).toBeInTheDocument();
+    expect(screen.getByText('Family Seats')).toBeInTheDocument();
 
     // 3. Pantry Restock 1-Tap Widget Action
     expect(screen.getAllByText('Organic Whole Milk').length).toBeGreaterThanOrEqual(1);

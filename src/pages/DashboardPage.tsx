@@ -25,7 +25,7 @@ import type {
   ServiceRequest,
 } from '@/types';
 
-type TaskFilterTab = 'focus' | 'my' | 'completed' | 'all';
+type TaskFilterTab = 'focus' | 'my' | 'completed';
 
 export function DashboardPage() {
   const queryClient = useQueryClient();
@@ -131,22 +131,13 @@ export function DashboardPage() {
     if (taskFilter === 'completed') {
       return (board.data.completed_today ?? []).slice(0, 6);
     }
-    // 'all'
-    const all = [
-      ...(board.data.overdue ?? []),
-      ...(board.data.due_today ?? []),
-      ...(board.data.assigned_to_me ?? []),
-      ...(board.data.backlog ?? []),
-    ];
-    const unique = new Map<number, ServiceRequest>();
-    for (const item of all) unique.set(item.id, item);
-    return Array.from(unique.values()).slice(0, 6);
+    return [];
   }, [board.data, taskFilter]);
 
   return (
     <AppLayout>
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        {/* Page Header as Executive Household Gateway */}
+        {/* Page Header as Single Unified Command Hub */}
         <PageHeader
           eyebrow={
             <div className="flex items-center gap-2">
@@ -330,154 +321,7 @@ export function DashboardPage() {
         </section>
 
         {/* -------------------------------------------------------------------
-            ROW 2: Software Gateway Navigation Hub (Gateway to All Modules)
-        -------------------------------------------------------------------- */}
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-headline-sm font-bold text-on-surface">
-                Household Operations Gateway
-              </h2>
-              <p className="text-body-sm text-muted">
-                Direct access and real-time status across all household coordination modules
-              </p>
-            </div>
-            <span className="text-xs font-semibold text-secondary">
-              6 Modules Active
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6">
-            {/* Gateway 1: Errands */}
-            <Link
-              to="/requests"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
-                  <Icon name="view_kanban" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Errands & Tasks
-                </span>
-                <span className="text-xs text-muted">
-                  {totalOpenCount} open errands
-                </span>
-              </div>
-            </Link>
-
-            {/* Gateway 2: Geofencing */}
-            <Link
-              to="/places"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
-                  <Icon name="pin_drop" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Store Geofences
-                </span>
-                <span className="text-xs text-muted">
-                  {places.length} saved places
-                </span>
-              </div>
-            </Link>
-
-            {/* Gateway 3: Recurring Staples */}
-            <Link
-              to="/recurring"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
-                  <Icon name="event_repeat" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Recurring Chores
-                </span>
-                <span className="text-xs text-muted">
-                  {recurringRules.length} standing rules
-                </span>
-              </div>
-            </Link>
-
-            {/* Gateway 4: Pantry & Safety Stock */}
-            <Link
-              to="/requests"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
-                  <Icon name="inventory_2" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Pantry Stock
-                </span>
-                <span className="text-xs text-muted">
-                  {essentialsSummary.due > 0 ? `${essentialsSummary.due} items low` : 'All stocked'}
-                </span>
-              </div>
-            </Link>
-
-            {/* Gateway 5: Ledgers & Money */}
-            <Link
-              to="/money"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary transition-transform group-hover:scale-105">
-                  <Icon name="account_balance_wallet" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Shared Ledgers
-                </span>
-                <span className="text-xs text-muted">
-                  {ledgers.length} family ledgers
-                </span>
-              </div>
-            </Link>
-
-            {/* Gateway 6: Family & Roles */}
-            <Link
-              to="/members"
-              className="group flex flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:border-secondary hover:shadow-e2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary transition-transform group-hover:scale-105">
-                  <Icon name="group" className="text-[18px]" />
-                </span>
-                <Icon name="arrow_forward" className="text-[16px] text-muted transition-transform group-hover:translate-x-1 group-hover:text-secondary" />
-              </div>
-              <div className="mt-3 flex flex-col">
-                <span className="text-sm font-bold text-on-surface group-hover:text-secondary">
-                  Family Members
-                </span>
-                <span className="text-xs text-muted">
-                  {seatsUsed} of {seatCap} seats
-                </span>
-              </div>
-            </Link>
-          </div>
-        </section>
-
-        {/* -------------------------------------------------------------------
-            ROW 3: Active Operations Hub (Tasks List + Operational Widgets)
+            ROW 2: Active Operations Hub (Tasks List + Operational Widgets)
         -------------------------------------------------------------------- */}
         <section className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Left (8 Cols): Today's Active Errands & Chores Hub */}
@@ -809,10 +653,11 @@ export function DashboardPage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-outline-variant/15 pt-3 text-xs text-muted">
-                <span>Places: {places.length}</span>
-                <span>Ledgers: {ledgers.length}</span>
-                <Link to="/settings" className="font-semibold text-secondary hover:underline">
-                  Settings →
+                <Link to="/members" className="font-semibold text-secondary hover:underline">
+                  Manage Family Seats →
+                </Link>
+                <Link to="/billing" className="font-semibold text-muted hover:text-on-surface">
+                  Tier Limits
                 </Link>
               </div>
             </Card>
