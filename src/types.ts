@@ -932,3 +932,36 @@ export interface ReferralProgramSettings {
   terms_markdown: string;
 }
 
+export interface OcrLineItem {
+  name: string;
+  price_minor: number;
+  quantity: number;
+  category: string;
+}
+
+export interface OcrSuggestedRestock {
+  essential_id: number;
+  name: string;
+  current_stock: number;
+  threshold: number;
+  suggested_quantity: number;
+}
+
+export interface ReceiptScanResponse {
+  merchant: string;
+  date: string;
+  total_minor: number;
+  tax_minor: number;
+  subtotal_minor: number;
+  currency: string;
+  line_items: OcrLineItem[];
+  suggested_restocks: OcrSuggestedRestock[];
+  recorded_entry: LedgerEntry | null;
+  confidence: number;
+  requirements?: {
+    printed_only: boolean;
+    language: string;
+    notice: string;
+  };
+}
+
