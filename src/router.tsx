@@ -14,6 +14,7 @@ import { FeaturesHubPage } from '@/pages/marketing/FeaturesHubPage';
 import { PricingPage } from '@/pages/marketing/PricingPage';
 import { SolutionDetailPage } from '@/pages/marketing/SolutionDetailPage';
 import { SolutionsHubPage } from '@/pages/marketing/SolutionsHubPage';
+import { PublicRefundPolicyPage } from '@/pages/marketing/PublicRefundPolicyPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { MoneyPage } from '@/pages/MoneyPage';
 import { PlacesPage } from '@/pages/PlacesPage';
@@ -118,6 +119,12 @@ const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
   component: AboutPage,
+});
+
+const refundPolicyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/refund-policy',
+  component: PublicRefundPolicyPage,
 });
 
 const faqRoute = createRoute({
@@ -397,6 +404,7 @@ export const routeTree = rootRoute.addChildren([
   solutionDetailRoute,
   pricingMarketingRoute,
   aboutRoute,
+  refundPolicyRoute,
   faqRoute,
   contactRoute,
   loginRoute,

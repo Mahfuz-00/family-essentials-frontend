@@ -475,6 +475,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/refund-policy" className="text-body-sm text-on-surface-variant hover:text-secondary">
+                    Subscription &amp; Refund Policy
+                  </Link>
+                </li>
+                <li>
                   <Link to="/about" className="text-body-sm text-on-surface-variant hover:text-secondary">
                     Our Mission & Privacy
                   </Link>
@@ -507,6 +512,9 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-outline-variant/20 pt-8 sm:flex-row text-label-sm text-muted">
             <p>© {new Date().getFullYear()} Family Essentials Inc. All rights reserved.</p>
             <div className="flex items-center gap-6">
+              <Link to="/refund-policy" className="hover:text-on-surface cursor-pointer">
+                Refund Policy
+              </Link>
               <span className="hover:text-on-surface cursor-pointer">Privacy Policy</span>
               <span className="hover:text-on-surface cursor-pointer">Terms of Service</span>
               <span className="hover:text-on-surface cursor-pointer">Security Safeguards</span>
