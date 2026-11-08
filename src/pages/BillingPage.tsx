@@ -534,7 +534,7 @@ export function BillingPage() {
                             </Badge>
                           </TD>
                           <TD className="text-right">
-                            {invoice.payment_method === 'cash' ? (
+                            {invoice.payment_method === 'cash' && invoice.status !== 'paid' ? (
                               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
                                 <Icon name="receipt" className="text-[14px]" />
                                 In-Person Invoice

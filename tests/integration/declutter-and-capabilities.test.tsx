@@ -132,9 +132,23 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
       '/v1/billing/invoices': {
         data: [
           {
+            id: 101,
+            tenant_id: 1,
+            invoice_number: 'INV-2026-CASH-PENDING',
+            amount_cents: 1900,
+            currency: 'USD',
+            status: 'pending',
+            tier: 'family',
+            billing_period: 'monthly',
+            paid_at: null,
+            payment_method: 'cash',
+            last4: 'CASH',
+            created_at: '2026-11-06T00:00:00Z',
+          },
+          {
             id: 102,
             tenant_id: 1,
-            invoice_number: 'INV-2026-CASH',
+            invoice_number: 'INV-2026-CASH-ACCEPTED',
             amount_cents: 1900,
             currency: 'USD',
             status: 'paid',
@@ -146,7 +160,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
             created_at: '2026-11-06T00:00:00Z',
           },
         ],
-        total: 1,
+        total: 2,
         current_page: 1,
       },
     });
@@ -205,14 +219,15 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
       payment_method: 'cash',
     });
 
-    // 4. Invoices tab shows Cash badge and in-person invoice notice without PDF download
+    // 4. Invoices tab shows Cash badge: pending cash shows in-person notice, accepted cash enables PDF receipt download
     const invoicesTab = screen.getByRole('button', { name: /Invoices & Receipts/i });
     await userEvent.click(invoicesTab);
 
-    expect(await screen.findByText('INV-2026-CASH')).toBeInTheDocument();
-    expect(screen.getByText('Cash / In-Person')).toBeInTheDocument();
+    expect(await screen.findByText('INV-2026-CASH-PENDING')).toBeInTheDocument();
+    expect(screen.getByText('INV-2026-CASH-ACCEPTED')).toBeInTheDocument();
+    expect(screen.getAllByText('Cash / In-Person')).toHaveLength(2);
     expect(screen.getByText('In-Person Invoice')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /PDF Receipt/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /PDF Receipt/i })).toBeInTheDocument();
   });
 
   it('filters Focus Mode tabs and sends gratitude on completed errands', async () => {
