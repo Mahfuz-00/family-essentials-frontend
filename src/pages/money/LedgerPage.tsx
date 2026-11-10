@@ -12,6 +12,7 @@ import { StaticChip } from '@/components/ui/chip';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
@@ -27,6 +28,7 @@ import type {
   LedgerEntryDirection,
   LedgerGrantRole,
   LedgerSummary,
+  ReceiptScanResponse,
   TenantMember,
 } from '@/types';
 
@@ -68,6 +70,40 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     description: '',
     occurred_on: isoDate(new Date()),
   });
+
+  const [showOcrModal, setShowOcrModal] = useState(false);
+  const [ocrFile, setOcrFile] = useState<File | null>(null);
+  const [ocrAutoRecord, setOcrAutoRecord] = useState(true);
+  const [ocrScanning, setOcrScanning] = useState(false);
+  const [ocrResult, setOcrResult] = useState<ReceiptScanResponse | null>(null);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+
+  const handleScanReceipt = async () => {
+    setOcrScanning(true);
+    setOcrError(null);
+    try {
+      const formData = new FormData();
+      if (ocrFile) {
+        formData.append('image', ocrFile);
+      }
+      formData.append('ledger_id', String(ledgerId));
+      formData.append('auto_record', ocrAutoRecord ? '1' : '0');
+
+      const response = await api.post<ReceiptScanResponse>('/v1/ledger/receipts/scan', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setOcrResult(response.data);
+      if (ocrAutoRecord) {
+        setNotice(`Scanned receipt from ${response.data.merchant} recorded to ledger.`);
+        await refresh();
+      }
+    } catch (err) {
+      setOcrError(apiError(err));
+    } finally {
+      setOcrScanning(false);
+    }
+  };
 
   const range = useMemo(currentMonth, []);
 
@@ -262,7 +298,18 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                   {summary.data?.entry_count ?? entryList.length} recorded in this period.
                 </p>
               </div>
-              <Badge tone="primary">{role === 'owner' ? 'You own this ledger' : 'You manage this ledger'}</Badge>
+              <div className="flex items-center gap-2.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowOcrModal(true)}
+                  className="flex items-center gap-1.5"
+                >
+                  <Icon name="document_scanner" className="text-[18px]" />
+                  Scan Receipt (OCR)
+                </Button>
+                <Badge tone="primary">{role === 'owner' ? 'You own this ledger' : 'You manage this ledger'}</Badge>
+              </div>
             </div>
 
             {entries.isLoading && <p className="px-5 pb-5 text-body-md text-muted">Loading entries…</p>}
@@ -351,10 +398,23 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
 
         {ledger && canReadEntries && (
           <Card className="p-5">
-            <h2 className="text-headline-sm text-on-surface">Record an entry</h2>
-            <p className="text-body-sm text-muted">
-              Type the amount in major units — it is sent as an integer number of minor units.
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-headline-sm text-on-surface">Record an entry</h2>
+                <p className="text-body-sm text-muted">
+                  Type the amount in major units or scan a machine-printed English receipt.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowOcrModal(true)}
+                className="flex items-center gap-1.5"
+              >
+                <Icon name="document_scanner" className="text-[18px]" />
+                Scan Receipt (OCR)
+              </Button>
+            </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div>
@@ -465,6 +525,178 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             </ul>
           </Card>
         )}
+
+        {/* Optical Character Recognition (OCR) Modal */}
+        <Modal
+          open={showOcrModal}
+          onClose={() => {
+            setShowOcrModal(false);
+            setOcrResult(null);
+            setOcrFile(null);
+            setOcrError(null);
+          }}
+          title="Optical Receipt Scanning (OCR)"
+          description="Extract merchant, items, taxes, and totals from your paper receipts directly into your household ledger."
+        >
+          <div className="flex flex-col gap-4">
+            {/* Explicit requirement notice requested by user */}
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50/70 p-3.5 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+              <Icon name="info" className="mt-0.5 text-[18px] text-amber-600 shrink-0" />
+              <div className="flex flex-col gap-1">
+                <span className="font-bold text-amber-950 dark:text-amber-100">
+                  Receipt Requirements: Machine-Printed &amp; In English
+                </span>
+                <p>
+                  To ensure high OCR optical precision, receipts <strong>must be machine-printed</strong> (e.g. supermarket cash register slip) and <strong>in English</strong>. Handwritten receipts, illegible photos, and non-English text are not supported.
+                </p>
+              </div>
+            </div>
+
+            {ocrError && <Alert tone="error">{ocrError}</Alert>}
+
+            {!ocrResult ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-outline-variant/60 bg-surface-container-low p-6 text-center">
+                  <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
+                    <Icon name="receipt_long" className="text-[28px]" />
+                  </span>
+                  <span className="text-label-lg font-bold text-on-surface">Upload or drop printed receipt</span>
+                  <p className="mb-3 text-body-xs text-muted">
+                    Supports JPG, PNG, WEBP, or PDF up to 10MB (Machine-printed in English)
+                  </p>
+                  <input
+                    type="file"
+                    id="receipt-file-input"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    onChange={(e) => setOcrFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="receipt-file-input"
+                    className="inline-flex h-9 cursor-pointer items-center justify-center rounded-xl border border-outline-variant/40 bg-surface px-4 text-label-md font-semibold text-secondary shadow-xs transition-all hover:bg-sage-soft"
+                  >
+                    {ocrFile ? ocrFile.name : 'Choose Receipt File'}
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="ocr-auto-record"
+                    checked={ocrAutoRecord}
+                    onChange={(e) => setOcrAutoRecord(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer accent-secondary"
+                  />
+                  <Label htmlFor="ocr-auto-record" className="cursor-pointer text-body-sm font-medium text-on-surface">
+                    Automatically record extracted total as an expense entry on this ledger
+                  </Label>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowOcrModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={ocrScanning}
+                    onClick={handleScanReceipt}
+                  >
+                    <Icon name="document_scanner" className="text-[18px]" />
+                    {ocrScanning ? 'Processing OCR…' : 'Scan Receipt'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 rounded-xl border border-outline-variant/30 bg-surface p-4">
+                  <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                    <div>
+                      <span className="text-body-xs text-muted">Detected Merchant</span>
+                      <h4 className="text-headline-sm font-bold text-on-surface">{ocrResult.merchant}</h4>
+                      <span className="text-body-xs text-muted">Date: {ocrResult.date}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-body-xs text-muted">Grand Total</span>
+                      <div className="text-headline-md font-bold text-secondary">
+                        {formatMoney(ocrResult.total_minor, ocrResult.currency)}
+                      </div>
+                      <span className="text-body-xs text-muted">
+                        Subtotal: {formatMoney(ocrResult.subtotal_minor, ocrResult.currency)} · Tax: {formatMoney(ocrResult.tax_minor, ocrResult.currency)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Parsed Line Items */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-label-md font-semibold text-on-surface">Extracted Line Items ({ocrResult.line_items.length}):</span>
+                    <div className="max-h-48 divide-y divide-outline-variant/20 overflow-y-auto text-xs">
+                      {ocrResult.line_items.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-on-surface">{item.name}</span>
+                            <span className="rounded bg-surface-container px-1.5 py-0.5 text-[10px] capitalize text-muted">{item.category}</span>
+                          </div>
+                          <span className="font-mono font-bold text-on-surface">
+                            {formatMoney(item.price_minor, ocrResult.currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pantry Restock Suggestions */}
+                  {ocrResult.suggested_restocks.length > 0 && (
+                    <div className="flex flex-col gap-1.5 rounded-xl border border-secondary/20 bg-forest-soft/40 p-3 text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-secondary">
+                        <Icon name="inventory_2" className="text-[16px]" />
+                        Matching Household Pantry Essentials ({ocrResult.suggested_restocks.length}):
+                      </span>
+                      <p className="text-muted">
+                        Items on this receipt matched your household pantry essentials:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {ocrResult.suggested_restocks.map((restock) => (
+                          <span key={restock.essential_id} className="rounded-lg border border-outline-variant/30 bg-surface px-2 py-1 font-semibold text-on-surface">
+                            {restock.name} (Stock: {restock.current_stock})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {ocrResult.recorded_entry && (
+                    <Alert tone="success">
+                      ✓ Entry of {formatMoney(ocrResult.total_minor, ocrResult.currency)} automatically recorded to this ledger.
+                    </Alert>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setOcrResult(null);
+                      setOcrFile(null);
+                    }}
+                  >
+                    Scan Another Receipt
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowOcrModal(false);
+                      setOcrResult(null);
+                      setOcrFile(null);
+                    }}
+                  >
+                    Done
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
       </div>
     </AppLayout>
   );

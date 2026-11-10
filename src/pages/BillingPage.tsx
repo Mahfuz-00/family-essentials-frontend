@@ -42,8 +42,12 @@ export function BillingPage() {
   const queryClient = useQueryClient();
   const active = useTenantStore((state) => state.active);
 
-  const [activeTab, setActiveTab] = useState<'plan' | 'invoices'>('plan');
+  const [activeTab, setActiveTab] = useState<'plan' | 'invoices' | 'refund-policy'>('plan');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refundInvoiceId, setRefundInvoiceId] = useState<number | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [selectedTier, setSelectedTier] = useState<'plus' | 'family' | 'enterprise'>('family');
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
@@ -176,6 +180,32 @@ export function BillingPage() {
     });
   };
 
+  const handleRefundSubmit = async () => {
+    if (!refundReason.trim()) {
+      setError('Please provide a brief reason for your refund request.');
+      return;
+    }
+    setRefundSubmitting(true);
+    setError(null);
+    try {
+      const selectedInvoice = invoicesList.find((inv) => inv.id === refundInvoiceId) || invoicesList[0];
+      const amountCents = selectedInvoice ? selectedInvoice.amount_cents : 1900;
+      await api.post('/v1/billing/refund-request', {
+        invoice_id: selectedInvoice?.id,
+        amount_cents: amountCents,
+        currency: selectedInvoice?.currency ?? 'USD',
+        reason: refundReason,
+      });
+      setNotice('Refund request successfully submitted! Our billing team reviews requests within 24 hours under our refund policy.');
+      setRefundModalOpen(false);
+      setRefundReason('');
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
@@ -221,6 +251,18 @@ export function BillingPage() {
           >
             <Icon name="receipt_long" className="text-[18px]" />
             Invoices &amp; Receipts ({invoicesList.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('refund-policy')}
+            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
+              activeTab === 'refund-policy'
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-muted hover:text-on-surface'
+            }`}
+          >
+            <Icon name="verified_user" className="text-[18px]" />
+            Refund Policy &amp; Guarantees
           </button>
         </div>
 
@@ -394,6 +436,37 @@ export function BillingPage() {
                 </Button>
               </div>
 
+              {/* Money-Back Guarantee Notice */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-secondary/20 bg-forest-soft/40 p-3.5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                    <Icon name="verified_user" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <span className="text-label-md font-bold text-on-surface">Household Money-Back Guarantee</span>
+                    <p className="text-body-xs text-muted">
+                      7-day 100% refund on monthly plans · 30-day 80% refund on annual plans.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRefundModalOpen(true)}
+                  >
+                    Request Refund
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('refund-policy')}
+                    className="text-xs font-bold text-secondary hover:underline px-2 py-1"
+                  >
+                    View Policy Details &rarr;
+                  </button>
+                </div>
+              </div>
+
               <Card className="overflow-hidden p-0">
                 {invoicesQuery.isLoading ? (
                   <div className="p-8 text-center text-xs text-muted">Loading payment records...</div>
@@ -461,7 +534,7 @@ export function BillingPage() {
                             </Badge>
                           </TD>
                           <TD className="text-right">
-                            {invoice.payment_method === 'cash' ? (
+                            {invoice.payment_method === 'cash' && invoice.status !== 'paid' ? (
                               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
                                 <Icon name="receipt" className="text-[14px]" />
                                 In-Person Invoice
@@ -485,6 +558,129 @@ export function BillingPage() {
                 )}
               </Card>
             </section>
+          </div>
+        )}
+
+        {activeTab === 'refund-policy' && (
+          <div className="flex flex-col gap-6">
+            <Card className="flex flex-col gap-5 p-6 border-l-4 border-secondary bg-surface">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-headline-sm font-bold text-on-surface">Household Refund &amp; Guarantee Status</h3>
+                  <p className="text-xs text-muted">
+                    Clear terms protecting your household subscription. Submit requests directly to platform billing triage.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setRefundModalOpen(true)}
+                  >
+                    <Icon name="assignment_return" className="text-[16px]" />
+                    Request a Refund
+                  </Button>
+                  <Link to="/refund-policy">
+                    <Button variant="outline" size="sm">
+                      <Icon name="open_in_new" className="text-[16px]" />
+                      Public Terms Page
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Household Status Breakdown */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 border-t border-outline-variant/20 pt-4">
+                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
+                  <span className="text-xs font-semibold text-muted">Current Plan Commitment</span>
+                  <div className="text-label-lg font-bold text-on-surface mt-1 capitalize">
+                    {quota.planLabel}
+                  </div>
+                  <span className="text-[11px] text-muted">Active household tier</span>
+                </div>
+
+                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
+                  <span className="text-xs font-semibold text-muted">Latest Invoice</span>
+                  <div className="text-label-lg font-bold text-on-surface mt-1 font-mono">
+                    {invoicesList[0]?.invoice_number ?? 'No invoices yet'}
+                  </div>
+                  <span className="text-[11px] text-muted">
+                    {invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)} · ${invoicesList[0].status.toUpperCase()}` : 'Free trial'}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
+                  <span className="text-xs font-semibold text-muted">Money-Back Window</span>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <Badge tone="success">7-Day Guarantee Active</Badge>
+                  </div>
+                  <span className="text-[11px] text-muted">100% refundable within 7 days of invoice</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* 4 Policy Pillars */}
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Card className="flex flex-col gap-3 p-5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                    <Icon name="verified_user" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-label-lg font-bold text-on-surface">Monthly Subscriptions: 7-Day 100% Guarantee</h4>
+                    <p className="text-body-xs text-muted">Full refund within 7 calendar days</p>
+                  </div>
+                </div>
+                <p className="text-xs text-on-surface leading-relaxed">
+                  If you decide Family Essentials does not fit your household within 7 days of your monthly subscription invoice, you are entitled to a full 100% refund. After 7 days, charges for that cycle are non-refundable.
+                </p>
+              </Card>
+
+              <Card className="flex flex-col gap-3 p-5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                    <Icon name="workspace_premium" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-label-lg font-bold text-on-surface">Annual Commitments: 30-Day 80% Guarantee</h4>
+                    <p className="text-body-xs text-muted">First-month early cancellation protection</p>
+                  </div>
+                </div>
+                <p className="text-xs text-on-surface leading-relaxed">
+                  Annual subscriptions can be cancelled within the first month (30 days) for an 80% refund (20% retained for early termination and payment gateway costs). After 30 days, annual subscriptions are non-refundable.
+                </p>
+              </Card>
+
+              <Card className="flex flex-col gap-3 p-5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                    <Icon name="swap_horiz" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-label-lg font-bold text-on-surface">Plan Modifications &amp; Prorations</h4>
+                    <p className="text-body-xs text-muted">Clear timing rules for upgrades and downgrades</p>
+                  </div>
+                </div>
+                <p className="text-xs text-on-surface leading-relaxed">
+                  Monthly plans can be upgraded or changed between <strong>Day 4 and Day 20</strong> with a 50% adjustment credit. Plan changes are locked on Days 0–3 and after Day 20. Annual plans may be changed within the first 3 months.
+                </p>
+              </Card>
+
+              <Card className="flex flex-col gap-3 p-5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    <Icon name="payments" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h4 className="text-label-lg font-bold text-on-surface">Cash &amp; Offline Payment Refunds</h4>
+                    <p className="text-body-xs text-muted">In-person cash settlement vouchers</p>
+                  </div>
+                </div>
+                <p className="text-xs text-on-surface leading-relaxed">
+                  For cash-based payments, refunds cannot be processed automatically back to an online bank card. Instead, approved refunds are settled offline in person with your platform administrator via an official printed refund voucher.
+                </p>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -700,6 +896,62 @@ export function BillingPage() {
                 srcDoc={viewInvoiceHtml ?? ''}
                 className="h-full w-full border-0"
               />
+            </div>
+          </div>
+        </Modal>
+
+        {/* Request Refund Modal */}
+        <Modal
+          open={refundModalOpen}
+          onClose={() => setRefundModalOpen(false)}
+          title="Submit Household Refund Request"
+          description="Submit a refund request under our 7-day monthly or 30-day annual guarantee policy."
+        >
+          <div className="flex flex-col gap-4 p-1">
+            <div className="rounded-xl border border-amber-300 bg-amber-50/60 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+              <span className="font-bold">Refund Policy Reminder:</span> Monthly plans are 100% refundable within 7 days. Annual plans are 80% refundable within 30 days. Requests are triaged by platform billing within 24 hours.
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-on-surface">Select Invoice to Refund</label>
+              <select
+                value={refundInvoiceId ?? (invoicesList[0]?.id || '')}
+                onChange={(e) => setRefundInvoiceId(Number(e.target.value))}
+                className="w-full rounded-xl border border-outline-variant/40 bg-surface p-2.5 text-xs text-on-surface focus:border-secondary focus:outline-none"
+              >
+                {invoicesList.map((inv) => (
+                  <option key={inv.id} value={inv.id}>
+                    {inv.invoice_number} — ${(inv.amount_cents / 100).toFixed(2)} ({inv.tier} · {inv.status.toUpperCase()})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-on-surface">Reason for Refund Request</label>
+              <textarea
+                rows={3}
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="e.g. Household moved, accidental duplicate subscription, or did not meet domestic requirements..."
+                className="w-full rounded-xl border border-outline-variant/40 bg-surface p-3 text-xs text-on-surface focus:border-secondary focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-outline-variant/20 pt-3">
+              <Button
+                variant="outline"
+                onClick={() => setRefundModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={refundSubmitting || !refundReason.trim()}
+                onClick={handleRefundSubmit}
+              >
+                <Icon name="send" className="text-[16px]" />
+                {refundSubmitting ? 'Submitting…' : 'Submit Refund Request'}
+              </Button>
             </div>
           </div>
         </Modal>

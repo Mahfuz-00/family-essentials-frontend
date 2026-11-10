@@ -322,6 +322,11 @@ export const FEATURES: FeatureData[] = [
         description: 'All financial math is calculated in exact cents (minor units) to prevent floating-point rounding errors on balances.',
         icon: 'calculate',
       },
+      {
+        title: 'Optical Receipt Scanning (OCR)',
+        description: 'Snap a photo of any grocery or store receipt to auto-parse merchant, itemized lines, taxes, and totals directly into your ledger. (Note: Receipts must be machine-printed and in English).',
+        icon: 'document_scanner',
+      },
     ],
     workflowSteps: [
       {
@@ -348,6 +353,10 @@ export const FEATURES: FeatureData[] = [
       {
         question: 'Can teenagers see the family budget without seeing individual purchases?',
         answer: 'Yes! Grant them the "Summary" role. They will see the total budget and remaining balance for the month, but cannot view individual line-item expenses.',
+      },
+      {
+        question: 'What kinds of receipts does the OCR receipt scanner support?',
+        answer: 'The OCR scanner supports standard machine-printed store receipts in English (PDF, PNG, JPG, WEBP). Handwritten receipts or non-English receipts are not currently supported. The scanner automatically detects the merchant, date, itemized lines, subtotal, tax, and total, and can cross-reference matching pantry items to recommend restocks.',
       },
     ],
   },
