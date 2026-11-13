@@ -14,47 +14,74 @@ const STEPS: Step[] = [
   {
     id: 1,
     stepNumber: 1,
-    label: '1. Errand Kanban',
-    badge: 'SINGLE NAMED OWNERSHIP',
+    label: '1. Errand',
+    badge: 'SINGLE NAMED OWNER',
     title: 'One Errand, One Clear Owner',
     description:
-      'Eliminate bystander apathy. Every errand has exactly one named person responsible, urgency tags, and real-time status visible to the whole house.',
+      'Every errand on the board has exactly one named owner, a due time and a priority. Nothing is shared and nothing is unowned.',
   },
   {
     id: 2,
     stepNumber: 2,
-    label: '2. Store Geofence',
-    badge: 'OPENSTREETMAP TRIGGER',
-    title: 'Automated Arrival & Departure',
+    label: '2. Saved Place',
+    badge: 'SAVED PLACE',
+    title: 'The Store Knows What Is Needed',
     description:
-      'When leaving work or arriving within 250m of CVS Pharmacy, native hardware geofences trigger automatic notifications with store checklists even with the app closed.',
+      'Save the stores you actually visit. When the app checks your position inside a saved store’s radius, that store’s open items surface in shopping mode.',
   },
   {
     id: 3,
     stepNumber: 3,
     label: '3. Shopping Mode',
-    badge: 'IN-STORE CHECKLIST',
-    title: 'In-Store Item Checking',
+    badge: 'ASKED VS. GOT',
+    title: 'Shop the List, Adjust Quantities',
     description:
-      'Inside the store, one-handed checklist mode lets runners tap to check off items in seconds, syncing completion live back to the home dashboard.',
+      'Shop the list in-store. Each line keeps the asked quantity next to what was actually picked up, so the household sees substitutions as they happen.',
   },
   {
     id: 4,
     stepNumber: 4,
-    label: '4. Direct Calling',
-    badge: 'ZERO ROBOCALLS',
-    title: 'Direct 1-Tap Carrier Escalation',
+    label: '4. Complete & Log',
+    badge: 'TASK → EXPENSE',
+    title: 'Completing the Errand Records the Cost',
     description:
-      'Need an urgent prescription pickup or brand substitution? Call the family member directly through your smartphone dialer with zero third-party robocalls.',
+      'Completing a request posts its expense to the household ledger. A receipt scan reads the merchant, date and total from a machine-printed receipt.',
   },
   {
     id: 5,
     stepNumber: 5,
-    label: '5. Household Money',
-    badge: 'INTEGER AUDIT LEDGER',
-    title: 'Shared Expenses & Balance',
+    label: '5. Ledger',
+    badge: 'SHARED LEDGER',
+    title: 'Expenses the Household Can See',
     description:
-      'Log receipts, grocery expenses, and reimbursements directly against tasks. Real-time integer ledger prevents rounding drift and tracks who paid what.',
+      'Expenses land in a shared ledger with explicit member roles. Owner, manager and summary roles decide who sees entries and who sees totals only.',
+  },
+  {
+    id: 6,
+    stepNumber: 6,
+    label: '6. Budgets',
+    badge: 'WEEKLY · MONTHLY · YEARLY',
+    title: 'Budget Limits With Live Gauges',
+    description:
+      'Set a spending cap for each period. Gauges show what has been spent and what remains, so the household sees an over-budget week before it becomes a problem.',
+  },
+  {
+    id: 7,
+    stepNumber: 7,
+    label: '7. Expense Log',
+    badge: 'EXPENSE TRACKER',
+    title: 'Log an Expense in Seconds',
+    description:
+      'Record an expense with an amount, category and payer. Amounts are stored in integer minor units, and a receipt scan can fill them from a machine-printed receipt.',
+  },
+  {
+    id: 8,
+    stepNumber: 8,
+    label: '8. Financial Health',
+    badge: 'NET WORTH',
+    title: 'The Whole Household Position',
+    description:
+      'Net worth, savings goals, loans and annual taxes sit next to the ledger, so the expense tracker rolls up into one financial picture.',
   },
 ];
 
@@ -110,55 +137,38 @@ export function PhoneSoftwareSimulation() {
 
   return (
     <div className="w-full">
-      {/* Step Navigation Tabs with Active Duration Progress Bars */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3 mb-8">
-        {STEPS.map((step, idx) => {
-          const isActive = idx === currentStepIndex;
+      {/* Main Simulation Container: step tabs, explainer and phone screen */}
+      <div className="rounded-3xl border border-secondary/20 bg-gradient-to-br from-surface via-forest-soft/20 to-sage-soft/40 p-6 sm:p-8 shadow-e2">
+        {/* Step navigation — one scrollable line inside the box */}
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto border-b border-outline-variant/30 pb-4">
+          {STEPS.map((step, idx) => {
+            const isActive = idx === currentStepIndex;
 
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => goToStep(idx)}
-              className={`relative overflow-hidden rounded-2xl p-3.5 sm:p-4 text-left transition-all cursor-pointer border ${
-                isActive
-                  ? 'border-secondary/40 bg-surface shadow-e2 -translate-y-0.5'
-                  : 'border-outline-variant/30 bg-canvas/80 hover:bg-surface text-muted'
-              }`}
-            >
-              {/* Duration Progress Indicator (Fills smoothly like before) */}
-              {isActive && isPlaying && (
-                <div
-                  className="absolute bottom-0 left-0 top-0 bg-secondary/10 transition-all duration-75 pointer-events-none"
-                  style={{ width: `${progress}%` }}
-                />
-              )}
-              {isActive && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-secondary rounded-t-2xl" />
-              )}
-              <div className="relative z-10">
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider block ${
-                    isActive ? 'text-secondary' : 'text-muted'
-                  }`}
-                >
-                  {step.label}
-                </span>
-                <span
-                  className={`mt-1 text-xs sm:text-sm font-bold block truncate ${
-                    isActive ? 'text-on-surface' : 'text-on-surface-variant'
-                  }`}
-                >
-                  {step.title}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => goToStep(idx)}
+                className={`relative shrink-0 overflow-hidden rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? 'border-secondary/40 bg-surface text-secondary shadow-e1'
+                    : 'border-outline-variant/30 bg-canvas/70 text-muted hover:bg-surface hover:text-on-surface'
+                }`}
+              >
+                {/* Duration progress fill rides with the active step */}
+                {isActive && isPlaying && (
+                  <span
+                    className="absolute inset-y-0 left-0 bg-secondary/10 transition-all duration-75 pointer-events-none"
+                    style={{ width: `${progress}%` }}
+                  />
+                )}
+                <span className="relative z-10">{step.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Main Simulation Container: Left Description, Right Phone Screen */}
-      <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 rounded-3xl border border-secondary/20 bg-gradient-to-br from-surface via-forest-soft/20 to-sage-soft/40 p-6 sm:p-8 shadow-e2">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
         {/* Left Side: Explainer Content */}
         <div className="lg:col-span-5 flex flex-col justify-between h-full">
           <div>
@@ -200,13 +210,13 @@ export function PhoneSoftwareSimulation() {
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
                       <Icon name="check" className="text-[14px]" />
                     </span>
-                    <span>250m OpenStreetMap geofence radar trigger</span>
+                    <span>Saved stores carry a radius you choose</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
                       <Icon name="check" className="text-[14px]" />
                     </span>
-                    <span>Automatic notification pops up as you pull into parking</span>
+                    <span>The store’s open items surface when the app checks your position inside it</span>
                   </div>
                 </>
               )}
@@ -234,13 +244,81 @@ export function PhoneSoftwareSimulation() {
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
                       <Icon name="check" className="text-[14px]" />
                     </span>
-                    <span>Direct pass-to-dialer phone call with zero robocalls</span>
+                    <span>Completing an errand can record its expense</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
                       <Icon name="check" className="text-[14px]" />
                     </span>
-                    <span>Instant brand substitution or prescription approval</span>
+                    <span>Receipt OCR reads machine-printed English receipts</span>
+                  </div>
+                </>
+              )}
+
+              {currentStepIndex === 4 && (
+                <>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Owner, manager and summary roles on every ledger</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Amounts stored in integer minor units</span>
+                  </div>
+                </>
+              )}
+
+              {currentStepIndex === 5 && (
+                <>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Weekly, monthly and yearly caps per category</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Gauges show what is spent and what remains</span>
+                  </div>
+                </>
+              )}
+
+              {currentStepIndex === 6 && (
+                <>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Amount, category and payer on every entry</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Receipt OCR fills machine-printed receipts</span>
+                  </div>
+                </>
+              )}
+
+              {currentStepIndex === 7 && (
+                <>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Net worth from real assets and liabilities</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-on-surface">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forest-soft text-secondary">
+                      <Icon name="check" className="text-[14px]" />
+                    </span>
+                    <span>Goals, loans, assets and taxes in one view</span>
                   </div>
                 </>
               )}
@@ -308,9 +386,11 @@ export function PhoneSoftwareSimulation() {
                 {/* Simulated App Header */}
                 <div className="relative z-20 flex items-center justify-between px-4 py-2 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#376847] text-white font-bold text-xs">
-                      FS
-                    </div>
+                    <img
+                      src="/favicon.svg"
+                      alt="FairShare"
+                      className="h-7 w-7 shrink-0 rounded-lg"
+                    />
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 leading-tight">FairShare</h4>
                       <div className="flex items-center gap-1">
@@ -327,7 +407,7 @@ export function PhoneSoftwareSimulation() {
                 {/* Screen Content With In-App Action Triggering Next Step */}
                 <div className="relative flex-1 overflow-hidden p-3.5 flex flex-col">
                   {/* ========================================================
-                      STEP 1: ERRAND KANBAN
+                      STEP 1: TODAY BOARD
                   ========================================================= */}
                   {currentStepIndex === 0 && (
                     <div className="flex-1 flex flex-col gap-2.5 animate-fadeIn">
@@ -401,7 +481,7 @@ export function PhoneSoftwareSimulation() {
                   )}
 
                   {/* ========================================================
-                      STEP 2: OPENSTREETMAP GEOFENCE ARRIVAL
+                      STEP 2: SAVED-PLACE ARRIVAL
                   ========================================================= */}
                   {currentStepIndex === 1 && (
                     <div className="flex-1 flex flex-col gap-2 animate-fadeIn relative">
@@ -414,7 +494,7 @@ export function PhoneSoftwareSimulation() {
                           <div className="animate-ping absolute h-36 w-36 rounded-full bg-emerald-500/20" />
                           <div className="h-32 w-32 rounded-full border-2 border-dashed border-emerald-600 bg-emerald-500/20 flex items-center justify-center">
                             <span className="text-[9px] font-bold text-emerald-800 bg-white/90 px-1.5 py-0.5 rounded shadow-xs">
-                              250m Geofence
+                              Saved radius
                             </span>
                           </div>
                           {/* CVS Pin */}
@@ -428,10 +508,10 @@ export function PhoneSoftwareSimulation() {
                           </div>
                         </div>
 
-                        {/* OpenStreetMap attribution badge */}
+                        {/* Saved-place marker */}
                         <div className="mt-auto p-1.5 text-[8px] text-slate-500 bg-white/80 backdrop-blur-xs flex items-center justify-between">
-                          <span>Map data © OpenStreetMap</span>
-                          <span className="font-bold text-emerald-700">GPS Arrival Detected</span>
+                          <span>Saved place</span>
+                          <span className="font-bold text-emerald-700">Position checked</span>
                         </div>
                       </div>
 
@@ -455,7 +535,7 @@ export function PhoneSoftwareSimulation() {
                               </span>
                             </div>
                             <p className="text-[9px] text-slate-600 truncate">
-                              2 errands waiting. Tap to open checklist →
+                              Open items for this store. Tap to shop →
                             </p>
                           </div>
                         </div>
@@ -518,7 +598,7 @@ export function PhoneSoftwareSimulation() {
                               <span className="text-xs font-bold text-slate-900 block leading-tight">
                                 Amoxicillin 500mg (Refill)
                               </span>
-                              <span className="text-[9px] text-slate-500">Pharmacy Counter</span>
+                              <span className="text-[9px] text-slate-500">Asked 1 · Got 1</span>
                             </div>
                           </div>
                           <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
@@ -549,7 +629,7 @@ export function PhoneSoftwareSimulation() {
                               <span className="text-xs font-bold text-slate-900 block leading-tight">
                                 Electrolyte Hydration Pack
                               </span>
-                              <span className="text-[9px] text-slate-500">Aisle 3 · Out of stock</span>
+                              <span className="text-[9px] text-slate-500">Asked 2 · Got 1</span>
                             </div>
                           </div>
                           <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
@@ -560,7 +640,7 @@ export function PhoneSoftwareSimulation() {
 
                       {/* Prompt */}
                       <div className="rounded-xl bg-amber-50 border border-amber-200 p-2 text-amber-900 text-[10px]">
-                        ⚠️ Generic brand missing. One-tap direct call to family runner:
+                        ⚠️ Out of stock? Call the other member about a substitution:
                       </div>
 
                       {/* Interactive In-App Action Trigger */}
@@ -584,75 +664,89 @@ export function PhoneSoftwareSimulation() {
                   )}
 
                   {/* ========================================================
-                      STEP 4: DIRECT CARRIER PHONE CALLING
+                      STEP 4: COMPLETE THE ERRAND & LOG THE EXPENSE
                   ========================================================= */}
                   {currentStepIndex === 3 && (
-                    <div className="flex-1 flex flex-col justify-between animate-fadeIn p-1">
-                      {/* Top Context Card */}
-                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
-                          Direct Carrier Calling
-                        </span>
-                        <h6 className="mt-1 text-xs font-bold text-slate-900">
-                          CVS Pharmacy Run · Maya
-                        </h6>
-                        <p className="text-[10px] text-slate-500">
-                          Direct phone dialer pass — zero robocalls or IVR delay.
-                        </p>
-                      </div>
-
-                      {/* Simulated Native Smartphone Calling Overlay */}
-                      <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4 text-white shadow-xl flex flex-col items-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg animate-pulse">
-                          <Icon name="phone" className="text-[26px]" />
-                        </div>
-
-                        <span className="mt-3 text-sm font-bold text-white">Samir Rahman</span>
-                        <span className="text-[10px] text-emerald-400 font-medium">
-                          Connected (0:18)
-                        </span>
-
-                        <div className="mt-3 flex items-center gap-2 rounded-full bg-slate-800 px-3 py-1 text-[9px] text-slate-300">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                          <span>Direct Carrier Line · Confirmed Brand</span>
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-center gap-6">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300">
-                            <Icon name="mic_off" className="text-[16px]" />
-                          </span>
-                          <span
-                            onClick={advanceNext}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white cursor-pointer hover:bg-red-700 transition-colors shadow-md"
-                          >
-                            <Icon name="call_end" className="text-[18px]" />
-                          </span>
-                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-300">
-                            <Icon name="volume_up" className="text-[16px]" />
+                    <div className="flex-1 flex flex-col gap-2.5 animate-fadeIn p-1">
+                      {/* Completion context */}
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                              Errand Complete
+                            </span>
+                            <h6 className="mt-1.5 text-xs font-bold text-slate-900">
+                              Prescription Refill · CVS Pharmacy
+                            </h6>
+                            <p className="text-[10px] text-slate-600">
+                              Completed by Maya · 2 items, 1 substitution
+                            </p>
+                          </div>
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                            <Icon name="check" className="text-[16px]" />
                           </span>
                         </div>
                       </div>
 
-                      {/* Interactive In-App Action Trigger to advance to Step 5 (Money) */}
+                      {/* Receipt scan */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800">
+                            <Icon name="receipt_long" className="text-[16px]" />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[11px] font-bold text-slate-900 block leading-tight">
+                              Receipt scan
+                            </span>
+                            <span className="text-[9px] text-slate-500">
+                              Machine-printed · English
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                            OCR
+                          </span>
+                        </div>
+
+                        <dl className="mt-2.5 flex flex-col gap-1 border-t border-slate-100 pt-2 text-[10px]">
+                          <div className="flex items-center justify-between">
+                            <dt className="text-slate-500">Merchant</dt>
+                            <dd className="font-semibold text-slate-800">CVS Pharmacy</dd>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <dt className="text-slate-500">Items</dt>
+                            <dd className="font-semibold text-slate-800">2 lines</dd>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <dt className="text-slate-500">Total</dt>
+                            <dd className="font-extrabold text-slate-900">$42.50</dd>
+                          </div>
+                        </dl>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-[10px] text-slate-600">
+                        The expense posts to the household ledger in integer minor units, with the payer recorded.
+                      </div>
+
+                      {/* Interactive In-App Action Trigger to advance to Step 5 (Ledger) */}
                       <button
                         type="button"
                         onClick={advanceNext}
-                        className="w-full relative flex items-center justify-between rounded-xl bg-amber-600 p-2.5 text-white text-[11px] font-bold shadow-md hover:bg-amber-700 transition-all cursor-pointer active:scale-95 group"
+                        className="mt-auto w-full relative flex items-center justify-between rounded-xl bg-[#376847] p-2.5 text-white text-[11px] font-bold shadow-md hover:bg-[#2c5339] transition-all cursor-pointer active:scale-95 group"
                       >
                         <div className="flex items-center gap-2">
                           <span className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
                           </span>
-                          <span>Complete Call & Log Pharmacy Expense</span>
+                          <span>Post $42.50 to the Ledger</span>
                         </div>
-                        <Icon name="arrow_forward" className="text-[14px] group-hover:translate-x-0.5 transition-transform" />
+                        <Icon name="arrow_forward" className="text-[14px] group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
                   )}
 
                   {/* ========================================================
-                      STEP 5: HOUSEHOLD MONEY & EXPENSES
+                      STEP 5: HOUSEHOLD LEDGER & BUDGET
                   ========================================================= */}
                   {currentStepIndex === 4 && (
                     <div className="flex-1 flex flex-col justify-between animate-fadeIn p-1">
@@ -667,10 +761,10 @@ export function PhoneSoftwareSimulation() {
                           </span>
                         </div>
                         <h6 className="mt-1 text-xs font-bold text-slate-900">
-                          Shared Family Expenses
+                          Household Ledger
                         </h6>
                         <p className="text-[10px] text-slate-500">
-                          Exact integer math · Zero hidden fees or rounding drift.
+                          Owner, manager and summary roles · Integer minor units.
                         </p>
                       </div>
 
@@ -749,7 +843,170 @@ export function PhoneSoftwareSimulation() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
                           </span>
-                          <span>Save Ledger & Return to Kanban</span>
+                          <span>Set Budget Limits</span>
+                        </div>
+                        <Icon name="arrow_forward" className="text-[14px] group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ========================================================
+                      STEP 6: BUDGET LIMITS
+                  ========================================================= */}
+                  {currentStepIndex === 5 && (
+                    <div className="flex-1 flex flex-col gap-2.5 animate-fadeIn p-1">
+                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                          Budget Limits
+                        </span>
+                        <h6 className="mt-1 text-xs font-bold text-slate-900">Weekly · Monthly · Yearly</h6>
+                        <p className="text-[10px] text-slate-500">A cap per period, with live gauges.</p>
+                      </div>
+
+                      <div className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                        {[
+                          { label: 'Weekly groceries', spent: '$124', cap: '$200', pct: 62 },
+                          { label: 'Monthly household', spent: '$640', cap: '$1,000', pct: 64 },
+                          { label: 'Yearly essentials', spent: '$3,180', cap: '$6,000', pct: 53 },
+                        ].map((budget) => (
+                          <div key={budget.label}>
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="font-semibold text-slate-800">{budget.label}</span>
+                              <span className="text-slate-500">{budget.spent} / {budget.cap}</span>
+                            </div>
+                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                              <div className="h-full rounded-full bg-[#376847]" style={{ width: `${budget.pct}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-[10px] text-slate-600">
+                        Reaching a cap warns the household instead of blocking the shop.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={advanceNext}
+                        className="mt-auto w-full relative flex items-center justify-between rounded-xl bg-[#376847] p-2.5 text-white text-[11px] font-bold shadow-md hover:bg-[#2c5339] transition-all cursor-pointer active:scale-95 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                          </span>
+                          <span>Log an Expense</span>
+                        </div>
+                        <Icon name="arrow_forward" className="text-[14px] group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ========================================================
+                      STEP 7: EXPENSE ENTRY
+                  ========================================================= */}
+                  {currentStepIndex === 6 && (
+                    <div className="flex-1 flex flex-col gap-2.5 animate-fadeIn p-1">
+                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                          Expense Entry
+                        </span>
+                        <h6 className="mt-1 text-xs font-bold text-slate-900">Log an Expense in Seconds</h6>
+                        <p className="text-[10px] text-slate-500">Amount, category and payer, in integer minor units.</p>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Amount</span>
+                          <span className="text-lg font-extrabold text-slate-900">$42.50</span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {['Groceries', 'Pharmacy', 'Utilities', 'Household'].map((category, index) => (
+                            <span
+                              key={category}
+                              className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                                index === 1 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {category}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-2.5 flex flex-col gap-1 border-t border-slate-100 pt-2 text-[10px]">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Payer</span>
+                            <span className="font-semibold text-slate-800">Maya</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Source</span>
+                            <span className="font-semibold text-slate-800">Receipt scan (OCR)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-2 text-[10px] text-amber-900">
+                        Machine-printed English receipts only; handwriting is not supported.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={advanceNext}
+                        className="mt-auto w-full relative flex items-center justify-between rounded-xl bg-[#376847] p-2.5 text-white text-[11px] font-bold shadow-md hover:bg-[#2c5339] transition-all cursor-pointer active:scale-95 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                          </span>
+                          <span>Save to Ledger</span>
+                        </div>
+                        <Icon name="arrow_forward" className="text-[14px] group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ========================================================
+                      STEP 8: FINANCIAL HEALTH
+                  ========================================================= */}
+                  {currentStepIndex === 7 && (
+                    <div className="flex-1 flex flex-col gap-2.5 animate-fadeIn p-1">
+                      <div className="rounded-xl bg-[#376847] p-3 text-white shadow-xs">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-100">Net Worth</span>
+                        <div className="text-xl font-extrabold">$263,500.00</div>
+                        <span className="text-[10px] text-emerald-100">Assets minus liabilities</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: 'Goals', value: '3 active' },
+                          { label: 'Loans', value: '1 active' },
+                          { label: 'Assets', value: '12 tracked' },
+                          { label: 'Taxes', value: '1 pending' },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              {item.label}
+                            </span>
+                            <span className="mt-1 block text-xs font-bold text-slate-900">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-[10px] text-slate-600">
+                        Goals, loans, savings and annual taxes sit next to the ledger.
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={advanceNext}
+                        className="mt-auto w-full relative flex items-center justify-between rounded-xl bg-[#376847] p-2.5 text-white text-[11px] font-bold shadow-md hover:bg-[#2c5339] transition-all cursor-pointer active:scale-95 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+                          </span>
+                          <span>Restart Tour</span>
                         </div>
                         <Icon name="refresh" className="text-[14px] group-hover:rotate-180 transition-transform duration-500" />
                       </button>
@@ -764,6 +1021,7 @@ export function PhoneSoftwareSimulation() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
