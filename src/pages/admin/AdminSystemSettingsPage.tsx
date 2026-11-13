@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonForm } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 
@@ -95,7 +96,11 @@ export function AdminSystemSettingsPage() {
         {error && <Alert tone="error">{error}</Alert>}
 
         {settingsQuery.isLoading || !current ? (
-          <Card className="p-8 text-center text-muted">Loading system configuration...</Card>
+          <div className="flex flex-col gap-6">
+            <SkeletonForm fields={4} />
+            <SkeletonForm fields={6} />
+            <SkeletonForm fields={4} />
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             {/* Branding & Platform Identity */}

@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPanel } from '@/components/ui/skeleton';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -252,7 +254,13 @@ export function MarketingPage() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="flex flex-col gap-6">
-            {overviewQuery.isLoading && <p className="text-body-md text-muted">Calculating growth telemetry…</p>}
+            {overviewQuery.isLoading && (
+              <>
+                <StatGridSkeleton count={4} />
+                <SkeletonPanel className="h-64" />
+                <SkeletonPanel className="h-48" />
+              </>
+            )}
             {overview && (
               <>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

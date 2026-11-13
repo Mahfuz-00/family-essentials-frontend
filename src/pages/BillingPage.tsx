@@ -244,7 +244,45 @@ export function BillingPage() {
     }
   };
 
-  const handleSimulatePayment = () => {
+  const handleSimulatePayment = async () => {
+    // Card payments go through the configured provider's hosted checkout. The
+    // invoice stays pending until its signed webhook settles it. When the
+    // platform has no provider keys, keep the local simulated flow.
+    const activeGateway = paymentMethodsQuery.data?.active_gateway;
+    const hostedGateways = ['stripe', 'paypal', 'razorpay', 'sslcommerz', 'bkash', 'paystack', 'mollie'];
+
+    if (paymentMethod === 'card' && activeGateway && hostedGateways.includes(activeGateway)) {
+      try {
+        const response = await api.post('/v1/billing/checkout-session', {
+          tier: selectedTier,
+          billing_period: selectedPeriod,
+          gateway: activeGateway,
+          success_url: `${window.location.origin}/billing?checkout=success`,
+          cancel_url: `${window.location.origin}/billing?checkout=cancelled`,
+        });
+
+        const url = response.data?.data?.checkout?.url;
+
+        if (typeof url === 'string' && url !== '') {
+          window.location.href = url;
+          return;
+        }
+
+        throw new Error('The checkout session did not include a redirect URL.');
+      } catch (caught) {
+        const status = (caught as { response?: { status?: number } }).response?.status;
+
+        if (status !== 422) {
+          setError(apiError(caught));
+          setNotice(null);
+          return;
+        }
+
+        // 422 means the gateway is not configured on this platform; fall back
+        // to the existing simulated invoice so local development still works.
+      }
+    }
+
     upgradeMutation.mutate({
       tier: selectedTier,
       billing_period: selectedPeriod,

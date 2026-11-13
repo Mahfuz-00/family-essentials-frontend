@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { BackupReadiness, BackupRecord, BackupStatus, BackupsPayload } from '@/types';
@@ -230,7 +230,11 @@ export function BackupsPage() {
             <Badge tone="neutral">{list.length} entries</Badge>
           </div>
 
-          {list.length === 0 ? (
+          {backups.isLoading ? (
+            <div className="p-5 pt-0">
+              <SkeletonTable rows={5} columns={6} className="shadow-none" />
+            </div>
+          ) : list.length === 0 ? (
             <div className="p-5 pt-0">
               <EmptyState
                 title="No backups recorded"

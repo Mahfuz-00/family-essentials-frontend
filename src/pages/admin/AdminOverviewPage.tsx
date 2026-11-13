@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
 import { api } from '@/lib/api';
 import type { Paginated, PlatformMetrics, Tenant } from '@/types';
 
@@ -161,6 +161,36 @@ export function AdminOverviewPage() {
     },
   ];
 
+  const isLoading = metrics.isLoading || tenants.isLoading;
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 animate-pulse">
+          <PageHeader
+            eyebrow={
+              <>
+                <span className="h-2 w-2 rounded-full bg-success" />
+                Platform Admin · All tenants
+              </>
+            }
+            title="Overview & MRR"
+            description="Cross-tenant telemetry and lifecycle health across every provisioned household."
+          />
+
+          <StatGridSkeleton count={4} />
+
+          <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-7" />
+            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-5" />
+          </section>
+
+          <div className="h-28 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -199,29 +229,27 @@ export function AdminOverviewPage() {
         )}
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.isLoading
-            ? cards.map((card) => <SkeletonCard key={card.label} />)
-            : cards.map((card) => (
-                <Card key={card.label} className="flex flex-col gap-3 p-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-label-sm uppercase tracking-wider text-muted">{card.label}</span>
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.tone}`}>
-                      <Icon name={card.icon} className="text-[20px]" />
+          {cards.map((card) => (
+            <Card key={card.label} className="flex flex-col gap-3 p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-label-sm uppercase tracking-wider text-muted">{card.label}</span>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.tone}`}>
+                  <Icon name={card.icon} className="text-[20px]" />
+                </span>
+              </div>
+              <span className="text-display-lg font-bold text-on-surface">{card.value}</span>
+              {card.footer && (
+                <span className="flex items-center justify-between border-t border-canvas pt-3">
+                  {card.footer.map((item) => (
+                    <span key={item.label} className="flex flex-col">
+                      <span className="text-body-sm text-muted">{item.label}</span>
+                      <span className="text-label-lg text-on-surface">{item.value}</span>
                     </span>
-                  </div>
-                  <span className="text-display-lg font-bold text-on-surface">{card.value}</span>
-                  {card.footer && (
-                    <span className="flex items-center justify-between border-t border-canvas pt-3">
-                      {card.footer.map((item) => (
-                        <span key={item.label} className="flex flex-col">
-                          <span className="text-body-sm text-muted">{item.label}</span>
-                          <span className="text-label-lg text-on-surface">{item.value}</span>
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </Card>
-              ))}
+                  ))}
+                </span>
+              )}
+            </Card>
+          ))}
         </section>
 
         <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">

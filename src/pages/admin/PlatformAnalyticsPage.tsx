@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPanel } from '@/components/ui/skeleton';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { PlatformAnalytics } from '@/types';
@@ -44,7 +46,13 @@ export function PlatformAnalyticsPage() {
         </div>
 
         {analyticsQuery.isError && <Alert tone="error">{apiError(analyticsQuery.error)}</Alert>}
-        {analyticsQuery.isLoading && <p className="text-body-md text-muted">Calculating cross-tenant analytics…</p>}
+        {analyticsQuery.isLoading && (
+          <div className="flex flex-col gap-6">
+            <StatGridSkeleton count={4} />
+            <SkeletonPanel className="h-64" />
+            <SkeletonPanel className="h-64" />
+          </div>
+        )}
 
         {data && (
           <div className="flex flex-col gap-6">

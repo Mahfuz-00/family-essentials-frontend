@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { AuditLevel, Paginated, PlatformAuditEvent, PlatformMetrics } from '@/types';
@@ -180,7 +180,15 @@ export function AuditLogPage() {
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.isLoading
-            ? kpis.map((kpi) => <SkeletonCard key={kpi.label} />)
+            ? kpis.map((kpi) => (
+                <Card key={kpi.label} className="flex items-center justify-between p-5 animate-pulse">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-7 w-16" />
+                  </div>
+                  <Skeleton className="h-11 w-11 rounded-xl" />
+                </Card>
+              ))
             : kpis.map((kpi) => (
                 <Card key={kpi.label} className="flex items-center justify-between p-5">
                   <span className="flex flex-col">
@@ -270,7 +278,7 @@ export function AuditLogPage() {
           </div>
         </Card>
 
-        {events.isLoading && <p className="text-body-md text-muted">Loading ledger…</p>}
+        {events.isLoading && <SkeletonTable rows={8} columns={8} />}
 
         {events.isSuccess && rows.length === 0 && (
           <EmptyState
@@ -280,7 +288,7 @@ export function AuditLogPage() {
           />
         )}
 
-        {rows.length > 0 && (
+        {!events.isLoading && rows.length > 0 && (
           <Card className="overflow-hidden p-0">
             <Table className="min-w-[1000px]">
               <THead>

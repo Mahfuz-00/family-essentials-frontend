@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { SkeletonPanel } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import type { Incident, IncidentSeverity, IncidentStatus, MaintenanceModeStatus, OpsHealth, OpsStatus } from '@/types';
 
@@ -171,7 +171,11 @@ export function HealthPage() {
 
         {/* Overall */}
         {health.isLoading ? (
-          <SkeletonCard />
+          <div className="flex flex-col gap-5">
+            <SkeletonPanel className="h-28" />
+            <SkeletonPanel className="h-48" />
+            <SkeletonPanel className="h-64" />
+          </div>
         ) : (
           report && (
             <Card className="p-5">
