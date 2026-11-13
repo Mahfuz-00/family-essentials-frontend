@@ -89,9 +89,10 @@ describe('money', () => {
     expect(within(table).getByText('Expense')).toBeInTheDocument();
     expect(within(table).getByText('-$1,245.50')).toBeInTheDocument();
 
-    // Submodules load on click rather than all at once:
-    await userEvent.click(screen.getByRole('tab', { name: /record entry/i }));
+    // Top button opens the right-side Record Entry form:
+    await userEvent.click(screen.getAllByRole('button', { name: /record entry/i })[0]);
     expect(await screen.findByRole('heading', { name: 'Record an entry' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     await userEvent.click(screen.getByRole('tab', { name: /member access/i }));
     expect(await screen.findByRole('heading', { name: 'Who can see this ledger' })).toBeInTheDocument();
@@ -108,10 +109,12 @@ describe('money', () => {
 
     renderApp('/money/7');
 
-    await userEvent.click(await screen.findByRole('tab', { name: /record entry/i }));
-    await userEvent.type(await screen.findByLabelText('Amount'), '12.50');
-    await userEvent.type(screen.getByLabelText('Description'), 'Weekly shop');
-    await userEvent.click(screen.getByRole('button', { name: /record entry/i }));
+    const openBtns = await screen.findAllByRole('button', { name: /record entry/i });
+    await userEvent.click(openBtns[0]);
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(await within(dialog).findByLabelText('Amount'), '12.50');
+    await userEvent.type(within(dialog).getByLabelText('Description'), 'Weekly shop');
+    await userEvent.click(within(dialog).getByRole('button', { name: /record entry/i }));
 
     await waitFor(() => expect(apiMock.post).toHaveBeenCalled());
 
@@ -133,9 +136,11 @@ describe('money', () => {
 
     renderApp('/money/7');
 
-    await userEvent.click(await screen.findByRole('tab', { name: /record entry/i }));
-    await userEvent.type(await screen.findByLabelText('Amount'), '12.345');
-    await userEvent.click(screen.getByRole('button', { name: /record entry/i }));
+    const openBtns = await screen.findAllByRole('button', { name: /record entry/i });
+    await userEvent.click(openBtns[0]);
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(await within(dialog).findByLabelText('Amount'), '12.345');
+    await userEvent.click(within(dialog).getByRole('button', { name: /record entry/i }));
 
     expect(await screen.findByText(/at most two decimals/i)).toBeInTheDocument();
     expect(apiMock.post).not.toHaveBeenCalled();

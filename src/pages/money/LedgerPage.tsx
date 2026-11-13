@@ -91,6 +91,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     occurred_on: isoDate(new Date()),
   });
 
+  const [recordModalOpen, setRecordModalOpen] = useState(false);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
   const [budgetMonthlyInput, setBudgetMonthlyInput] = useState('');
   const [budgetWeeklyInput, setBudgetWeeklyInput] = useState('');
@@ -105,7 +106,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
 
   type LedgerSubmodule =
     | 'entries'
-    | 'record'
     | 'budget'
     | 'categories'
     | 'breakdown'
@@ -144,7 +144,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           params: { period_type: periodType, from: range.from, to: range.to },
         })
       ).data.data,
-    enabled: canReadEntries && (activeSubmodule === 'entries' || activeSubmodule === 'record'),
+    enabled: canReadEntries && activeSubmodule === 'entries',
   });
 
   const roster = useQuery({
@@ -156,7 +156,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
   const recurringRules = useQuery({
     queryKey: ['recurring-rules'],
     queryFn: async () => (await api.get<{ data: any[] }>('/v1/recurring-rules')).data.data,
-    enabled: canReadEntries && activeSubmodule === 'recurring',
+    enabled: canReadEntries,
   });
 
   const onError = (caught: unknown) => {
@@ -206,6 +206,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
       }),
     onSuccess: async () => {
       setForm({ ...form, amount: '', category: '', description: '' });
+      setRecordModalOpen(false);
       setError(null);
       setNotice('Entry recorded.');
       setActiveSubmodule('entries');
@@ -382,7 +383,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           }
           titleSize="headline"
           actions={
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               {ledgers.data && ledgers.data.length > 1 && (
                 <div className="flex items-center gap-2">
                   <span className="text-label-sm font-semibold text-muted">Ledger:</span>
@@ -404,8 +405,14 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                   </select>
                 </div>
               )}
+              {ledger && canReadEntries && (
+                <Button variant="primary" size="md" onClick={() => setRecordModalOpen(true)}>
+                  <Icon name="add_circle" className="text-[18px]" />
+                  Record Entry
+                </Button>
+              )}
               {ledger?.my_role === 'owner' && (
-                <Button variant="outline" size="sm" onClick={() => setCreateLedgerOpen(true)}>
+                <Button variant="outline" size="md" onClick={() => setCreateLedgerOpen(true)}>
                   <Icon name="add" className="text-[16px]" />
                   New Ledger
                 </Button>
@@ -491,21 +498,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             <button
               type="button"
               role="tab"
-              aria-selected={activeSubmodule === 'record'}
-              onClick={() => setActiveSubmodule('record')}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
-                activeSubmodule === 'record'
-                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
-                  : 'text-on-surface-variant hover:bg-surface/70'
-              }`}
-            >
-              <Icon name="add_circle" className="text-[18px]" />
-              <span>Record Entry</span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
               aria-selected={activeSubmodule === 'budget'}
               onClick={() => setActiveSubmodule('budget')}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
@@ -561,17 +553,15 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             >
               <Icon name="update" className="text-[18px]" />
               <span>Recurring Expenses</span>
-              {relevantRecurringExpenses.length > 0 && (
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    activeSubmodule === 'recurring'
-                      ? 'bg-white/20 text-white'
-                      : 'bg-surface-container text-muted'
-                  }`}
-                >
-                  {relevantRecurringExpenses.length}
-                </span>
-              )}
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  activeSubmodule === 'recurring'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-surface-container text-muted'
+                }`}
+              >
+                {relevantRecurringExpenses.length}
+              </span>
             </button>
 
             {isOwner && (
@@ -614,14 +604,9 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           <Card className="overflow-hidden p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
               <div>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-headline-sm text-on-surface">
-                    {periodLabel} Household Ledger Entries
-                  </h2>
-                  <Badge tone="neutral">
-                    {activeFrom} to {activeTo}
-                  </Badge>
-                </div>
+                <h2 className="text-headline-sm text-on-surface">
+                  Household Ledger Entries
+                </h2>
                 <p className="text-body-sm text-muted">
                   {entryList.length} of {rawEntries.length} {rawEntries.length === 1 ? 'entry' : 'entries'} shown for this {periodType} period.
                 </p>
@@ -655,16 +640,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
 
                 <Button
                   size="sm"
-                  variant="primary"
-                  onClick={() => setActiveSubmodule('record')}
-                  className="flex items-center gap-1.5"
-                >
-                  <Icon name="add" className="text-[18px]" />
-                  <span>Record Entry</span>
-                </Button>
-
-                <Button
-                  size="sm"
                   variant="outline"
                   onClick={() => setShowOcrModal(true)}
                   className="flex items-center gap-1.5"
@@ -688,9 +663,9 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 <p className="text-body-sm text-muted max-w-sm mt-1 mb-4">
                   {rawEntries.length > 0
                     ? 'No entries match the selected category filter.'
-                    : 'Nothing recorded in this period yet. Use the record submodule to add your first entry.'}
+                    : 'Nothing recorded in this period yet. Use the Record Entry button to add your first entry.'}
                 </p>
-                <Button size="sm" variant="primary" onClick={() => setActiveSubmodule('record')}>
+                <Button size="sm" variant="primary" onClick={() => setRecordModalOpen(true)}>
                   <Icon name="add" className="text-[16px]" />
                   Record Entry
                 </Button>
@@ -786,36 +761,39 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </Card>
         )}
 
-        {/* SUBMODULE 2: Record Entry Form */}
-        {ledger && canReadEntries && activeSubmodule === 'record' && (
-          <Card className="p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <div>
-                <h2 className="text-headline-sm text-on-surface">Record an entry</h2>
-                <p className="text-body-sm text-muted">
-                  Record rent, utility bills, groceries, or household income into this ledger.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveSubmodule('entries')}
-                className="gap-1.5"
-              >
-                <Icon name="receipt_long" className="text-[16px]" />
-                <span>View Entries</span>
+        {/* Right-Side Slide-Over Form: Record an entry */}
+        <Modal
+          open={recordModalOpen}
+          onClose={() => setRecordModalOpen(false)}
+          title="Record an entry"
+          description="Record rent, utility bills, groceries, or household income into this ledger."
+          position="right"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setRecordModalOpen(false)}>
+                Cancel
               </Button>
-            </div>
-
+              <Button
+                size="lg"
+                disabled={record.isPending || form.amount.trim() === '' || form.occurred_on === ''}
+                onClick={submitEntry}
+              >
+                <Icon name="add" className="text-[18px]" />
+                {record.isPending ? 'Saving…' : 'Record entry'}
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-4">
             {/* Quick Category Selector */}
-            <div className="flex items-center gap-2 my-2 overflow-x-auto pb-1">
-              <span className="text-label-sm font-semibold text-muted">Quick Category:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-label-sm font-semibold text-muted w-full">Quick Category:</span>
               {COMMON_EXPENSE_CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
                   type="button"
                   onClick={() => setForm({ ...form, category: cat.key })}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-medium border transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm font-medium border transition-all ${
                     form.category === cat.key
                       ? 'bg-secondary text-on-secondary border-secondary'
                       : 'bg-surface text-on-surface border-outline-variant hover:bg-sage-soft'
@@ -827,75 +805,62 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               ))}
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div>
-                <Label htmlFor="entry-amount">Amount</Label>
-                <Input
-                  id="entry-amount"
-                  inputMode="decimal"
-                  value={form.amount}
-                  onChange={(event) => setForm({ ...form, amount: event.target.value })}
-                  placeholder={`0.00 ${currency}`}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="entry-direction">Direction</Label>
-                <Select
-                  id="entry-direction"
-                  value={form.direction}
-                  onChange={(event) =>
-                    setForm({ ...form, direction: event.target.value as LedgerEntryDirection })
-                  }
-                >
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="entry-category">Category</Label>
-                <Input
-                  id="entry-category"
-                  value={form.category}
-                  onChange={(event) => setForm({ ...form, category: event.target.value })}
-                  placeholder="e.g. rent, utility_bill, grocery"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="entry-date">Date</Label>
-                <Input
-                  id="entry-date"
-                  type="date"
-                  value={form.occurred_on}
-                  onChange={(event) => setForm({ ...form, occurred_on: event.target.value })}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <Label htmlFor="entry-description">Description</Label>
-                <Input
-                  id="entry-description"
-                  value={form.description}
-                  onChange={(event) => setForm({ ...form, description: event.target.value })}
-                  placeholder="e.g. November Rent, Electric Bill, Trader Joe's"
-                />
-              </div>
-
-              <div className="flex items-end sm:col-span-2 xl:col-span-2">
-                <Button
-                  size="lg"
-                  disabled={record.isPending || form.amount.trim() === '' || form.occurred_on === ''}
-                  onClick={submitEntry}
-                >
-                  <Icon name="add" className="text-[18px]" />
-                  {record.isPending ? 'Saving…' : 'Record entry'}
-                </Button>
-              </div>
+            <div>
+              <Label htmlFor="entry-amount">Amount</Label>
+              <Input
+                id="entry-amount"
+                inputMode="decimal"
+                value={form.amount}
+                onChange={(event) => setForm({ ...form, amount: event.target.value })}
+                placeholder={`0.00 ${currency}`}
+              />
             </div>
-          </Card>
-        )}
+
+            <div>
+              <Label htmlFor="entry-direction">Direction</Label>
+              <Select
+                id="entry-direction"
+                value={form.direction}
+                onChange={(event) =>
+                  setForm({ ...form, direction: event.target.value as LedgerEntryDirection })
+                }
+              >
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="entry-category">Category</Label>
+              <Input
+                id="entry-category"
+                value={form.category}
+                onChange={(event) => setForm({ ...form, category: event.target.value })}
+                placeholder="e.g. rent, utility_bill, grocery"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="entry-date">Date</Label>
+              <Input
+                id="entry-date"
+                type="date"
+                value={form.occurred_on}
+                onChange={(event) => setForm({ ...form, occurred_on: event.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="entry-description">Description</Label>
+              <Input
+                id="entry-description"
+                value={form.description}
+                onChange={(event) => setForm({ ...form, description: event.target.value })}
+                placeholder="e.g. November Rent, Electric Bill, Trader Joe's"
+              />
+            </div>
+          </div>
+        </Modal>
 
         {/* SUBMODULE 3: Budget & Limits */}
         {ledger && canReadEntries && activeSubmodule === 'budget' && (
