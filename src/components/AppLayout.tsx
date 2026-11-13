@@ -70,7 +70,7 @@ const householdSections: NavSection[] = [
   {
     title: 'Dashboard',
     items: [
-      { to: '/dashboard', label: 'Executive Pulse', icon: 'dashboard', exact: true },
+      { to: '/dashboard', label: 'Household Overview', icon: 'dashboard', exact: true },
     ],
   },
   {
@@ -158,7 +158,7 @@ const platformSections: NavSection[] = [
 
 const routeLabels: Record<string, string> = {
   '/': 'Welcome',
-  '/dashboard': 'Executive Pulse',
+  '/dashboard': 'Household Overview',
   '/app': 'Activities Hub',
   '/requests': 'Tasks & Errands',
   '/pantry': 'Pantry Inventory',

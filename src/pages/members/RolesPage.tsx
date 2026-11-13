@@ -11,7 +11,6 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -63,6 +62,41 @@ export function RolesPage() {
   const memberList = members.data ?? [];
   const canManage = data?.can_manage_roles === true;
 
+  if (catalogue.isLoading || members.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-8 w-60 rounded-xl bg-forest-soft/60" />
+            <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="h-6 w-32 rounded-lg bg-forest-soft/60" />
+                  <div className="h-5 w-16 rounded-full bg-forest-soft/40" />
+                </div>
+                <div className="h-10 w-full rounded bg-forest-soft/30" />
+                <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+                  <div className="h-7 w-20 rounded-full bg-forest-soft/40" />
+                  <div className="h-4 w-16 rounded bg-forest-soft/30" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="h-72 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+          <div className="h-64 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -95,32 +129,53 @@ export function RolesPage() {
           </Alert>
         )}
 
-        {(catalogue.isLoading || members.isLoading) && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        )}
-
         {/* Role catalogue */}
         {data && (
           <section
             aria-label="Role catalogue"
             className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
           >
-            {(data?.roles ?? []).map((role) => (
-              <Card key={role.key} className="flex flex-col gap-2 p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-headline-sm text-on-surface">{role.label}</h2>
-                  <Badge tone={role.can_be_granted ? 'primary' : 'neutral'}>
-                    {role.member_count} {role.member_count === 1 ? 'member' : 'members'}
-                  </Badge>
-                </div>
-                <p className="text-body-sm text-muted">{role.detail}</p>
-                <span className="mt-auto text-label-sm font-mono text-muted">{role.key}</span>
-              </Card>
-            ))}
+            {(data?.roles ?? []).map((role) => {
+              const roleMembers = memberList.filter((m) => m.role === role.key);
+              const label = role.label ?? (role.key === 'tenant_admin' ? 'Household admin' : role.key);
+              return (
+                <Card
+                  key={role.key}
+                  className="flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="text-title-md font-bold text-on-surface">{label}</h2>
+                    <Badge tone={role.can_be_granted ? 'primary' : 'neutral'}>
+                      {roleMembers.length} {roleMembers.length === 1 ? 'member' : 'members'}
+                    </Badge>
+                  </div>
+                  <p className="text-body-sm text-muted">{role.detail}</p>
+
+                  <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+                    <div className="flex items-center -space-x-2 overflow-hidden">
+                      {roleMembers.slice(0, 3).map((m) => (
+                        <Avatar
+                          key={m.id}
+                          name={m.name ?? 'Member'}
+                          className="ring-2 ring-surface h-7 w-7 text-xs"
+                        />
+                      ))}
+                      {roleMembers.length > 3 && (
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-soft text-[10px] font-bold text-secondary ring-2 ring-surface">
+                          +{roleMembers.length - 3}
+                        </span>
+                      )}
+                      {roleMembers.length === 0 && (
+                        <span className="text-xs text-muted">No members</span>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-muted">
+                      {role.can_be_granted ? 'Assignable' : 'Protected'}
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
           </section>
         )}
 
@@ -141,7 +196,7 @@ export function RolesPage() {
               <TH>Capability</TH>
               {(data?.roles ?? []).map((role) => (
                 <TH key={role.key} className="text-center">
-                  {role.label}
+                  {role.key === 'tenant_admin' ? 'Household Admin' : role.label}
                 </TH>
               ))}
             </THead>
@@ -159,7 +214,9 @@ export function RolesPage() {
                       {capability.access[role.key] ? (
                         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-forest-soft text-secondary">
                           <Icon name="check" className="text-[16px]" />
-                          <span className="sr-only">Allowed for {role.label}</span>
+                          <span className="sr-only">
+                            Allowed for {role.key === 'tenant_admin' ? 'Household Admin' : role.label}
+                          </span>
                         </span>
                       ) : (
                         <span className="text-muted">—</span>
@@ -185,6 +242,10 @@ export function RolesPage() {
             {memberList.map((member) => {
               const isSelf = member.user_id === currentUser?.id;
               const role = data?.roles.find((entry) => entry.key === member.role);
+              const displayRoleLabel =
+                member.role === 'tenant_admin'
+                  ? 'Household Admin'
+                  : (role?.label ?? member.role.replace('_', ' '));
 
               return (
                 <li
@@ -195,7 +256,7 @@ export function RolesPage() {
                     <Avatar name={member.name ?? 'Member'} />
                     <span className="flex flex-col">
                       <span className="text-label-lg text-on-surface">{member.name}</span>
-                      <span className="text-body-sm text-muted">{role?.label ?? member.role}</span>
+                      <span className="text-body-sm text-muted">{displayRoleLabel}</span>
                     </span>
                     {isSelf && <Badge tone="neutral">You</Badge>}
                   </span>
@@ -213,14 +274,14 @@ export function RolesPage() {
                       >
                         {(data?.roles ?? []).map((option) => (
                           <option key={option.key} value={option.key} disabled={!option.can_be_granted}>
-                            {option.label}
+                            {option.key === 'tenant_admin' ? 'Household Admin' : option.label}
                             {option.can_be_granted ? '' : ' (owner only)'}
                           </option>
                         ))}
                       </Select>
                     </label>
                   ) : (
-                    <Badge tone="primary">{role?.label ?? member.role}</Badge>
+                    <Badge tone="primary">{displayRoleLabel}</Badge>
                   )}
                 </li>
               );
@@ -236,7 +297,12 @@ export function RolesPage() {
         title="Change this role?"
         description={
           pending
-            ? `${pending.member.name} will become ${pending.role.replace('_', ' ')}. The change is audited.`
+            ? `${pending.member.name} will become ${
+                pending.role === 'tenant_admin'
+                  ? 'Household Admin'
+                  : (data?.roles.find((r) => r.key === pending.role)?.label ??
+                    pending.role.replace('_', ' '))
+              }. The change is audited.`
             : ''
         }
         footer={

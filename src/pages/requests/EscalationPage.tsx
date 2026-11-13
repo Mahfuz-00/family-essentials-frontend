@@ -57,6 +57,38 @@ export function EscalationPage() {
     },
   ];
 
+  if (quota.isLoading || calls.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-8 w-60 rounded-xl bg-forest-soft/60" />
+            <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1"
+              >
+                <div className="space-y-2.5">
+                  <div className="h-3 w-28 rounded bg-forest-soft/40" />
+                  <div className="h-7 w-20 rounded-lg bg-forest-soft/60" />
+                  <div className="h-3 w-36 rounded bg-forest-soft/30" />
+                </div>
+                <div className="h-11 w-11 rounded-xl bg-forest-soft/50" />
+              </div>
+            ))}
+          </div>
+
+          <div className="h-64 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1" />
+          <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -72,36 +104,81 @@ export function EscalationPage() {
 
         {/* Budget */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Calls used today</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '—'}
-            </span>
-            <span className="text-body-sm text-muted">Daily household budget</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Attempts per item</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data?.max_attempts_per_request ?? '—'}
-            </span>
-            <span className="text-body-sm text-muted">Then the item waits for a human</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Cooldown</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data ? `${quota.data.cooldown_minutes}m` : '—'}
-            </span>
-            <span className="text-body-sm text-muted">Between attempts on one item</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Your consent</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {user?.voice_opt_in ? 'On' : 'Off'}
-            </span>
-            <span className="text-body-sm text-muted">
-              {user?.phone_verified ? 'Number verified' : 'Verify your number to opt in'}
-            </span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Calls used today</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '0 / 0'}
+                </span>
+                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                  Daily Cap
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Daily household budget</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="ring_volume" className="text-[22px]" />
+            </div>
+          </div>
+
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Attempts per item</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {quota.data?.max_attempts_per_request ?? 0}
+                </span>
+                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                  Max Limit
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Then the item waits for a human</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="repeat" className="text-[22px]" />
+            </div>
+          </div>
+
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Cooldown</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {quota.data ? `${quota.data.cooldown_minutes}m` : '0m'}
+                </span>
+                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                  Cooldown
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Between attempts on one item</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="hourglass_bottom" className="text-[22px]" />
+            </div>
+          </div>
+
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Your consent</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {user?.voice_opt_in ? 'Opted In' : 'Opted Out'}
+                </span>
+                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold leading-none ${
+                  user?.phone_verified ? 'bg-forest-soft text-success' : 'bg-coral-soft text-error'
+                }`}>
+                  {user?.phone_verified ? 'Verified' : 'Unverified'}
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">
+                {user?.phone_verified ? 'Direct voice notifications active' : 'Verify phone number to opt in'}
+              </span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="verified_user" className="text-[22px]" />
+            </div>
+          </div>
         </section>
 
         {/* Policy */}

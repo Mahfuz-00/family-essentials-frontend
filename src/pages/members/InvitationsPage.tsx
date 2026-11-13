@@ -86,6 +86,26 @@ export function InvitationsPage() {
 
   const grantable = (catalogue.data?.roles ?? []).filter((entry) => entry.can_be_granted);
 
+  if (members.isLoading || invitations.isLoading || catalogue.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-8 w-56 rounded-xl bg-forest-soft/60" />
+            <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+          </div>
+
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 lg:col-span-2" />
+            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1" />
+          </section>
+
+          <div className="h-48 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -164,7 +184,9 @@ export function InvitationsPage() {
                       onChange={() => setRole(option.key)}
                       className="sr-only"
                     />
-                    <span className="text-label-lg text-on-surface">{option.label}</span>
+                    <span className="text-label-lg text-on-surface">
+                      {option.key === 'tenant_admin' ? 'Household Admin' : option.label}
+                    </span>
                     <span className="text-body-sm text-muted">{option.detail}</span>
                   </label>
                 ))}
@@ -249,7 +271,10 @@ export function InvitationsPage() {
                         {invitation.email ?? invitation.phone}
                       </span>
                       <span className="text-body-sm text-muted">
-                        {invitation.role === 'tenant_admin' ? 'Household admin' : invitation.role} ·
+                        {invitation.role === 'tenant_admin'
+                          ? 'Household Admin'
+                          : (catalogue.data?.roles.find((r) => r.key === invitation.role)?.label ??
+                            invitation.role.replace('_', ' '))} ·
                         sent {new Date(invitation.created_at).toLocaleDateString()}
                       </span>
                     </span>

@@ -54,8 +54,16 @@ export function HomeOverviewPage() {
     queryKey: ['finances-overview-summary'],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/v1/finances/overview');
-        return data as FinancialSnapshot;
+        const res = await api.get('/v1/finances/overview');
+        const raw = res.data?.data ?? res.data ?? {};
+        return {
+          ...raw,
+          net_worth_minor: Number(raw?.net_worth_minor ?? 0),
+          total_assets_minor: Number(raw?.total_assets_minor ?? 0),
+          total_liabilities_minor: Number(raw?.total_liabilities_minor ?? 0),
+          taxes_pending_minor: Number(raw?.taxes?.pending_minor ?? raw?.taxes_pending_minor ?? 0),
+          taxes_pending_count: Number(raw?.taxes?.pending_count ?? raw?.taxes_pending_count ?? 0),
+        } as FinancialSnapshot;
       } catch {
         return null;
       }
@@ -176,7 +184,7 @@ export function HomeOverviewPage() {
           </div>
         </div>
 
-        {/* 1. Executive Summary Pulse Cards matching software UI */}
+        {/* 1. Household Overview Summary Pulse Cards matching software UI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link to="/finances/overview" className="group block">
             <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
@@ -186,14 +194,14 @@ export function HomeOverviewPage() {
                 </span>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                    {fin ? formatMoney(fin.net_worth_minor, curr) : '$0'}
+                    {formatMoney(fin?.net_worth_minor ?? 0, curr)}
                   </span>
                   <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                     Net Worth
                   </span>
                 </div>
                 <span className="mt-1.5 text-xs text-muted">
-                  Assets: {fin ? formatMoney(fin.total_assets_minor, curr) : '$0'} · Debt: {fin ? formatMoney(fin.total_liabilities_minor, curr) : '$0'}
+                  Assets: {formatMoney(fin?.total_assets_minor ?? 0, curr)} · Debt: {formatMoney(fin?.total_liabilities_minor ?? 0, curr)}
                 </span>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
@@ -244,7 +252,7 @@ export function HomeOverviewPage() {
                 </span>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                    {fin ? formatMoney(fin.taxes_pending_minor, curr) : '$0'}
+                    {formatMoney(fin?.taxes_pending_minor ?? 0, curr)}
                   </span>
                   <span className="inline-flex items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
                     Taxes
@@ -268,7 +276,7 @@ export function HomeOverviewPage() {
                 </span>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                    {lowStock.length} Low
+                    {lowStock.length > 0 ? `${lowStock.length} Low` : `${essentials.length} Items`}
                   </span>
                   {lowStock.length > 0 ? (
                     <span className="inline-flex items-center rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
@@ -287,7 +295,7 @@ export function HomeOverviewPage() {
                 </span>
               </div>
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                <Icon name="inventory_2" className="text-[22px]" />
+                <Icon name="kitchen" className="text-[22px]" />
               </div>
             </div>
           </Link>

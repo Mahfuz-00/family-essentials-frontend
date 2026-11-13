@@ -322,6 +322,29 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     (rule) => rule.ledger_id === ledgerId || (rule.amount_minor && rule.amount_minor > 0)
   );
 
+  if (ledgers.isLoading || (ledger && summary.isLoading && !summary.data)) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 max-w-6xl animate-pulse">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
+              <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+            </div>
+            <div className="h-10 w-32 rounded-xl bg-forest-soft/50" />
+          </div>
+
+          <div className="h-56 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 h-96 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+            <div className="h-96 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
@@ -369,14 +392,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
         {ledgers.isError && <Alert>{apiError(ledgers.error)}</Alert>}
-
-        {ledgers.isLoading && (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {[0, 1].map((key) => (
-              <SkeletonCard key={key} />
-            ))}
-          </div>
-        )}
 
         {ledgers.isSuccess && !ledger && (
           <EmptyState

@@ -12,13 +12,13 @@
 --------------------------------------------------------------------------- */
 @font-face {
   font-family: 'BengaliTakaBold';
-  src: local('Segoe UI Bold'), local('Segoe UI Semibold'), local('Nirmala UI Bold'), local('Noto Sans Bengali Bold'), local('Arial Bold');
+  src: local('Noto Sans Bengali SemiBold'), local('Noto Sans Bengali Bold'), local('Noto Sans Bengali ExtraBold'), local('Noto Sans Bengali Black'), local('Segoe UI Bold'), local('Nirmala UI Bold');
   unicode-range: U+09F3;
   font-weight: 100 900;
 }
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', 'BengaliTakaBold', 'Nirmala UI', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', 'Noto Sans Bengali', 'BengaliTakaBold', ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces and ink */
   --color-canvas: #fdfcf7;
