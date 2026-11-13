@@ -105,7 +105,7 @@ export function FeaturesHubPage() {
             ) : (
               <Link to="/register">
                 <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
-                  Create Free Household
+                  Get Started Free
                 </Button>
               </Link>
             )}

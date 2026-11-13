@@ -106,7 +106,7 @@ export function LoginPage() {
 
         <div className="border-t border-outline-variant/20 pt-4 text-center">
           <Link to="/landing" className="text-body-sm text-muted transition-colors hover:text-secondary hover:underline">
-            ← Explore Family Essentials Overview
+            ← Explore FairShare Overview
           </Link>
         </div>
       </form>

@@ -50,7 +50,7 @@ function getPeriodRange(type: 'monthly' | 'weekly' | 'yearly'): { from: string; 
   if (type === 'weekly') {
     const day = now.getDay();
     const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(now.setDate(diffToMonday));
+    const monday = new Date(now.getFullYear(), now.getMonth(), diffToMonday);
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     return { from: isoDate(monday), to: isoDate(sunday) };
@@ -137,9 +137,13 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
   });
 
   const entries = useQuery({
-    queryKey: ['ledgers', ledgerId, 'entries'],
+    queryKey: ['ledgers', ledgerId, 'entries', periodType, range.from, range.to],
     queryFn: async () =>
-      (await api.get<{ data: LedgerEntry[] }>(`/v1/ledgers/${ledgerId}/entries`)).data.data,
+      (
+        await api.get<{ data: LedgerEntry[] }>(`/v1/ledgers/${ledgerId}/entries`, {
+          params: { period_type: periodType, from: range.from, to: range.to },
+        })
+      ).data.data,
     enabled: canReadEntries && (activeSubmodule === 'entries' || activeSubmodule === 'record'),
   });
 
@@ -321,7 +325,17 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
   });
 
   const currency = summary.data?.currency ?? ledger?.currency ?? '';
-  const rawEntries = entries.data ?? [];
+  const activeFrom = summary.data?.period?.from ?? summary.data?.from ?? range.from;
+  const activeTo = summary.data?.period?.to ?? summary.data?.to ?? range.to;
+  const periodLabel =
+    periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly';
+
+  const allEntries = entries.data ?? [];
+  const rawEntries = allEntries.filter((entry) => {
+    const dateStr = (entry.occurred_on ?? '').slice(0, 10);
+    if (!dateStr) return true;
+    return dateStr >= activeFrom && dateStr <= activeTo;
+  });
   const entryList = rawEntries.filter((entry) => {
     if (categoryFilter === 'all') return true;
     return (entry.category ?? 'other').toLowerCase() === categoryFilter.toLowerCase();
@@ -600,9 +614,16 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           <Card className="overflow-hidden p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
               <div>
-                <h2 className="text-headline-sm text-on-surface">Household Ledger Entries</h2>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-headline-sm text-on-surface">
+                    {periodLabel} Household Ledger Entries
+                  </h2>
+                  <Badge tone="neutral">
+                    {activeFrom} to {activeTo}
+                  </Badge>
+                </div>
                 <p className="text-body-sm text-muted">
-                  {entryList.length} of {rawEntries.length} entries shown for this period.
+                  {entryList.length} of {rawEntries.length} {rawEntries.length === 1 ? 'entry' : 'entries'} shown for this {periodType} period.
                 </p>
               </div>
 
@@ -973,11 +994,16 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
         {/* SUBMODULE 4: Category Breakdown */}
         {ledger && canReadEntries && activeSubmodule === 'categories' && (
           <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-headline-sm text-on-surface">Spending by Category</h2>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-headline-sm text-on-surface">{periodLabel} Spending by Category</h2>
+                  <Badge tone="neutral">
+                    {activeFrom} to {activeTo}
+                  </Badge>
+                </div>
                 <p className="text-body-sm text-muted">
-                  Proportional share of expenses across categories for the active period.
+                  Proportional share of expenses across categories for the selected {periodType} period.
                 </p>
               </div>
               <Badge tone="neutral">{summary.data?.by_category?.length ?? 0} Categories</Badge>
@@ -1017,7 +1043,40 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
         {/* SUBMODULE 5: Periodic Breakdown */}
         {ledger && activeSubmodule === 'breakdown' && (
           <div className="flex flex-col gap-4">
-            {periodType === 'monthly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
+            {periodType === 'weekly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
+              <Card className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-title-md font-bold text-on-surface">Weekly Daily Ledger Breakdown</h3>
+                    <p className="text-body-sm text-muted">
+                      Day-by-day expense & income tracking for the selected week ({activeFrom} to {activeTo}).
+                    </p>
+                  </div>
+                  <Badge tone="neutral">{summary.data.weekly_breakdown.length} Days</Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {summary.data.weekly_breakdown.map((d, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 rounded-2xl bg-canvas p-3.5 shadow-[var(--shadow-inset-sm)]">
+                      <span className="text-label-sm font-semibold text-on-surface truncate">{d.week_label}</span>
+                      <div className="flex justify-between items-baseline mt-1 text-body-sm">
+                        <span className="text-muted">Spent:</span>
+                        <span className="font-semibold text-tertiary">{formatMoney(d.expense_minor, currency)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline text-body-sm">
+                        <span className="text-muted">Income:</span>
+                        <span className="font-semibold text-secondary">{formatMoney(d.income_minor, currency)}</span>
+                      </div>
+                      <div className="border-t border-outline-variant/60 my-1 pt-1 flex justify-between items-baseline text-label-sm">
+                        <span className="text-muted">Net:</span>
+                        <span className={`font-bold ${d.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}`}>
+                          {formatMoney(d.net_minor, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : periodType === 'monthly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
               <Card className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>

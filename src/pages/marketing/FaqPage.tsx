@@ -14,7 +14,7 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     category: 'Errand Kanban',
-    question: 'How is Family Essentials different from Apple Reminders or Google Keep?',
+    question: 'How is FairShare different from Apple Reminders or Google Keep?',
     answer:
       'Apple Reminders and Google Keep are general-purpose scratchpads. They lack single-assignee enforcement (leading to bystander apathy), store geofence arrival detection, integer-minor-unit ledgers, and direct one-tap mobile calling when urgent tasks need immediate attention.',
   },
@@ -26,7 +26,7 @@ const FAQS: FaqItem[] = [
   },
   {
     category: 'Geofencing',
-    question: 'Does Family Essentials track my continuous GPS location or live speed?',
+    question: 'Does FairShare track my continuous GPS location or live speed?',
     answer:
       'No. The app reads your position only when it is open or resumes, then compares it with the radiuses of the stores you saved (e.g. Costco, Pharmacy). We never record a continuous breadcrumb route.',
   },
@@ -46,19 +46,19 @@ const FAQS: FaqItem[] = [
     category: 'Direct Calling',
     question: 'Do I need any third-party telephony accounts or special setup to make calls?',
     answer:
-      'No! Family Essentials requires no third-party telephony or telecom APIs. It leverages your mobile phone’s built-in dialer (iOS Phone app or Android dialer) using standard device calling.',
+      'No! FairShare requires no third-party telephony or telecom APIs. It leverages your mobile phone’s built-in dialer (iOS Phone app or Android dialer) using standard device calling.',
   },
   {
     category: 'Shared Ledgers',
     question: 'Do I need to connect my credit card or bank login to use the Money ledger?',
     answer:
-      'Never. Family Essentials uses lightweight manual entry. We do not use Plaid or scrape your bank transactions. You maintain 100% financial privacy while keeping domestic reimbursements clear.',
+      'Never. FairShare uses lightweight manual entry. We do not use Plaid or scrape your bank transactions. You maintain 100% financial privacy while keeping domestic reimbursements clear.',
   },
   {
     category: 'Security & Privacy',
     question: 'How is our family’s data isolated in your database?',
     answer:
-      'Family Essentials is built on PostgreSQL Row-Level Security (RLS) with strict multi-tenant schema isolation. Every API request is verified against your tenant token, making it mathematically impossible for one household to query another household’s data.',
+      'FairShare is built on PostgreSQL Row-Level Security (RLS) with strict multi-tenant schema isolation. Every API request is verified against your tenant token, making it mathematically impossible for one household to query another household’s data.',
   },
   {
     category: 'Security & Privacy',
@@ -100,7 +100,7 @@ export function FaqPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Everything you need to know about Family Essentials, geofences, phone escalations, privacy, and plans.
+            Everything you need to know about FairShare, geofences, phone escalations, privacy, and plans.
           </p>
 
           {/* Search Bar */}
@@ -187,7 +187,7 @@ export function FaqPage() {
           <div className="mt-6 flex justify-center gap-4">
             <Link to="/contact">
               <Button variant="primary" size="lg">
-                Contact Family Essentials Support
+                Contact FairShare Support
               </Button>
             </Link>
           </div>

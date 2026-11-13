@@ -309,10 +309,10 @@ export function PhoneSoftwareSimulation() {
                 <div className="relative z-20 flex items-center justify-between px-4 py-2 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#376847] text-white font-bold text-xs">
-                      FE
+                      FS
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 leading-tight">Family Essentials</h4>
+                      <h4 className="text-xs font-bold text-slate-900 leading-tight">FairShare</h4>
                       <div className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span className="text-[9px] text-slate-500 font-medium">Step {currentStepIndex + 1} of {STEPS.length}</span>

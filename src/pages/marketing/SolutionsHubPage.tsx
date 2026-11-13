@@ -19,7 +19,7 @@ export function SolutionsHubPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Every family is unique. Whether you are balancing dual corporate careers or coordinating split custody across two homes, discover how Family Essentials adapts to your household.
+            Every family is unique. Whether you are balancing dual corporate careers or coordinating split custody across two homes, discover how FairShare adapts to your household.
           </p>
         </div>
 

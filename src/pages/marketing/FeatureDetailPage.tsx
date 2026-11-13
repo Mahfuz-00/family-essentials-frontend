@@ -29,7 +29,7 @@ export function FeatureDetailPage({ slug: propSlug }: { slug?: string }) {
       '@graph': [
         {
           '@type': 'SoftwareApplication',
-          name: `Family Essentials - ${feature.name}`,
+          name: `FairShare - ${feature.name}`,
           applicationCategory: 'ProductivityApplication',
           operatingSystem: 'iOS, Android, Web',
           description: feature.summary,
@@ -167,11 +167,11 @@ export function FeatureDetailPage({ slug: propSlug }: { slug?: string }) {
               </blockquote>
             </Card>
 
-            {/* The Family Essentials Way */}
+            {/* The FairShare Way */}
             <Card className="border-secondary/30 bg-forest-soft/40 p-5 sm:p-7 shadow-e1">
               <div className="flex items-center gap-2 text-sm font-bold text-secondary">
                 <Icon name="check_circle" className="text-[18px]" />
-                <span>With Family Essentials</span>
+                <span>With FairShare</span>
               </div>
               <ul className="mt-4 flex flex-col gap-3">
                 {feature.afterBulletPoints.map((point) => (

@@ -152,7 +152,7 @@ export function PublicRefundPolicyPage() {
           </h1>
 
           <p className="mt-4 text-sm sm:text-base text-muted leading-relaxed max-w-2xl">
-            We believe in honest, predictable family software. If Family Essentials doesn't bring calm, synchrony, and clarity to your household logistics, our graduated refund policy ensures you are protected every step of the way.
+            We believe in honest, predictable family software. If FairShare doesn't bring calm, synchrony, and clarity to your household logistics, our graduated refund policy ensures you are protected every step of the way.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -421,7 +421,7 @@ export function PublicRefundPolicyPage() {
             </span>
             <h3 className="text-headline-sm font-bold text-on-surface">Mid-Cycle Upgrades &amp; Proration</h3>
             <p className="text-body-sm text-muted leading-relaxed">
-              When upgrading or switching subscription tiers mid-cycle, Family Essentials calculates the exact unused days remaining on your active plan and deducts that value as a direct credit against your new plan price. You never pay twice for the same billing days.
+              When upgrading or switching subscription tiers mid-cycle, FairShare calculates the exact unused days remaining on your active plan and deducts that value as a direct credit against your new plan price. You never pay twice for the same billing days.
             </p>
           </Card>
 

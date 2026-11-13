@@ -119,7 +119,7 @@ export function SolutionDetailPage({ slug: propSlug }: { slug?: string }) {
               Tailored Systems
             </span>
             <h2 className="mt-1 text-headline-lg font-bold text-on-surface">
-              How Family Essentials Restores Calm
+              How FairShare Restores Calm
             </h2>
           </div>
 

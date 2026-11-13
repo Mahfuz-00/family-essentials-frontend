@@ -45,7 +45,7 @@ export const FEATURES: FeatureData[] = [
     heroEyebrow: 'Execution Engine · Module 01',
     heroTitle: 'Turn Unspoken Domestic Chores into Trackable, Named Errands',
     heroDescription:
-      'Eliminate bystander apathy and ambiguous chore lists. Family Essentials assigns every domestic errand to exactly one person with clear deadlines, store tags, and live progress statuses.',
+      'Eliminate bystander apathy and ambiguous chore lists. FairShare assigns every domestic errand to exactly one person with clear deadlines, store tags, and live progress statuses.',
     metrics: [
       { value: '3.4 hrs', label: 'Average hours saved per family weekly' },
       { value: '0%', label: 'Bystander ambiguity on task ownership' },
@@ -66,7 +66,7 @@ export const FEATURES: FeatureData[] = [
     capabilities: [
       {
         title: 'Strict Single Assignee',
-        description: 'No joint or orphaned tasks. When everyone is responsible, no one is. Family Essentials requires exactly one primary owner per task.',
+        description: 'No joint or orphaned tasks. When everyone is responsible, no one is. FairShare requires exactly one primary owner per task.',
         icon: 'person_check',
       },
       {
@@ -104,7 +104,7 @@ export const FEATURES: FeatureData[] = [
     ],
     faqs: [
       {
-        question: 'Why does Family Essentials enforce a single assignee instead of multiple assignees?',
+        question: 'Why does FairShare enforce a single assignee instead of multiple assignees?',
         answer: 'Decades of organizational psychology and domestic research show that shared ownership breeds bystander apathy. When an errand is assigned to "Mom and Dad", both assume the other will handle it. Giving every request a single owner guarantees clarity, accountability, and peace of mind.',
       },
       {
@@ -113,7 +113,7 @@ export const FEATURES: FeatureData[] = [
       },
       {
         question: 'Does the board work across both desktop web and mobile phones?',
-        answer: 'Yes. Family Essentials features real-time synchronization between the Flutter mobile app (iOS and Android) and the React web dashboard.',
+        answer: 'Yes. FairShare features real-time synchronization between the Flutter mobile app (iOS and Android) and the React web dashboard.',
       },
     ],
   },
@@ -163,7 +163,7 @@ export const FEATURES: FeatureData[] = [
       },
       {
         title: 'Opt-in Member Consent',
-        description: 'Each family member has individual control over location monitoring. Family Essentials tracks store boundaries, never personal movement histories.',
+        description: 'Each family member has individual control over location monitoring. FairShare tracks store boundaries, never personal movement histories.',
         icon: 'security',
       },
     ],
@@ -186,7 +186,7 @@ export const FEATURES: FeatureData[] = [
     ],
     faqs: [
       {
-        question: 'Does Family Essentials track my continuous GPS location or live speed?',
+        question: 'Does FairShare track my continuous GPS location or live speed?',
         answer: 'No. The app reads your position only when it opens or resumes and compares it with the radiuses of your saved stores. We never record, store, or sell continuous breadcrumb movement history.',
       },
       {
@@ -205,7 +205,7 @@ export const FEATURES: FeatureData[] = [
     heroEyebrow: 'Domestic Automation · Module 03',
     heroTitle: 'Put Repeatable Household Errands on Autopilot',
     heroDescription:
-      'Every household has dozens of cyclic tasks: taking the bins out on Tuesday, changing furnace filters every 90 days, or ordering dog food on the 1st of every month. Family Essentials schedules, generates, and delegates them automatically.',
+      'Every household has dozens of cyclic tasks: taking the bins out on Tuesday, changing furnace filters every 90 days, or ordering dog food on the 1st of every month. FairShare schedules, generates, and delegates them automatically.',
     metrics: [
       { value: '100%', label: 'On-time routine maintenance completion' },
       { value: '24+', label: 'Automated tasks generated per month' },
@@ -259,7 +259,7 @@ export const FEATURES: FeatureData[] = [
       {
         step: '03',
         title: 'System Auto-Dispatches',
-        description: 'When the cadence arrives, Family Essentials automatically creates an active errand on the board and alerts the assignee.',
+        description: 'When the cadence arrives, FairShare automatically creates an active errand on the board and alerts the assignee.',
       },
     ],
     faqs: [
@@ -283,13 +283,13 @@ export const FEATURES: FeatureData[] = [
     heroEyebrow: 'Household Finance · Module 04',
     heroTitle: 'Domestic Expense Sharing Without the Financial Awkwardness',
     heroDescription:
-      'Bank sync tools like Mint or YNAB are either over-complicated or expose too much private personal data. Family Essentials gives your household simple, multi-currency ledgers where each family member sees only what they need to see.',
+      'Bank sync tools like Mint or YNAB are either over-complicated or expose too much private personal data. FairShare gives your household simple, multi-currency ledgers where each family member sees only what they need to see.',
     metrics: [
       { value: '$420', label: 'Average monthly unneeded expense reduction' },
       { value: '3 Roles', label: 'Owner, Manager, and Totals-only Summary' },
       { value: '100%', label: 'Manual privacy control — no Plaid or bank scraping' },
     ],
-    problemQuote: 'Splitting kids expenses between co-parents was an endless debate of crumpled receipts and spreadsheets. Family Essentials created a single undisputed ledger.',
+    problemQuote: 'Splitting kids expenses between co-parents was an endless debate of crumpled receipts and spreadsheets. FairShare created a single undisputed ledger.',
     problemAuthor: 'Marcus & Jessica, Co-parents, Denver',
     beforeBulletPoints: [
       'Hunting through receipt photos in WhatsApp or text message archives',
@@ -309,7 +309,7 @@ export const FEATURES: FeatureData[] = [
       },
       {
         title: 'Zero Bank Credentials Needed',
-        description: 'Keep your financial privacy intact. Family Essentials uses lightweight manual entry rather than scraping your bank accounts.',
+        description: 'Keep your financial privacy intact. FairShare uses lightweight manual entry rather than scraping your bank accounts.',
         icon: 'lock',
       },
       {
@@ -348,7 +348,7 @@ export const FEATURES: FeatureData[] = [
     faqs: [
       {
         question: 'Do I have to link my credit card or bank login?',
-        answer: 'Never. Family Essentials does not connect to banking APIs or require financial credentials. It is a lightweight, privacy-first ledger designed for domestic coordination.',
+        answer: 'Never. FairShare does not connect to banking APIs or require financial credentials. It is a lightweight, privacy-first ledger designed for domestic coordination.',
       },
       {
         question: 'Can teenagers see the family budget without seeing individual purchases?',
@@ -370,7 +370,7 @@ export const FEATURES: FeatureData[] = [
     heroEyebrow: 'Fail-Safe Reliability · Module 05',
     heroTitle: 'Direct One-Tap Phone Calling When an Errand Is Too Urgent for a Text',
     heroDescription:
-      'Push notifications get silenced, swiped away, or buried under social media alerts. For life-critical tasks—like picking up an inhaler or collecting a child from soccer—Family Essentials lets you pass the assignee’s number directly into your smartphone dialer with a single tap. Zero robocalls and zero telephony surcharges.',
+      'Push notifications get silenced, swiped away, or buried under social media alerts. For life-critical tasks—like picking up an inhaler or collecting a child from soccer—FairShare lets you pass the assignee’s number directly into your smartphone dialer with a single tap. Zero robocalls and zero telephony surcharges.',
     metrics: [
       { value: '1 Tap', label: 'Direct pass to native phone dialer' },
       { value: '$0', label: 'No third-party telecom or add-on fees' },
@@ -430,7 +430,7 @@ export const FEATURES: FeatureData[] = [
     faqs: [
       {
         question: 'Do I need any third-party phone service or telecom subscription?',
-        answer: 'No! Family Essentials requires no external telecom services, API credentials, or extra phone subscriptions. Calls are passed directly into your smartphone’s native dialer application.',
+        answer: 'No! FairShare requires no external telecom services, API credentials, or extra phone subscriptions. Calls are passed directly into your smartphone’s native dialer application.',
       },
       {
         question: 'Does this work on both iPhone and Android?',
@@ -448,7 +448,7 @@ export const FEATURES: FeatureData[] = [
     heroEyebrow: 'Enterprise Architecture · Module 06',
     heroTitle: 'Enterprise-Grade Security Built Specifically for Family Privacy',
     heroDescription:
-      'Your family’s daily locations, schedules, and budgets are sensitive personal data. Family Essentials isolates every household with strict multi-tenant database partitions, custom family roles, and cryptographic audit logs.',
+      'Your family’s daily locations, schedules, and budgets are sensitive personal data. FairShare isolates every household with strict multi-tenant database partitions, custom family roles, and cryptographic audit logs.',
     metrics: [
       { value: '100%', label: 'Cryptographic tenant schema isolation' },
       { value: '4 Tiers', label: 'Admin, Adult, Teen, and Child roles' },
@@ -525,7 +525,7 @@ export const SOLUTIONS: SolutionData[] = [
     subtitle: 'Eliminate the invisible mental load of juggling dual careers, school runs, and domestic chores.',
     heroTitle: 'Household Coordination for Dual-Career Parents Who Refuse to Drop the Ball',
     heroDescription:
-      'When both partners work full-time, domestic logistics often turn into an unwritten second shift. Family Essentials transforms frantic WhatsApp texts into a quiet, reliable operational system.',
+      'When both partners work full-time, domestic logistics often turn into an unwritten second shift. FairShare transforms frantic WhatsApp texts into a quiet, reliable operational system.',
     icon: 'family_restroom',
     badge: 'Dual-Career Households',
     audienceDescription:
@@ -564,14 +564,14 @@ export const SOLUTIONS: SolutionData[] = [
     recommendedFeatureSlugs: ['errands', 'geofencing', 'recurring'],
     testimonial: {
       quote:
-        'Family Essentials literally saved our evenings. We used to spend our first 45 minutes after work debriefing chores and arguing over what was missed. Now everything is on the board.',
+        'FairShare literally saved our evenings. We used to spend our first 45 minutes after work debriefing chores and arguing over what was missed. Now everything is on the board.',
       author: 'Amanda & Chris M.',
       role: 'Product Manager & Software Architect',
       householdSize: 'Family of 4, Austin, TX',
     },
     faqs: [
       {
-        question: 'How long does it take to set up Family Essentials for our family?',
+        question: 'How long does it take to set up FairShare for our family?',
         answer: 'Less than 5 minutes. Create your household workspace, invite your partner with a link, and pin 2 or 3 of your regular grocery stores.',
       },
       {
@@ -586,7 +586,7 @@ export const SOLUTIONS: SolutionData[] = [
     subtitle: 'Transparent expense tracking, split custody schedules, and objective accountability across separate households.',
     heroTitle: 'High-Clarity Logistics for Co-Parents Who Want Peace of Mind',
     heroDescription:
-      'Co-parenting works best when expectations are explicit, schedules are visible, and financial splits are indisputable. Family Essentials provides a neutral, documented platform that keeps the focus where it belongs: on the kids.',
+      'Co-parenting works best when expectations are explicit, schedules are visible, and financial splits are indisputable. FairShare provides a neutral, documented platform that keeps the focus where it belongs: on the kids.',
     icon: 'diversity_1',
     badge: 'Co-Parents & Blended Families',
     audienceDescription:

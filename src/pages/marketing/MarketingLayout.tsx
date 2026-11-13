@@ -333,7 +333,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   to="/about"
                   className="rounded-xl px-3 py-2 text-body-md font-semibold text-on-surface hover:bg-sage-soft"
                 >
-                  About Our Mission
+                  About Us
                 </Link>
                 <Link
                   to="/faq"
@@ -510,7 +510,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
           {/* Sub-footer bottom row */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-outline-variant/20 pt-8 sm:flex-row text-label-sm text-muted">
-            <p>© {new Date().getFullYear()} Family Essentials Inc. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} FairShare. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <Link to="/refund-policy" className="hover:text-on-surface cursor-pointer">
                 Refund Policy
