@@ -451,7 +451,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           />
         )}
 
-        {/* Submodule Navigation Bar at Top (over This period) */}
+        {/* Submodule Navigation Bar at Top */}
         {ledger && canReadEntries && (
           <div
             className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
@@ -471,24 +471,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             >
               <Icon name="receipt_long" className="text-[18px]" />
               <span>Entries &amp; Transactions</span>
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                  activeSubmodule === 'entries'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-surface-container text-muted'
-                }`}
-              >
-                {summary.data?.entry_count ?? entryList.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setRecordModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold text-on-surface-variant transition-all hover:bg-surface/70"
-            >
-              <Icon name="add_circle" className="text-[18px] text-secondary" />
-              <span>Record Entry</span>
             </button>
 
             <button
@@ -588,29 +570,39 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </div>
         )}
 
-        {/* This Period Toolbar + 3 Unified StatCards */}
-        {ledger && (
-          <SummaryCard
-            summary={summary.data}
-            currency={currency}
-            loading={summary.isLoading}
-            periodType={periodType}
-            onPeriodChange={setPeriodType}
-            error={summary.isError ? summary.error : null}
-            onRetry={() => void summary.refetch()}
-          />
-        )}
-
+        {/* Summary-only members see This period + info alert */}
         {ledger && !canReadEntries && (
-          <Alert tone="info">
-            Your role on this ledger shows the totals only — the individual entries stay with the people
-            who record them.
-          </Alert>
+          <>
+            <SummaryCard
+              summary={summary.data}
+              currency={currency}
+              loading={summary.isLoading}
+              periodType={periodType}
+              onPeriodChange={setPeriodType}
+              error={summary.isError ? summary.error : null}
+              onRetry={() => void summary.refetch()}
+            />
+            <Alert tone="info">
+              Your role on this ledger shows the totals only — the individual entries stay with the people
+              who record them.
+            </Alert>
+          </>
         )}
 
-        {/* SUBMODULE 1: Entries Table & Category Filters */}
+        {/* SUBMODULE 1: Entries & Transactions (This period + Household Ledger Entries) */}
         {ledger && canReadEntries && activeSubmodule === 'entries' && (
-          <Card className="overflow-hidden p-0">
+          <div className="flex flex-col gap-6">
+            <SummaryCard
+              summary={summary.data}
+              currency={currency}
+              loading={summary.isLoading}
+              periodType={periodType}
+              onPeriodChange={setPeriodType}
+              error={summary.isError ? summary.error : null}
+              onRetry={() => void summary.refetch()}
+            />
+
+            <Card className="overflow-hidden p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
               <div>
                 <h2 className="text-headline-sm text-on-surface">
@@ -767,7 +759,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 </tbody>
               </Table>
             )}
-          </Card>
+            </Card>
+          </div>
         )}
 
         {/* Right-Side Slide-Over Form: Record an entry */}
