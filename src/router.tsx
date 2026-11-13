@@ -55,42 +55,8 @@ import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
 import { AdminSystemSettingsPage } from '@/pages/admin/AdminSystemSettingsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
-function RootComponent() {
-  const location = useLocation();
-  const path = location.pathname;
-
-  const isPublic =
-    path === '/' ||
-    path === '/landing' ||
-    path === '/welcome' ||
-    path.startsWith('/features') ||
-    path.startsWith('/solutions') ||
-    path === '/pricing' ||
-    path === '/about' ||
-    path === '/refund-policy' ||
-    path === '/faq' ||
-    path === '/contact' ||
-    path === '/login' ||
-    path === '/admin/login' ||
-    path === '/register' ||
-    path === '/forgot-password' ||
-    path === '/reset-password' ||
-    path.startsWith('/verify-email') ||
-    path.startsWith('/verify-phone');
-
-  if (isPublic) {
-    return <Outlet />;
-  }
-
-  return (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
-  );
-}
-
 const rootRoute = createRootRoute({
-  component: RootComponent,
+  component: () => <Outlet />,
 });
 
 // The public marketing website is served at the root '/'
