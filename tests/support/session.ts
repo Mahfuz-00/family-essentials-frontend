@@ -1,3 +1,4 @@
+import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
 import { useUiStore } from '@/stores/ui';
@@ -11,6 +12,7 @@ import type { AuthUser } from '@/types';
  */
 export function resetStores(): void {
   localStorage.clear();
+  resetSession();
 
   useAuthStore.setState({ token: null, user: null });
   useTenantStore.setState({ memberships: [], active: null, loaded: false });

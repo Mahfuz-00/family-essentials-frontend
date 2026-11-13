@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, Outlet, useLocation, useNavigate, useRouterState } from '@tanstack/react-router';
 
 export const AppLayoutContext = createContext<boolean>(false);
 import { BrandLogo } from '@/components/BrandLogo';
@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
 import { api } from '@/lib/api';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
@@ -230,6 +231,12 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const pendingCashCount = notificationsQuery.data?.pending_cash_count ?? 0;
 
   const location = useLocation();
+  const isRoutePending = useRouterState({
+    select: (state) =>
+      state.status === 'pending' &&
+      Boolean(state.resolvedLocation) &&
+      state.location.pathname !== state.resolvedLocation?.pathname,
+  });
   const path = location.pathname;
   const routeLabel =
     routeLabels[path] ??
@@ -782,7 +789,18 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
         <main className="w-full px-4 py-6 sm:px-6">
           <div key={path} className="animate-body-in">
-            {children ?? <Outlet />}
+            {isRoutePending ? (
+              <div className="flex flex-col gap-6 animate-pulse" aria-busy="true">
+                <div className="space-y-2">
+                  <div className="h-7 w-56 rounded-xl bg-forest-soft/70" />
+                  <div className="h-4 w-80 max-w-full rounded-lg bg-forest-soft/50" />
+                </div>
+                <StatGridSkeleton count={4} />
+                <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface p-6 shadow-e1" />
+              </div>
+            ) : (
+              children ?? <Outlet />
+            )}
           </div>
         </main>
       </div>

@@ -528,7 +528,11 @@ export const routeTree = rootRoute.addChildren([
   adminLoginRoute,
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+  routeTree,
+  defaultPendingMs: 0,
+  defaultPendingMinMs: 0,
+});
 
 declare module '@tanstack/react-router' {
   interface Register {
