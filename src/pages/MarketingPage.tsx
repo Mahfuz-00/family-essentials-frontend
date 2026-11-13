@@ -214,7 +214,7 @@ export function MarketingPage() {
               How FairShare Works On Mobile
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-              Watch the interactive mobile app simulation below to see how erranding, OpenStreetMap arrival triggers, in-store shopping checklists, and direct carrier calling operate in real time.
+              Follow one errand through the mobile app — the board, a saved store’s checklist, the in-store quantities, completing the task — then into the household expense tracker: ledger, budgets, categorized expenses and financial health.
             </p>
           </div>
 
