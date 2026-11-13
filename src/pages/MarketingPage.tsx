@@ -197,7 +197,7 @@ export function MarketingPage() {
               Live Software Simulation
             </span>
             <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold text-on-surface">
-              How Family Essentials Works On Mobile
+              How FairShare Works On Mobile
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
               Watch the interactive mobile app simulation below to see how erranding, OpenStreetMap arrival triggers, in-store shopping checklists, and direct carrier calling operate in real time.

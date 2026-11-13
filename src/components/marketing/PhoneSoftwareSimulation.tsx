@@ -277,7 +277,7 @@ export function PhoneSoftwareSimulation() {
             </button>
 
             <span className="ml-auto text-xs font-bold text-secondary">
-              Step {currentStepIndex + 1} of 4
+              Step {currentStepIndex + 1} of {STEPS.length}
             </span>
           </div>
         </div>
@@ -315,7 +315,7 @@ export function PhoneSoftwareSimulation() {
                       <h4 className="text-xs font-bold text-slate-900 leading-tight">Family Essentials</h4>
                       <div className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[9px] text-slate-500 font-medium">Step {currentStepIndex + 1} of 4</span>
+                        <span className="text-[9px] text-slate-500 font-medium">Step {currentStepIndex + 1} of {STEPS.length}</span>
                       </div>
                     </div>
                   </div>

@@ -159,7 +159,7 @@ describe('money', () => {
     expect(screen.queryByRole('heading', { name: 'Who can see this ledger' })).not.toBeInTheDocument();
 
     // The nav item is where it always is: present, and not disabled.
-    const moneyNav = screen.getByRole('link', { name: 'Money' });
+    const moneyNav = screen.getByRole('link', { name: /household expense overview|money/i });
     expect(moneyNav).toBeInTheDocument();
     expect(moneyNav).not.toHaveAttribute('aria-disabled', 'true');
   });

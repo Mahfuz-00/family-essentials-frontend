@@ -385,10 +385,21 @@ export interface Assignment {
   created_at: string;
 }
 
+export interface RequestItem {
+  id?: number | string;
+  name: string;
+  quantity_asked?: string | null;
+  quantity_got?: string | null;
+  is_picked?: boolean;
+}
+
 export interface ServiceRequest {
   id: number;
   title: string;
   quantity: string | null;
+  quantity_asked?: string | null;
+  quantity_got?: string | null;
+  items?: RequestItem[];
   notes: string | null;
   category: string | null;
   priority: RequestPriority;
@@ -400,6 +411,8 @@ export interface ServiceRequest {
   created_at: string;
   item_id: number | null;
   item?: Item;
+  amount_minor?: number | null;
+  ledger_id?: number | null;
   requested_by?: UserRef | null;
   assignee?: UserRef | null;
   history?: Assignment[];
@@ -537,24 +550,50 @@ export interface Ledger {
   currency: string;
   my_role: LedgerRole;
   member_count: number;
+  monthly_budget_minor?: number | null;
+  weekly_budget_minor?: number | null;
+  yearly_budget_minor?: number | null;
 }
 
 export interface LedgerCategoryTotal {
+  category?: string;
   label: string;
+  display_name?: string;
   expense_minor: number;
+  income_minor?: number;
   /** Fraction of the period's expense, 0–1. */
   share: number;
 }
 
+export interface WeeklyLedgerBucket {
+  week_label: string;
+  start_date: string;
+  end_date: string;
+  expense_minor: number;
+  income_minor: number;
+  net_minor: number;
+}
+
 export interface LedgerSummary {
+  ledger_id?: number;
   currency: string;
-  from: string;
-  to: string;
+  period_type?: 'monthly' | 'weekly' | 'yearly' | 'custom';
+  period?: {
+    from: string;
+    to: string;
+  };
+  from?: string;
+  to?: string;
   expense_minor: number;
   income_minor: number;
   net_minor: number;
   entry_count: number;
+  budget_minor?: number | null;
+  remaining_budget_minor?: number | null;
+  budget_percent_used?: number | null;
+  is_over_budget?: boolean;
   by_category: LedgerCategoryTotal[];
+  weekly_breakdown?: WeeklyLedgerBucket[];
 }
 
 export type LedgerEntryDirection = 'expense' | 'income';
@@ -566,12 +605,106 @@ export interface LedgerEntry {
   category: string | null;
   description: string | null;
   occurred_on: string;
-  source: string | null;
+  source: 'manual' | 'request' | 'recurring' | string | null;
+  request_id?: number | null;
   paid_by: UserRef | null;
 }
 
 /** The roles an owner may grant through the members endpoint. */
 export type LedgerGrantRole = 'manager' | 'summary';
+
+/* ---------------------------------------------------- household finances --- */
+
+export interface FinancialGoal {
+  id: number;
+  name: string;
+  category?: string | null;
+  target_amount_minor: number;
+  current_amount_minor: number;
+  progress_percent: number;
+  currency: string;
+  target_date?: string | null;
+  status: 'active' | 'achieved' | 'paused';
+  notes?: string | null;
+  created_at: string;
+}
+
+export type LiabilityType = 'mortgage' | 'loan' | 'auto_loan' | 'student_loan' | 'credit_card' | 'other';
+
+export interface FinancialLiability {
+  id: number;
+  name: string;
+  type: LiabilityType;
+  lender?: string | null;
+  principal_amount_minor: number;
+  remaining_balance_minor: number;
+  monthly_payment_minor?: number | null;
+  interest_rate_bps?: number | null;
+  interest_rate_percent?: number | null;
+  payoff_percent: number;
+  due_day_of_month?: number | null;
+  currency: string;
+  start_date?: string | null;
+  maturity_date?: string | null;
+  status: 'active' | 'paid_off' | 'defaulted';
+  notes?: string | null;
+  created_at: string;
+}
+
+export type AssetType = 'savings' | 'investment' | 'stocks' | 'retirement' | 'crypto' | 'real_estate' | 'cash' | 'other';
+
+export interface FinancialAsset {
+  id: number;
+  name: string;
+  type: AssetType;
+  institution?: string | null;
+  balance_minor: number;
+  contribution_monthly_minor?: number | null;
+  return_rate_bps?: number | null;
+  return_rate_percent?: number | null;
+  currency: string;
+  notes?: string | null;
+  created_at: string;
+}
+
+export type TaxType = 'property' | 'income' | 'municipal' | 'sales' | 'other';
+export type TaxStatus = 'pending' | 'filed' | 'paid' | 'overdue';
+
+export interface FinancialTax {
+  id: number;
+  name: string;
+  type: TaxType;
+  tax_year: number;
+  amount_minor: number;
+  due_date: string;
+  status: TaxStatus;
+  paid_at?: string | null;
+  currency: string;
+  authority?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface FinancialOverview {
+  currency: string;
+  total_assets_minor: number;
+  total_liabilities_minor: number;
+  net_worth_minor: number;
+  savings_minor: number;
+  investments_minor: number;
+  mortgage_minor: number;
+  loans_minor: number;
+  goals: {
+    active_count: number;
+    achieved_count: number;
+    total_target_minor: number;
+    total_saved_minor: number;
+  };
+  taxes: {
+    pending_count: number;
+    pending_minor: number;
+  };
+}
 
 
 /* ---------------------------------------------------- platform administration --- */

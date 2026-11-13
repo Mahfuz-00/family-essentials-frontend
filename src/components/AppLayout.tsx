@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router';
+
+export const AppLayoutContext = createContext<boolean>(false);
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
@@ -25,6 +27,11 @@ type RoutePath =
   | '/members/roles'
   | '/members/invitations'
   | '/money'
+  | '/finances/overview'
+  | '/finances/goals'
+  | '/finances/liabilities'
+  | '/finances/assets'
+  | '/finances/taxes'
   | '/billing'
   | '/settings'
   | '/feedback'
@@ -57,19 +64,28 @@ interface NavSection {
 
 const householdSections: NavSection[] = [
   {
-    title: 'Today',
+    title: 'Dashboard',
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: 'cottage', exact: true },
+    ],
+  },
+  {
+    title: 'Household Activities',
+    items: [
       { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
       { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
       { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
     ],
   },
   {
-    title: 'Household',
+    title: 'Finances & Budget',
     items: [
-      { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
-      { to: '/places/console', label: 'Geofence Console', icon: 'map', exact: true },
+      { to: '/money', label: 'Household Expense Overview', icon: 'account_balance_wallet', exact: false },
+      { to: '/finances/overview', label: 'Household Financial Overview', icon: 'query_stats', exact: true },
+      { to: '/finances/goals', label: 'Financial Goals', icon: 'flag', exact: true },
+      { to: '/finances/liabilities', label: 'Loans & Mortgages', icon: 'real_estate_agent', exact: true },
+      { to: '/finances/assets', label: 'Savings & Investments', icon: 'trending_up', exact: true },
+      { to: '/finances/taxes', label: 'Taxes & Deductions', icon: 'receipt_long', exact: true },
     ],
   },
   {
@@ -81,9 +97,15 @@ const householdSections: NavSection[] = [
     ],
   },
   {
+    title: 'Household',
+    items: [
+      { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
+      { to: '/places/console', label: 'Geofence Console', icon: 'map', exact: true },
+    ],
+  },
+  {
     title: 'Account',
     items: [
-      { to: '/money', label: 'Money', icon: 'account_balance_wallet', exact: true },
       { to: '/billing', label: 'Billing & Invoices', icon: 'credit_card', exact: true },
       { to: '/settings', label: 'Settings', icon: 'tune', exact: true },
       { to: '/feedback', label: 'Help & Feedback', icon: 'forum', exact: true },
@@ -135,7 +157,12 @@ const routeLabels: Record<string, string> = {
   '/members': 'Family Members',
   '/members/roles': 'Roles & Permissions',
   '/members/invitations': 'Invitations',
-  '/money': 'Money',
+  '/money': 'Household Expense Overview',
+  '/finances/overview': 'Household Financial Overview',
+  '/finances/goals': 'Financial Goals',
+  '/finances/liabilities': 'Loans & Mortgages',
+  '/finances/assets': 'Savings & Investments',
+  '/finances/taxes': 'Taxes & Deductions',
   '/billing': 'Billing & Subscription',
   '/settings': 'Settings',
   '/feedback': 'Help & Feedback',
@@ -155,7 +182,12 @@ const routeLabels: Record<string, string> = {
   '/admin/audit-logs': 'Global Audit & Security Log',
 };
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({ children }: { children?: ReactNode }) {
+  const isNested = useContext(AppLayoutContext);
+  if (isNested) {
+    return <>{children ?? <Outlet />}</>;
+  }
+
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const memberships = useTenantStore((state) => state.memberships);
@@ -243,7 +275,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const sections = isPlatformAdmin ? platformSections : householdSections;
 
   return (
-    <div className="min-h-full bg-canvas text-on-surface">
+    <AppLayoutContext.Provider value={true}>
+      <div className="min-h-full bg-canvas text-on-surface">
       {/* ------------------------------- Desktop Sidebar ------------------------------- */}
       <aside
         className={`fixed left-0 top-0 z-50 hidden h-full flex-col border-r border-outline-variant/30 bg-surface shadow-e1 transition-all duration-300 lg:flex ${
@@ -741,8 +774,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="w-full px-4 py-6 sm:px-6">{children}</main>
+        <main className="w-full px-4 py-6 sm:px-6">{children ?? <Outlet />}</main>
       </div>
     </div>
+    </AppLayoutContext.Provider>
   );
 }

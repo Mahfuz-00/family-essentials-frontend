@@ -524,12 +524,6 @@ export function TenantsPage() {
             )}
           </>
         )}
-
-        <Alert tone="info">
-          The platform API returns each tenant's member count and nothing more: it does not send that
-          household's seat cap, so this console shows usage without a limit line. The caps a household
-          sees are its own — they come from <span className="font-mono">/v1/tenant/quotas</span>.
-        </Alert>
       </div>
 
       <Modal

@@ -1,4 +1,5 @@
-import { Outlet, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { Outlet, createRootRoute, createRoute, createRouter, useLocation } from '@tanstack/react-router';
+import { AppLayout } from '@/components/AppLayout';
 import { AdminLoginPage } from '@/pages/AdminLoginPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -28,6 +29,11 @@ import { VerifyPhonePage } from '@/pages/VerifyPhonePage';
 import { InvitationsPage } from '@/pages/members/InvitationsPage';
 import { RolesPage } from '@/pages/members/RolesPage';
 import { LedgerPage } from '@/pages/money/LedgerPage';
+import { FinancesOverviewPage } from '@/pages/finances/FinancesOverviewPage';
+import { GoalsPage } from '@/pages/finances/GoalsPage';
+import { LiabilitiesPage } from '@/pages/finances/LiabilitiesPage';
+import { AssetsPage } from '@/pages/finances/AssetsPage';
+import { TaxesPage } from '@/pages/finances/TaxesPage';
 import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
 import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminBillingPage } from '@/pages/admin/AdminBillingPage';
@@ -47,8 +53,42 @@ import { AdminProfilePage } from '@/pages/admin/AdminProfilePage';
 import { AdminSystemSettingsPage } from '@/pages/admin/AdminSystemSettingsPage';
 import { requireAuth, requirePlatformAdmin, requireTenant } from '@/lib/guards';
 
+function RootComponent() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const isPublic =
+    path === '/' ||
+    path === '/landing' ||
+    path === '/welcome' ||
+    path.startsWith('/features') ||
+    path.startsWith('/solutions') ||
+    path === '/pricing' ||
+    path === '/about' ||
+    path === '/refund-policy' ||
+    path === '/faq' ||
+    path === '/contact' ||
+    path === '/login' ||
+    path === '/admin/login' ||
+    path === '/register' ||
+    path === '/forgot-password' ||
+    path === '/reset-password' ||
+    path.startsWith('/verify-email') ||
+    path.startsWith('/verify-phone');
+
+  if (isPublic) {
+    return <Outlet />;
+  }
+
+  return (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  );
+}
+
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: RootComponent,
 });
 
 // The public marketing website is served at the root '/'
@@ -275,6 +315,41 @@ function LedgerRoute() {
   return <LedgerPage ledgerId={Number(ledgerId)} />;
 }
 
+const financesOverviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/overview',
+  beforeLoad: requireTenant,
+  component: FinancesOverviewPage,
+});
+
+const financesGoalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/goals',
+  beforeLoad: requireTenant,
+  component: GoalsPage,
+});
+
+const financesLiabilitiesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/liabilities',
+  beforeLoad: requireTenant,
+  component: LiabilitiesPage,
+});
+
+const financesAssetsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/assets',
+  beforeLoad: requireTenant,
+  component: AssetsPage,
+});
+
+const financesTaxesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/taxes',
+  beforeLoad: requireTenant,
+  component: TaxesPage,
+});
+
 const adminLoginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/login',
@@ -426,6 +501,11 @@ export const routeTree = rootRoute.addChildren([
   recurringRoute,
   moneyRoute,
   ledgerRoute,
+  financesOverviewRoute,
+  financesGoalsRoute,
+  financesLiabilitiesRoute,
+  financesAssetsRoute,
+  financesTaxesRoute,
   adminLoginRoute,
   adminOverviewRoute,
   adminAnalyticsRoute,
