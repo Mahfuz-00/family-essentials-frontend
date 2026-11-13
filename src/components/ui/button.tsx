@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
+type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger' | 'inverse';
 type Size = 'sm' | 'md' | 'lg' | 'xl';
 
 const variants: Record<Variant, string> = {
@@ -15,6 +15,10 @@ const variants: Record<Variant, string> = {
   ghost: 'text-ink hover:bg-sage-soft active:shadow-[var(--shadow-inset-sm)]',
   danger:
     'bg-error text-on-error shadow-[0_6px_14px_-4px_rgba(231,111,81,0.45)] hover:bg-tertiary active:translate-y-px active:shadow-[var(--shadow-inset-sm)]',
+  // Surface button for use on dark/brand-coloured panels. It carries no
+  // background-image, so it never inherits the primary gradient.
+  inverse:
+    'bg-surface text-secondary shadow-e2 hover:bg-canvas active:translate-y-px active:shadow-[var(--shadow-inset-sm)]',
 };
 
 // Design: default control radius is rounded-xl (12px); the auth CTA is larger type.

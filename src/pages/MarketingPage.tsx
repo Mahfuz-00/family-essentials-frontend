@@ -455,13 +455,13 @@ export function MarketingPage() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
             Give Your Household the Calm It Deserves.
           </h2>
-          <p className="mt-2.5 max-w-xl mx-auto text-xs sm:text-sm text-emerald-100 leading-relaxed">
-            Set up your family workspace in under 60 seconds. Free forever for up to 3 family members.
+          <p className="mt-2.5 max-w-xl mx-auto text-xs sm:text-sm text-white/90 leading-relaxed">
+            Set up your family workspace in under 60 seconds. Free forever for up to 2 family members.
           </p>
           <div className="mt-7 flex justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold shadow-e2 gap-2">
+                <Button variant="inverse" size="xl" className="font-bold gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -469,7 +469,7 @@ export function MarketingPage() {
               </Link>
             ) : (
               <Link to="/register">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold shadow-e2">
+                <Button variant="inverse" size="xl" className="font-bold">
                   Create Free Family Workspace
                 </Button>
               </Link>

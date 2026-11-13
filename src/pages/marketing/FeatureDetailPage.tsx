@@ -338,7 +338,7 @@ export function FeatureDetailPage({ slug: propSlug }: { slug?: string }) {
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas shadow-e2 font-bold gap-2">
+                <Button variant="inverse" size="xl" className="font-bold gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -347,7 +347,7 @@ export function FeatureDetailPage({ slug: propSlug }: { slug?: string }) {
             ) : (
               <>
                 <Link to="/register">
-                  <Button size="xl" className="bg-surface text-secondary hover:bg-canvas shadow-e2 font-bold">
+                  <Button variant="inverse" size="xl" className="font-bold">
                     Get Started Free Today
                   </Button>
                 </Link>

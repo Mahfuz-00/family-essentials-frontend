@@ -90,13 +90,13 @@ export function FeaturesHubPage() {
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
             Ready to Experience the Difference?
           </h2>
-          <p className="mx-auto mt-2.5 max-w-xl text-xs sm:text-sm text-emerald-100">
-            Set up your household in 2 minutes. Free forever for up to 5 family members.
+          <p className="mx-auto mt-2.5 max-w-xl text-xs sm:text-sm text-white/90">
+            Set up your household in 2 minutes. Free forever for up to 2 family members.
           </p>
           <div className="mt-6 flex justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold gap-2">
+                <Button variant="inverse" size="xl" className="font-bold gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -104,7 +104,7 @@ export function FeaturesHubPage() {
               </Link>
             ) : (
               <Link to="/register">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
+                <Button variant="inverse" size="xl" className="font-bold">
                   Get Started Free
                 </Button>
               </Link>

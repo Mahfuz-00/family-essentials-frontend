@@ -451,20 +451,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           />
         )}
 
-        {/* Top Period Toolbar + 3 Unified StatCards */}
-        {ledger && (
-          <SummaryCard
-            summary={summary.data}
-            currency={currency}
-            loading={summary.isLoading}
-            periodType={periodType}
-            onPeriodChange={setPeriodType}
-            error={summary.isError ? summary.error : null}
-            onRetry={() => void summary.refetch()}
-          />
-        )}
-
-        {/* Submodule Navigation Bar (Sunken Clay Segmented Control) */}
+        {/* Submodule Navigation Bar at Top (over This period) */}
         {ledger && canReadEntries && (
           <div
             className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
@@ -491,8 +478,17 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                     : 'bg-surface-container text-muted'
                 }`}
               >
-                {entryList.length}
+                {summary.data?.entry_count ?? entryList.length}
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setRecordModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold text-on-surface-variant transition-all hover:bg-surface/70"
+            >
+              <Icon name="add_circle" className="text-[18px] text-secondary" />
+              <span>Record Entry</span>
             </button>
 
             <button
@@ -590,6 +586,19 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               </button>
             )}
           </div>
+        )}
+
+        {/* This Period Toolbar + 3 Unified StatCards */}
+        {ledger && (
+          <SummaryCard
+            summary={summary.data}
+            currency={currency}
+            loading={summary.isLoading}
+            periodType={periodType}
+            onPeriodChange={setPeriodType}
+            error={summary.isError ? summary.error : null}
+            onRetry={() => void summary.refetch()}
+          />
         )}
 
         {ledger && !canReadEntries && (
