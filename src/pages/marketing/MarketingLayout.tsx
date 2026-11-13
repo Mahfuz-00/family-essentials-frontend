@@ -395,14 +395,14 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               <BrandLogo />
               <p className="max-w-sm text-body-md text-on-surface-variant leading-relaxed">
                 The household logistics operating system for modern families. Eliminating bystander apathy,
-                domestic mental load, and forgotten chores through single named accountability, geofencing,
-                and fail-safe voice escalations.
+                domestic mental load, and forgotten chores through single named accountability, saved-place
+                checklists, and one-tap direct calling.
               </p>
 
               <div className="flex items-center gap-3 pt-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft px-3 py-1 text-label-sm font-semibold text-secondary">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  <span>SOC2 & ISO27001 Certified Architecture</span>
+                  <span>PostgreSQL Row-Level Security</span>
                 </span>
               </div>
             </div>

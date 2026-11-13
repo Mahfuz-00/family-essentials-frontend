@@ -94,19 +94,19 @@ export function MarketingPage() {
   const faqs = [
     {
       q: 'What makes Family Essentials different from a family WhatsApp chat or Apple Reminders?',
-      a: 'Group chats are where domestic tasks go to die: messages get buried under memes, nobody knows who actually bought the eggs, or both partners end up buying milk on the way home. Generic todo apps lack domestic awareness. Family Essentials solves this with single named ownership, geofenced in-store shopping triggers, automated safety-stock buffers, and optional voice escalation for urgent medicines.',
+      a: 'Group chats are where domestic tasks go to die: messages get buried under memes, nobody knows who actually bought the eggs, or both partners end up buying milk on the way home. Generic todo apps lack domestic awareness. Family Essentials solves this with single named ownership, store-aware shopping lists, automated safety-stock buffers, and one-tap direct calling for urgent items.',
     },
     {
       q: 'How does geofenced location reminders work without draining battery?',
-      a: 'The mobile app uses standard passive circular geofences registered with iOS CoreLocation and Android Geofencing API. Your phone does not constantly track continuous GPS coordinates in the background. It only checks into the household server when you transition across a saved store radius.',
+      a: 'The app reads your position only when it is open or resumes, then compares it with the radiuses of the stores you saved. If you are inside one, that store’s open items surface. It does not stream continuous GPS or record a movement history.',
     },
     {
       q: 'Is Family Essentials free to use for our family?',
       a: 'Yes! The Free Household plan is free forever for up to 3 family members. It includes all core features: the Kanban errand hub, geofenced saved places, shopping mode, recurring staples, and mobile/web sync. Paid tiers are available for larger families, extra voice calls, or multiple homes.',
     },
     {
-      q: 'How does voice escalation work for urgent deadlines?',
-      a: 'If a critical task (like picking up an urgent prescription or school medicine) becomes overdue and unacknowledged, Family Essentials can dispatch a calm automated voice call to the assigned family member. It strictly obeys household quiet hours and requires explicit voice consent.',
+      q: 'How does calling work when an errand is urgent?',
+      a: 'Urgent requests carry a call action. Tapping it passes the responsible member’s phone number into your phone’s own dialer so you can ring them directly. There is no third-party telephony service, per-minute fee or robocall infrastructure.',
     },
     {
       q: 'Can family members use different phones (iOS, Android, and Web)?',
@@ -377,7 +377,7 @@ export function MarketingPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="mt-1 text-secondary">✓</span>
-                  <span><strong>Automated Phone Escalation:</strong> When critical health tasks are overdue, a voice call rings through.</span>
+                  <span><strong>Direct One-Tap Calling:</strong> When an errand is urgent, tap to call its owner from your phone’s dialer.</span>
                 </li>
               </ul>
             </div>

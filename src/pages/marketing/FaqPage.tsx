@@ -28,13 +28,13 @@ const FAQS: FaqItem[] = [
     category: 'Geofencing',
     question: 'Does Family Essentials track my continuous GPS location or live speed?',
     answer:
-      'No. We strictly use native iOS and Android region-monitoring APIs (geofences). Your device only checks in when entering or leaving a 150m perimeter around your explicitly saved stores (e.g. Costco, Pharmacy). We never store or trace your continuous breadcrumb route.',
+      'No. The app reads your position only when it is open or resumes, then compares it with the radiuses of the stores you saved (e.g. Costco, Pharmacy). We never record a continuous breadcrumb route.',
   },
   {
     category: 'Geofencing',
-    question: 'Will background geofencing drain my smartphone battery?',
+    question: 'Will location checks drain my smartphone battery?',
     answer:
-      'No. Because we utilize cellular tower and Wi-Fi assisted OS region monitoring rather than constant high-power GPS polling, the daily battery impact is negligible (under 1% per full day).',
+      'No. There is no continuous GPS polling. A position is read only when the app is open or resumes, so the battery impact stays negligible.',
   },
   {
     category: 'Direct Calling',

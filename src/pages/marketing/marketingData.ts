@@ -141,9 +141,9 @@ export const FEATURES: FeatureData[] = [
       'Spamming family chat with "Are you near the supermarket right now?"',
     ],
     afterBulletPoints: [
-      'Automatic alerts pop up on your phone the instant you cross the 150-meter geofence perimeter',
-      'The store checklist opens in one swipe so you see exactly what to grab',
-      'Privacy-first architecture: location stays on your device and is only compared against your family’s saved pins',
+      'Store checklists surface when the app checks your position inside a saved store radius',
+      'The checklist opens in one swipe so you see exactly what to grab',
+      'Privacy-first architecture: your position is only compared against your family’s saved pins, never stored as a route',
     ],
     capabilities: [
       {
@@ -157,8 +157,8 @@ export const FEATURES: FeatureData[] = [
         icon: 'swap_horiz',
       },
       {
-        title: 'Battery-Optimized Background Sync',
-        description: 'Built on native OS boundary monitoring APIs (CoreLocation on iOS and LocationServices on Android) for negligible battery consumption.',
+        title: 'Foreground Location Checks',
+        description: 'Your position is read only when the app opens or resumes, then compared with your saved store radiuses. No continuous GPS polling and no background tracking.',
         icon: 'battery_saver',
       },
       {
@@ -181,17 +181,17 @@ export const FEATURES: FeatureData[] = [
       {
         step: '03',
         title: 'Automatic Arrival Notification',
-        description: 'When any household member pulls into the parking lot, Family Essentials delivers a high-priority notification with the full store shopping list.',
+        description: 'When a household member opens the app inside a saved store’s radius, the full store shopping list is waiting.',
       },
     ],
     faqs: [
       {
         question: 'Does Family Essentials track my continuous GPS location or live speed?',
-        answer: 'No. Family Essentials uses native mobile OS region monitoring. Your device only alerts the app when crossing predefined boundaries around your saved stores. We never record, store, or sell continuous breadcrumb movement history.',
+        answer: 'No. The app reads your position only when it opens or resumes and compares it with the radiuses of your saved stores. We never record, store, or sell continuous breadcrumb movement history.',
       },
       {
-        question: 'Will geofencing drain my smartphone battery?',
-        answer: 'Not at all. By utilizing hardware-accelerated geofence beacons rather than continuous active GPS polling, battery consumption is virtually undetectable (under 1% per day).',
+        question: 'Will location checks drain my smartphone battery?',
+        answer: 'No. There is no continuous GPS polling: a position is read only when the app is open or resumes, so battery impact stays negligible.',
       },
     ],
   },

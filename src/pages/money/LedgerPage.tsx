@@ -16,7 +16,7 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { AMOUNT_INPUT_ERROR, formatMoney, parseMoneyToMinor } from '@/lib/money';
@@ -103,7 +103,14 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
   const [ocrResult, setOcrResult] = useState<ReceiptScanResponse | null>(null);
   const [ocrError, setOcrError] = useState<string | null>(null);
 
-  type LedgerSubmodule = 'entries' | 'record' | 'breakdown' | 'recurring' | 'access';
+  type LedgerSubmodule =
+    | 'entries'
+    | 'record'
+    | 'budget'
+    | 'categories'
+    | 'breakdown'
+    | 'recurring'
+    | 'access';
   const [activeSubmodule, setActiveSubmodule] = useState<LedgerSubmodule>('entries');
 
   const range = useMemo(() => getPeriodRange(periodType), [periodType]);
@@ -423,7 +430,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           />
         )}
 
-        {/* The aggregate summary & budget limiter card */}
+        {/* Top Period Toolbar + 3 Unified StatCards */}
         {ledger && (
           <SummaryCard
             summary={summary.data}
@@ -431,8 +438,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             loading={summary.isLoading}
             periodType={periodType}
             onPeriodChange={setPeriodType}
-            onOpenBudgetModal={openBudgetModal}
-            canManageBudget={isOwner}
             error={summary.isError ? summary.error : null}
             onRetry={() => void summary.refetch()}
           />
@@ -443,7 +448,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           <div
             className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
             role="tablist"
-            aria-label="Household budget submodules"
+            aria-label="Expenses and money submodules"
           >
             <button
               type="button"
@@ -487,6 +492,36 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             <button
               type="button"
               role="tab"
+              aria-selected={activeSubmodule === 'budget'}
+              onClick={() => setActiveSubmodule('budget')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'budget'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              <Icon name="tune" className="text-[18px]" />
+              <span>Budget &amp; Limits</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubmodule === 'categories'}
+              onClick={() => setActiveSubmodule('categories')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'categories'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              <Icon name="pie_chart" className="text-[18px]" />
+              <span>Category Breakdown</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
               aria-selected={activeSubmodule === 'breakdown'}
               onClick={() => setActiveSubmodule('breakdown')}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
@@ -499,20 +534,20 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               <span>Periodic Breakdown</span>
             </button>
 
-            {relevantRecurringExpenses.length > 0 && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeSubmodule === 'recurring'}
-                onClick={() => setActiveSubmodule('recurring')}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
-                  activeSubmodule === 'recurring'
-                    ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
-                    : 'text-on-surface-variant hover:bg-surface/70'
-                }`}
-              >
-                <Icon name="update" className="text-[18px]" />
-                <span>Recurring Expenses</span>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubmodule === 'recurring'}
+              onClick={() => setActiveSubmodule('recurring')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'recurring'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              <Icon name="update" className="text-[18px]" />
+              <span>Recurring Expenses</span>
+              {relevantRecurringExpenses.length > 0 && (
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
                     activeSubmodule === 'recurring'
@@ -522,8 +557,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 >
                   {relevantRecurringExpenses.length}
                 </span>
-              </button>
-            )}
+              )}
+            </button>
 
             {isOwner && (
               <button
@@ -841,7 +876,145 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </Card>
         )}
 
-        {/* SUBMODULE 3: Periodic Breakdown */}
+        {/* SUBMODULE 3: Budget & Limits */}
+        {ledger && canReadEntries && activeSubmodule === 'budget' && (
+          <Card className="p-6 flex flex-col gap-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-headline-sm text-on-surface">
+                  {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Budget & Limits
+                </h2>
+                <p className="text-body-sm text-muted">
+                  Track spending caps against your active ledger period and configure over-budget warnings.
+                </p>
+              </div>
+              {canReadEntries && (
+                <Button size="sm" variant="outline" onClick={openBudgetModal}>
+                  <Icon name="tune" className="text-[16px]" />
+                  {summary.data?.budget_minor ? 'Adjust Limit' : 'Set Budget Limit'}
+                </Button>
+              )}
+            </div>
+
+            {summary.data?.budget_minor ? (
+              <div className="rounded-2xl bg-canvas p-5 shadow-[var(--shadow-inset-sm)] flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-soft text-secondary shadow-[var(--shadow-clay-sm)]">
+                      <Icon name="account_balance_wallet" className="text-[20px]" />
+                    </div>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">
+                        {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Budget Limit
+                      </h4>
+                      <p className="text-body-sm text-muted">
+                        Cap: <span className="font-semibold text-on-surface">{formatMoney(summary.data.budget_minor, currency)}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {summary.data.is_over_budget ? (
+                      <Badge tone="danger">
+                        Over Budget by {formatMoney(Math.abs(summary.data.remaining_budget_minor ?? 0), currency)}
+                      </Badge>
+                    ) : (
+                      <Badge tone="success">
+                        {formatMoney(summary.data.remaining_budget_minor ?? 0, currency)} ({Math.max(0, 100 - (summary.data.budget_percent_used ?? 0)).toFixed(0)}%) Remaining
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-full bg-sage-soft/70 rounded-full h-3.5 overflow-hidden p-0.5 shadow-[var(--shadow-inset-sm)]">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      summary.data.is_over_budget
+                        ? 'bg-tertiary'
+                        : (summary.data.budget_percent_used ?? 0) > 80
+                        ? 'bg-amber-500'
+                        : 'bg-secondary'
+                    }`}
+                    style={{ width: `${Math.min(100, Math.max(2, summary.data.budget_percent_used ?? 0))}%` }}
+                  />
+                </div>
+
+                <div className="flex justify-between text-body-sm text-muted">
+                  <span>Spent: {formatMoney(summary.data.expense_minor, currency)} ({summary.data.budget_percent_used ?? 0}%)</span>
+                  <span>
+                    {summary.data.is_over_budget
+                      ? `Exceeded limit of ${formatMoney(summary.data.budget_minor, currency)}`
+                      : `Target: ${formatMoney(summary.data.budget_minor, currency)}`}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-canvas p-5 shadow-[var(--shadow-inset-sm)] flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-soft text-muted">
+                    <Icon name="tune" className="text-[20px]" />
+                  </div>
+                  <div>
+                    <p className="text-label-md font-semibold text-on-surface">No Budget Limit Active</p>
+                    <p className="text-body-sm text-muted">Set monthly, weekly, or yearly spending caps to enable budget alerts.</p>
+                  </div>
+                </div>
+                {canReadEntries && (
+                  <Button size="sm" variant="soft" onClick={openBudgetModal}>
+                    <Icon name="add" className="text-[16px]" />
+                    Set Budget Limit
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* SUBMODULE 4: Category Breakdown */}
+        {ledger && canReadEntries && activeSubmodule === 'categories' && (
+          <Card className="p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-headline-sm text-on-surface">Spending by Category</h2>
+                <p className="text-body-sm text-muted">
+                  Proportional share of expenses across categories for the active period.
+                </p>
+              </div>
+              <Badge tone="neutral">{summary.data?.by_category?.length ?? 0} Categories</Badge>
+            </div>
+
+            {(summary.data?.by_category?.length ?? 0) > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {summary.data!.by_category.map((category) => {
+                  const percent = Math.round(Math.min(1, Math.max(0, category.share)) * 100);
+
+                  return (
+                    <div key={category.label} className="flex flex-col gap-2 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]">
+                      <div className="flex items-center justify-between text-body-sm">
+                        <span className="font-semibold text-on-surface">{category.display_name ?? category.label}</span>
+                        <span className="font-bold text-on-surface-variant">
+                          {formatMoney(category.expense_minor, currency)} · {percent}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-sage-soft rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-secondary/80 transition-all"
+                          style={{ width: `${Math.min(100, Math.max(2, percent))}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-body-sm text-muted py-4 text-center">
+                No category expenses recorded in this period yet.
+              </p>
+            )}
+          </Card>
+        )}
+
+        {/* SUBMODULE 5: Periodic Breakdown */}
         {ledger && activeSubmodule === 'breakdown' && (
           <div className="flex flex-col gap-4">
             {periodType === 'monthly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
@@ -1194,8 +1367,6 @@ function SummaryCard({
   loading,
   periodType,
   onPeriodChange,
-  onOpenBudgetModal,
-  canManageBudget,
   error,
   onRetry,
 }: {
@@ -1204,8 +1375,6 @@ function SummaryCard({
   loading: boolean;
   periodType: 'monthly' | 'weekly' | 'yearly';
   onPeriodChange: (type: 'monthly' | 'weekly' | 'yearly') => void;
-  onOpenBudgetModal: () => void;
-  canManageBudget: boolean;
   error?: unknown;
   onRetry: () => void;
 }) {
@@ -1214,33 +1383,12 @@ function SummaryCard({
   }
 
   if (loading || !summary) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {[0, 1, 2].map((key) => (
-          <SkeletonCard key={key} />
-        ))}
-      </div>
-    );
+    return <StatGridSkeleton count={3} />;
   }
 
-  const totals = [
-    { label: 'Total Spent', value: formatMoney(summary.expense_minor, currency), text: 'text-tertiary' },
-    { label: 'Total Income', value: formatMoney(summary.income_minor, currency), text: 'text-secondary' },
-    {
-      label: summary.net_minor < 0 ? 'Net Outflow' : 'Net Surplus',
-      value: formatMoney(summary.net_minor, currency),
-      text: summary.net_minor < 0 ? 'text-tertiary' : 'text-secondary',
-    },
-  ];
-
-  const budgetMinor = summary.budget_minor;
-  const percentUsed = summary.budget_percent_used ?? 0;
-  const isOverBudget = summary.is_over_budget ?? false;
-  const remainingMinor = summary.remaining_budget_minor ?? 0;
-
   return (
-    <Card className="p-5 flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/60 pb-3">
+    <div className="flex flex-col gap-4">
+      <Card className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-headline-sm text-on-surface">This period</h2>
           <span className="text-label-sm text-muted">
@@ -1285,124 +1433,48 @@ function SummaryCard({
             Yearly Ledger
           </button>
         </div>
-      </div>
+      </Card>
 
-      {/* 3 Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {totals.map((total) => (
-          <div key={total.label} className="flex flex-col gap-1.5 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]">
-            <span className="text-label-sm uppercase tracking-wider text-muted font-bold">{total.label}</span>
-            <span className={`text-[clamp(1.25rem,1.8vw,1.75rem)] font-extrabold truncate ${total.text}`}>{total.value}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Budget Limiting Gauge / Meter */}
-      {budgetMinor ? (
-        <div className="rounded-2xl border border-outline-variant bg-surface p-4 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-secondary">
-                <Icon name="account_balance_wallet" className="text-[20px]" />
-              </div>
-              <div>
-                <h4 className="text-label-lg font-bold text-on-surface">
-                  {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Budget Limit
-                </h4>
-                <p className="text-body-sm text-muted">
-                  Cap: <span className="font-semibold text-on-surface">{formatMoney(budgetMinor, currency)}</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {isOverBudget ? (
-                <Badge tone="danger">Over Budget by {formatMoney(Math.abs(remainingMinor), currency)}</Badge>
-              ) : (
-                <Badge tone="success">
-                  {formatMoney(remainingMinor, currency)} ({Math.max(0, 100 - percentUsed).toFixed(0)}%) Remaining
-                </Badge>
-              )}
-              {canManageBudget && (
-                <Button size="sm" variant="outline" onClick={onOpenBudgetModal}>
-                  Adjust Limit
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Visual Progress Bar */}
-          <div className="w-full bg-sage-soft/70 rounded-full h-3.5 overflow-hidden p-0.5">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isOverBudget
-                  ? 'bg-tertiary'
-                  : percentUsed > 80
-                  ? 'bg-amber-500'
-                  : 'bg-secondary'
-              }`}
-              style={{ width: `${Math.min(100, Math.max(2, percentUsed))}%` }}
-            />
-          </div>
-
-          <div className="flex justify-between text-body-sm text-muted">
-            <span>Spent: {formatMoney(summary.expense_minor, currency)} ({percentUsed}%)</span>
-            <span>
-              {isOverBudget
-                ? `Exceeded limit of ${formatMoney(budgetMinor, currency)}`
-                : `Target: ${formatMoney(budgetMinor, currency)}`}
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-outline-variant p-4 flex flex-wrap items-center justify-between gap-3 bg-surface/40">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-muted">
-              <Icon name="tune" className="text-[20px]" />
-            </div>
-            <div>
-              <p className="text-label-md font-semibold text-on-surface">No Budget Limit Active</p>
-              <p className="text-body-sm text-muted">Set monthly or weekly spending caps to enable budget limiting alerts.</p>
-            </div>
-          </div>
-          {canManageBudget && (
-            <Button size="sm" variant="soft" onClick={onOpenBudgetModal}>
-              <Icon name="add" className="text-[16px]" />
-              Set Budget Limit
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Category Breakdown */}
-      {(summary.by_category?.length ?? 0) > 0 && (
-        <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/60">
-          <h3 className="text-label-sm uppercase tracking-wider text-muted font-medium">Spending by Category</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {summary.by_category.map((category) => {
-              const percent = Math.round(Math.min(1, Math.max(0, category.share)) * 100);
-
-              return (
-                <div key={category.label} className="flex flex-col gap-1 rounded-xl bg-canvas p-3 border border-outline-variant/30">
-                  <div className="flex items-center justify-between text-body-sm">
-                    <span className="font-semibold text-on-surface">{category.display_name ?? category.label}</span>
-                    <span className="font-bold text-on-surface-variant">
-                      {formatMoney(category.expense_minor, currency)} · {percent}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-sage-soft rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-secondary/80 transition-all"
-                      style={{ width: `${Math.min(100, Math.max(2, percent))}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </Card>
+      {/* 3 Soft UI Stat Cards */}
+      <StatGrid count={3}>
+        <StatCard
+          title="Total Spent"
+          value={formatMoney(summary.expense_minor, currency)}
+          icon="payments"
+          tone="coral"
+          valueClassName="text-tertiary"
+          highlight={
+            <StatHighlight tone="danger">
+              {summary.entry_count} {summary.entry_count === 1 ? 'Entry' : 'Entries'}
+            </StatHighlight>
+          }
+        />
+        <StatCard
+          title="Total Income"
+          value={formatMoney(summary.income_minor, currency)}
+          icon="trending_up"
+          tone="forest"
+          valueClassName="text-secondary"
+          highlight={
+            <StatHighlight tone="success">
+              {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Inflow
+            </StatHighlight>
+          }
+        />
+        <StatCard
+          title={summary.net_minor < 0 ? 'Net Outflow' : 'Net Surplus'}
+          value={formatMoney(summary.net_minor, currency)}
+          icon="account_balance_wallet"
+          tone={summary.net_minor < 0 ? 'coral' : 'sage'}
+          valueClassName={summary.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}
+          highlight={
+            <StatHighlight tone={summary.net_minor < 0 ? 'danger' : 'success'}>
+              {summary.net_minor < 0 ? 'Deficit' : 'Positive Net'}
+            </StatHighlight>
+          }
+        />
+      </StatGrid>
+    </div>
   );
 }
 
