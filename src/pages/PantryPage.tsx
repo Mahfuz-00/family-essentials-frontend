@@ -373,8 +373,8 @@ export function PantryPage() {
         </StatGrid>
 
         {/* Search and Filters */}
-        <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="relative w-full max-w-sm">
+        <Card className="flex flex-col gap-3 p-4">
+          <div className="relative w-full">
             <Icon
               name="search"
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
@@ -388,7 +388,7 @@ export function PantryPage() {
           </div>
 
           <div
-            className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
+            className="flex w-fit max-w-full flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
             role="group"
             aria-label="Filter pantry"
           >

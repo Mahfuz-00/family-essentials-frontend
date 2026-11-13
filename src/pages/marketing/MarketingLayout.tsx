@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui/button';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/auth';
 import { FEATURES, SOLUTIONS } from './marketingData';
 
@@ -12,6 +13,22 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  const staticTitles: Record<string, string | undefined> = {
+    '/': undefined,
+    '/features': 'Features',
+    '/solutions': 'Solutions',
+    '/pricing': 'Pricing',
+    '/about': 'About Us',
+    '/faq': 'FAQ',
+    '/contact': 'Contact',
+    '/refund-policy': 'Refund Policy',
+  };
+
+  const featureTitle = FEATURES.find((feature) => location.pathname === `/features/${feature.slug}`)?.name;
+  const solutionTitle = SOLUTIONS.find((solution) => location.pathname === `/solutions/${solution.slug}`)?.title;
+
+  useDocumentTitle(featureTitle ?? solutionTitle ?? staticTitles[location.pathname]);
 
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = Boolean(token);
