@@ -12,13 +12,9 @@ function focusableWithin(root: HTMLElement): HTMLElement[] {
 }
 
 /**
- * Overlay on the attention plane: blurred slate backdrop, focus moved in on
+ * Slide-over overlay on the right side: blurred backdrop, focus moved in on
  * open and trapped there, Escape and backdrop-click close, focus returned to
- * the trigger. (DESIGN.md Level 4 + accessibility floor.)
- *
- * Tab is cycled inside the panel by hand: moving focus in and restoring it was
- * not enough, because Tab walked straight out into the page behind the
- * backdrop and left the dialog open but unreachable.
+ * the trigger. Supports expansive forms with maximum vertical and horizontal space.
  */
 export function Modal({
   open,
@@ -28,6 +24,7 @@ export function Modal({
   children,
   footer,
   className,
+  position = 'right',
 }: {
   open: boolean;
   onClose: () => void;
@@ -36,15 +33,12 @@ export function Modal({
   children?: ReactNode;
   footer?: ReactNode;
   className?: string;
+  position?: 'right' | 'center';
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const restoreTo = useRef<Element | null>(null);
   const close = useRef(onClose);
 
-  // `onClose` is usually an inline arrow, so it is a new function on every
-  // render of the screen that owns the modal. Keeping it in a ref lets the
-  // effect below depend on `open` alone: previously it re-ran on every
-  // keystroke, re-focusing the panel and swallowing the rest of the input.
   useEffect(() => {
     close.current = onClose;
   }, [onClose]);
@@ -60,7 +54,6 @@ export function Modal({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         close.current();
-
         return;
       }
 
@@ -69,25 +62,20 @@ export function Modal({
       }
 
       const root = panel.current;
-
       if (!root) {
         return;
       }
 
       const stops = focusableWithin(root);
-
       if (stops.length === 0) {
-        // Nothing to cycle through: keep the focus on the dialog itself.
         event.preventDefault();
         root.focus();
-
         return;
       }
 
       const current = document.activeElement as HTMLElement | null;
       const index = current ? stops.indexOf(current) : -1;
 
-      // Focus outside the panel (or still on the panel) enters at either end.
       const next =
         index === -1
           ? stops[event.shiftKey ? stops.length - 1 : 0]
@@ -111,7 +99,10 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 p-4 backdrop-blur-[4px]"
+      className={cn(
+        'fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-[4px] transition-opacity duration-200',
+        position === 'right' ? 'flex justify-end' : 'flex items-center justify-center p-4',
+      )}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -125,14 +116,16 @@ export function Modal({
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          'w-full max-w-lg max-h-[88vh] flex flex-col rounded-3xl bg-surface p-6 shadow-e2 outline-none',
+          position === 'right'
+            ? 'h-full w-full max-w-lg sm:max-w-xl md:max-w-2xl flex flex-col bg-surface p-6 sm:p-8 shadow-2xl outline-none border-l border-outline-variant/40 animate-in slide-in-from-right duration-300'
+            : 'w-full max-w-lg max-h-[88vh] flex flex-col rounded-3xl bg-surface p-6 shadow-e2 outline-none',
           className,
         )}
       >
-        <div className="flex shrink-0 items-start justify-between gap-4">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-outline-variant/30 pb-4">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-bold text-on-surface">{title}</h2>
-            {description && <p className="text-xs text-muted leading-relaxed">{description}</p>}
+            <h2 className="text-xl font-bold text-on-surface">{title}</h2>
+            {description && <p className="text-sm text-muted leading-relaxed">{description}</p>}
           </div>
           <button
             type="button"
@@ -140,14 +133,18 @@ export function Modal({
             onClick={onClose}
             className="-mr-1 -mt-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-sage-soft hover:text-on-surface"
           >
-            <svg viewBox="0 0 20 20" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
             </svg>
           </button>
         </div>
 
-        {children && <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1">{children}</div>}
-        {footer && <div className="mt-6 shrink-0 flex items-center justify-end gap-3">{footer}</div>}
+        {children && <div className="mt-5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2 py-1">{children}</div>}
+        {footer && (
+          <div className="mt-6 shrink-0 flex items-center justify-end gap-3 border-t border-outline-variant/30 pt-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

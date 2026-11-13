@@ -68,7 +68,7 @@ export function AdminLoginPage() {
           </span>
           <div className="flex flex-col">
             <span className="flex items-center gap-2">
-              <span className="text-headline-sm font-bold text-on-surface">Family Essentials</span>
+              <span className="text-headline-sm font-bold text-on-surface">FairShare</span>
               <span className="rounded-full bg-sage-soft px-2 py-0.5 text-label-sm uppercase tracking-wider text-on-surface-variant">
                 Platform Admin
               </span>
@@ -184,7 +184,7 @@ export function AdminLoginPage() {
 
       <footer className="relative border-t border-[rgba(43,45,66,0.08)] bg-surface px-8 py-5">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-label-sm text-muted">
-          <span>Family Essentials · Landlord platform v2.4</span>
+          <span>FairShare · Landlord platform v2.4</span>
           <span>Need help? Contact the platform SRE team.</span>
         </div>
       </footer>

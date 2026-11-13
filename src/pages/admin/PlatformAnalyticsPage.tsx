@@ -34,7 +34,7 @@ export function PlatformAnalyticsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <PageHeader
-            title="Platform Analytics &amp; Operations"
+            title="Platform Analytics"
             description="Macro trends across all tenant households: recurring revenue (MRR/ARR), errand completion velocity, and hardware geofencing throughput."
           />
           <Button variant="outline" onClick={exportReport} disabled={!data}>

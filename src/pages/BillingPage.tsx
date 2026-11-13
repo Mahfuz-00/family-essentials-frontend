@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
@@ -38,12 +39,68 @@ interface InvoicesResponse {
   current_page: number;
 }
 
+const planFeaturePoints: Record<string, { price: string; features: string[] }> = {
+  starter: {
+    price: '$9',
+    features: [
+      '2 Family members',
+      '2 Geofenced saved places',
+      '15 Active requests & errands / mo',
+      '10 Receipt OCR scans / mo',
+      '30 Pantry & essentials items',
+      'Shared calendar & expense overview',
+      'Standard community support',
+    ],
+  },
+  pilot: {
+    price: '$19',
+    features: [
+      '4 Family members',
+      '5 Geofenced saved places',
+      '40 Active requests & errands / mo',
+      '5 Urgent voice escalations / mo',
+      '10 Direct member calls / mo',
+      '30 Receipt OCR scans / mo',
+      '100 Pantry & essentials items',
+      'Automated restock reminders',
+      'Standard email support',
+    ],
+  },
+  standard: {
+    price: '$49',
+    features: [
+      '10 Family members',
+      '20 Geofenced saved places',
+      '250 Active requests & errands / mo',
+      '30 Urgent voice escalations / mo',
+      '100 Direct member calls / mo',
+      '150 Receipt OCR scans / mo',
+      '500 Pantry & essentials items',
+      'AI Assistant & NLP parser',
+      'Priority SLA & phone support',
+    ],
+  },
+  enterprise: {
+    price: '$99',
+    features: [
+      'Unlimited family members',
+      'Unlimited geofenced places',
+      'Unlimited monthly requests',
+      'Unlimited voice calls & escalations',
+      'Unlimited receipt scans & pantry',
+      'Dedicated account manager & 24/7 SLA',
+    ],
+  },
+};
+
 export function BillingPage() {
   const queryClient = useQueryClient();
   const active = useTenantStore((state) => state.active);
 
   const [activeTab, setActiveTab] = useState<'plan' | 'invoices' | 'refund-policy'>('plan');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [newInvoiceModal, setNewInvoiceModal] = useState<InvoiceRecord | null>(null);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundInvoiceId, setRefundInvoiceId] = useState<number | null>(null);
   const [refundReason, setRefundReason] = useState('');
@@ -100,12 +157,27 @@ export function BillingPage() {
       );
       setError(null);
       setUpgradeModalOpen(false);
+      if (data.invoice) {
+        setNewInvoiceModal(data.invoice);
+      }
       queryClient.invalidateQueries({ queryKey: ['billing', 'invoices'] });
       queryClient.invalidateQueries({ queryKey: ['tenant', 'quotas'] });
     },
     onError: (err) => {
       setError(apiError(err));
       setNotice(null);
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => (await api.post('/v1/billing/cancel')).data,
+    onSuccess: () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    },
+    onError: (err) => {
+      setError(apiError(err));
     },
   });
 
@@ -210,7 +282,7 @@ export function BillingPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          title="Billing &amp; Subscription Portal"
+          title="Billing &amp; Plans"
           description="Your household plan, seat allocation, usage quotas, and official downloadable payment invoices."
           actions={
             <Button
@@ -250,7 +322,7 @@ export function BillingPage() {
             }`}
           >
             <Icon name="receipt_long" className="text-[18px]" />
-            Invoices &amp; Receipts ({invoicesList.length})
+            Invoices &amp; Receipts {invoicesQuery.isLoading ? '' : `(${invoicesList.length})`}
           </button>
           <button
             type="button"
@@ -317,14 +389,22 @@ export function BillingPage() {
                           Manage seats
                         </Button>
                       </Link>
+                      <Button
+                        variant="outline"
+                        className="text-error border-error/30 hover:bg-coral-soft"
+                        onClick={() => setCancelModalOpen(true)}
+                      >
+                        <Icon name="cancel" className="text-[16px]" />
+                        Cancel Plan
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
                     {usage.map((meter) => (
                       <div
                         key={meter.label}
-                        className="flex flex-col gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
+                        className="flex flex-col justify-between h-full w-full gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
                       >
                         <span className="flex items-center justify-between">
                           <span className="text-label-sm text-muted">{meter.label}</span>
@@ -361,44 +441,55 @@ export function BillingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                {plans
-                  .filter((tier) => tier.key !== 'enterprise')
-                  .map((tier) => {
-                    const isCurrent = tier.key === active?.subscription_tier;
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
+                {plans.map((tier) => {
+                  const isCurrent = tier.key === active?.subscription_tier;
+                  const details = planFeaturePoints[tier.key] ?? {
+                    price: '$19',
+                    features: ['Multi-member household', 'Standard quotas'],
+                  };
 
-                    return (
-                      <Card
-                        key={tier.key}
-                        className={`flex flex-col gap-4 p-5 ${
-                          isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
-                        }`}
+                  return (
+                    <Card
+                      key={tier.key}
+                      className={`flex flex-col justify-between h-full w-full gap-4 p-5 ${
+                        isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
+                          <span className="text-body-xs text-muted">{tier.tagline}</span>
+                        </div>
+                        {isCurrent && <Badge tone="primary">Current</Badge>}
+                      </div>
+
+                      <div className="text-2xl font-extrabold text-on-surface">
+                        {details.price} <span className="text-xs font-normal text-muted">/ month</span>
+                      </div>
+
+                      <ul className="flex flex-col gap-2 border-t border-outline-variant/20 pt-3 my-1">
+                        {details.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-on-surface">
+                            <Icon name="check_circle" className="text-[16px] text-secondary shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button
+                        variant={isCurrent ? 'soft' : 'outline'}
+                        onClick={() => {
+                          setSelectedTier(tier.key as any);
+                          setUpgradeModalOpen(true);
+                        }}
+                        className="mt-auto w-full"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex flex-col gap-0.5">
-                            <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
-                            <span className="text-body-sm text-muted">{tier.tagline}</span>
-                          </div>
-                          {isCurrent && <Badge tone="primary">Current plan</Badge>}
-                        </div>
-
-                        <div className="text-xl font-extrabold text-on-surface">
-                          {tier.key === 'starter' ? '$9' : tier.key === 'pilot' ? '$19' : '$49'} <span className="text-xs font-normal text-muted">/ month</span>
-                        </div>
-
-                        <Button
-                          variant={isCurrent ? 'soft' : 'outline'}
-                          onClick={() => {
-                            setSelectedTier(tier.key as any);
-                            setUpgradeModalOpen(true);
-                          }}
-                          className="mt-auto w-full"
-                        >
-                          {isCurrent ? 'Active Plan' : `Upgrade to ${tier.label}`}
-                        </Button>
-                      </Card>
-                    );
-                  })}
+                        {isCurrent ? 'Active Plan' : `Select ${tier.label}`}
+                      </Button>
+                    </Card>
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -563,15 +654,24 @@ export function BillingPage() {
 
         {activeTab === 'refund-policy' && (
           <div className="flex flex-col gap-6">
-            <Card className="flex flex-col gap-5 p-6 border-l-4 border-secondary bg-surface">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-headline-sm font-bold text-on-surface">Household Refund &amp; Guarantee Status</h3>
-                  <p className="text-xs text-muted">
-                    Clear terms protecting your household subscription. Submit requests directly to platform billing triage.
-                  </p>
+            {/* Header Card with Warm Sage Banner */}
+            <div className="relative overflow-hidden rounded-2xl border border-secondary/20 bg-forest-soft/40 p-6 shadow-e1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-white shadow-xs">
+                    <Icon name="verified_user" className="text-[26px]" />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-headline-sm font-extrabold text-on-surface">Household Refund &amp; Guarantee Protection</h3>
+                      <Badge tone="success">Guaranteed</Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted max-w-2xl leading-relaxed">
+                      Every subscription comes with our graduated refund guarantee and automated proration protection. Submit claims directly to billing operations or simulate refund eligibility.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                   <Button
                     variant="primary"
                     size="sm"
@@ -583,103 +683,205 @@ export function BillingPage() {
                   <Link to="/refund-policy">
                     <Button variant="outline" size="sm">
                       <Icon name="open_in_new" className="text-[16px]" />
-                      Public Terms Page
+                      Public Terms
                     </Button>
                   </Link>
                 </div>
               </div>
+            </div>
 
-              {/* Household Status Breakdown */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 border-t border-outline-variant/20 pt-4">
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Current Plan Commitment</span>
-                  <div className="text-label-lg font-bold text-on-surface mt-1 capitalize">
-                    {quota.planLabel}
+            {/* 3 Unified StatCards */}
+            <StatGrid count={3}>
+              <StatCard
+                title="Current Commitment"
+                value={quota.planLabel}
+                icon="verified_user"
+                tone="forest"
+                valueClassName="capitalize"
+                highlight={<StatHighlight tone="success">Active</StatHighlight>}
+              />
+              <StatCard
+                title="Latest Invoice"
+                value={invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)}` : 'Trial'}
+                icon="receipt_long"
+                tone="sage"
+                valueClassName="font-mono"
+                highlight={
+                  invoicesList[0] ? (
+                    <StatHighlight tone={invoicesList[0].status === 'paid' ? 'success' : 'warning'}>
+                      {invoicesList[0].status.toUpperCase()}
+                    </StatHighlight>
+                  ) : (
+                    <StatHighlight tone="neutral">No Invoices</StatHighlight>
+                  )
+                }
+              />
+              <StatCard
+                title="Refund Eligibility"
+                value="100% Grace"
+                icon="security"
+                tone="forest"
+                valueClassName="text-secondary"
+                highlight={<StatHighlight tone="success">Eligible</StatHighlight>}
+              />
+            </StatGrid>
+
+            {/* Graduated Refund Pillars Breakdown */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Monthly Subscriptions Card */}
+              <div className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1">
+                <div className="flex items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                      <Icon name="calendar_month" className="text-[22px]" />
+                    </span>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">Monthly Plan Schedule</h4>
+                      <p className="text-xs text-muted">30-day graduated guarantee milestones</p>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-muted">Active household tier</span>
+                  <Badge tone="success">Monthly</Badge>
                 </div>
 
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Latest Invoice</span>
-                  <div className="text-label-lg font-bold text-on-surface mt-1 font-mono">
-                    {invoicesList[0]?.invoice_number ?? 'No invoices yet'}
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-3 rounded-xl border border-secondary/30 bg-forest-soft/30 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-white text-xs font-bold">1</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Days 1 to 7 (Grace Window)</span>
+                        <Badge tone="success">100% Full Refund</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        Unconditional full refund directly back to your payment card with zero deductions.
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-muted">
-                    {invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)} · ${invoicesList[0].status.toUpperCase()}` : 'Free trial'}
-                  </span>
-                </div>
 
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Money-Back Window</span>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <Badge tone="success">7-Day Guarantee Active</Badge>
+                  <div className="flex items-start gap-3 rounded-xl border border-amber-300/40 bg-amber-50/40 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold">2</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Days 8 to 20 (Buffer Window)</span>
+                        <Badge tone="warning">50% Prorated</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        50% refund returned. Reverting to previous subscription tier is supported.
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-muted">100% refundable within 7 days of invoice</span>
+
+                  <div className="flex items-start gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-outline text-white text-xs font-bold">3</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Day 21+ (Active Term)</span>
+                        <Badge tone="neutral">Term Active</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        Subscription completes term. Data remains safely preserved for 90 days in vault.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </Card>
 
-            {/* 4 Policy Pillars */}
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                    <Icon name="verified_user" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Monthly Subscriptions: 7-Day 100% Guarantee</h4>
-                    <p className="text-body-xs text-muted">Full refund within 7 calendar days</p>
+              {/* Annual Commitments Card */}
+              <div className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1">
+                <div className="flex items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                      <Icon name="workspace_premium" className="text-[22px]" />
+                    </span>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">Annual Plan Schedule</h4>
+                      <p className="text-xs text-muted">Yearly subscription graduated tiers</p>
+                    </div>
+                  </div>
+                  <Badge tone="warning">Save 20%</Badge>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Days 1 to 15</span>
+                      <Badge tone="success">100%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">Annual unconditional trial guarantee</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Month 1 (Days 16–30)</span>
+                      <Badge tone="success">75%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">75% refund returned upon early review</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Months 2 to 3</span>
+                      <Badge tone="warning">50%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">50% refund. Plan reverting permitted</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Months 4 to 6</span>
+                      <Badge tone="warning">25%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">25% refund through month 6. 0% after</span>
                   </div>
                 </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  If you decide Family Essentials does not fit your household within 7 days of your monthly subscription invoice, you are entitled to a full 100% refund. After 7 days, charges for that cycle are non-refundable.
-                </p>
-              </Card>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                    <Icon name="workspace_premium" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Annual Commitments: 30-Day 80% Guarantee</h4>
-                    <p className="text-body-xs text-muted">First-month early cancellation protection</p>
-                  </div>
+                <div className="mt-auto pt-4 border-t border-outline-variant/20 flex items-center gap-2 text-xs text-muted">
+                  <Icon name="info" className="text-[16px] text-secondary" />
+                  <span>Reverting to a previous plan is permitted while within the 50% refund window.</span>
                 </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  Annual subscriptions can be cancelled within the first month (30 days) for an 80% refund (20% retained for early termination and payment gateway costs). After 30 days, annual subscriptions are non-refundable.
-                </p>
-              </Card>
+              </div>
+            </div>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
-                    <Icon name="swap_horiz" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Plan Modifications &amp; Prorations</h4>
-                    <p className="text-body-xs text-muted">Clear timing rules for upgrades and downgrades</p>
-                  </div>
-                </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  Monthly plans can be upgraded or changed between <strong>Day 4 and Day 20</strong> with a 50% adjustment credit. Plan changes are locked on Days 0–3 and after Day 20. Annual plans may be changed within the first 3 months.
+            {/* Core Household Guarantees 4-Grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                  <Icon name="currency_exchange" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Automated Proration</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Remaining unused days on your active plan are calculated down to the day and credited directly toward any upgrade.
                 </p>
-              </Card>
+              </div>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                    <Icon name="payments" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Cash &amp; Offline Payment Refunds</h4>
-                    <p className="text-body-xs text-muted">In-person cash settlement vouchers</p>
-                  </div>
-                </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  For cash-based payments, refunds cannot be processed automatically back to an online bank card. Instead, approved refunds are settled offline in person with your platform administrator via an official printed refund voucher.
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+                  <Icon name="undo" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Revert Plan Guarantee</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Changed your mind? Revert back to your previous household tier anytime while within the 50% refund eligibility window.
                 </p>
-              </Card>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                  <Icon name="payments" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Cash Settlement Flow</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Cash payment invoices are verified in person by your platform administrator before marking settlement and enabling invoice downloads.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-soft text-primary">
+                  <Icon name="lock_reset" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">90-Day Vault Retention</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Upon cancellation, all family lists, places, and financial entries are safely encrypted for 90 days. Reactivate anytime with zero data loss.
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -953,6 +1155,109 @@ export function BillingPage() {
                 {refundSubmitting ? 'Submitting…' : 'Submit Refund Request'}
               </Button>
             </div>
+          </div>
+        </Modal>
+
+        {/* Instant Post-Payment Invoice Modal (Point 23) */}
+        <Modal
+          open={newInvoiceModal !== null}
+          onClose={() => setNewInvoiceModal(null)}
+          title="Payment Confirmed & Invoice Issued"
+          description="Your household subscription has been updated and an official tax invoice has been generated."
+          className="max-w-lg"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (newInvoiceModal) {
+                    handleDownloadInvoice(newInvoiceModal.id, newInvoiceModal.invoice_number);
+                  }
+                }}
+              >
+                <Icon name="download" className="text-[16px]" />
+                View / Print Invoice
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setNewInvoiceModal(null)}
+              >
+                Done &amp; Return to Billing
+              </Button>
+            </div>
+          }
+        >
+          {newInvoiceModal && (
+            <div className="flex flex-col gap-4 p-2">
+              <div className="flex items-center gap-3 rounded-2xl bg-forest-soft p-4 border border-secondary/20">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-white">
+                  <Icon name="verified" className="text-[28px]" />
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Transaction Success</span>
+                  <span className="text-headline-sm font-bold text-on-surface">Invoice #{newInvoiceModal.invoice_number}</span>
+                  <span className="text-xs text-muted">
+                    {newInvoiceModal.payment_method === 'cash' ? 'Pending in-person settlement' : 'Paid in full via online payment'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 flex flex-col gap-2.5 text-xs">
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Subscription Tier:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.tier.replace('_', ' ')}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Billing Cycle:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.billing_period}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Amount Billed:</span>
+                  <span className="font-bold text-secondary text-sm">${(newInvoiceModal.amount_cents / 100).toFixed(2)} {newInvoiceModal.currency}</span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-muted">Payment Method:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.payment_method}</span>
+                </div>
+              </div>
+
+              {newInvoiceModal.payment_method === 'cash' && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-amber-900">
+                  <strong>Cash Notice:</strong> This invoice is pending collection. Once paid in person to your platform administrator, it will be marked as paid and downloadable from your permanent vault.
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
+
+        {/* Cancellation Confirmation Modal (Point 23) */}
+        <Modal
+          open={cancelModalOpen}
+          onClose={() => setCancelModalOpen(false)}
+          title="Cancel FairShare Subscription"
+          description="Are you sure you want to cancel your household subscription?"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button variant="outline" onClick={() => setCancelModalOpen(false)}>
+                Keep My Plan
+              </Button>
+              <Button
+                className="bg-error text-white hover:bg-error/90"
+                disabled={cancelMutation.isPending}
+                onClick={() => cancelMutation.mutate()}
+              >
+                {cancelMutation.isPending ? 'Cancelling...' : 'Confirm Cancellation'}
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3 p-1 text-xs text-on-surface">
+            <div className="rounded-xl border border-error/30 bg-coral-soft/50 p-3 text-error">
+              <strong>Notice:</strong> Cancelling your plan immediately ends your current billing cycle, revokes active sessions, and logs you out.
+            </div>
+            <p>
+              Upon logging in again, your account will be in a read-only locked state. All household activities, tasks, pantry, and finances will require an active subscription to access. You will only have access to Billing &amp; Subscriptions to reactivate your plan.
+            </p>
           </div>
         </Modal>
       </div>

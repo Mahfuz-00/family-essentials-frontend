@@ -25,7 +25,7 @@ export function FeaturesHubPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            From single-person errand accountability and parking-lot geofences to fail-safe automated voice calls and private ledgers, explore how each module powers your home.
+            From single-person errand accountability and saved-place checklists to one-tap direct calling and private ledgers, explore how each module powers your home.
           </p>
         </div>
 
@@ -105,7 +105,7 @@ export function FeaturesHubPage() {
             ) : (
               <Link to="/register">
                 <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
-                  Create Free Household
+                  Get Started Free
                 </Button>
               </Link>
             )}

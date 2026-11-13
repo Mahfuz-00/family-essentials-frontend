@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui/button';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/auth';
 import { FEATURES, SOLUTIONS } from './marketingData';
 
@@ -12,6 +13,22 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+
+  const staticTitles: Record<string, string | undefined> = {
+    '/': undefined,
+    '/features': 'Features',
+    '/solutions': 'Solutions',
+    '/pricing': 'Pricing',
+    '/about': 'About Us',
+    '/faq': 'FAQ',
+    '/contact': 'Contact',
+    '/refund-policy': 'Refund Policy',
+  };
+
+  const featureTitle = FEATURES.find((feature) => location.pathname === `/features/${feature.slug}`)?.name;
+  const solutionTitle = SOLUTIONS.find((solution) => location.pathname === `/solutions/${solution.slug}`)?.title;
+
+  useDocumentTitle(featureTitle ?? solutionTitle ?? staticTitles[location.pathname]);
 
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = Boolean(token);
@@ -333,7 +350,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   to="/about"
                   className="rounded-xl px-3 py-2 text-body-md font-semibold text-on-surface hover:bg-sage-soft"
                 >
-                  About Our Mission
+                  About Us
                 </Link>
                 <Link
                   to="/faq"
@@ -395,14 +412,14 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               <BrandLogo />
               <p className="max-w-sm text-body-md text-on-surface-variant leading-relaxed">
                 The household logistics operating system for modern families. Eliminating bystander apathy,
-                domestic mental load, and forgotten chores through single named accountability, geofencing,
-                and fail-safe voice escalations.
+                domestic mental load, and forgotten chores through single named accountability, saved-place
+                checklists, and one-tap direct calling.
               </p>
 
               <div className="flex items-center gap-3 pt-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-forest-soft px-3 py-1 text-label-sm font-semibold text-secondary">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  <span>SOC2 & ISO27001 Certified Architecture</span>
+                  <span>PostgreSQL Row-Level Security</span>
                 </span>
               </div>
             </div>
@@ -510,7 +527,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
           {/* Sub-footer bottom row */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-outline-variant/20 pt-8 sm:flex-row text-label-sm text-muted">
-            <p>© {new Date().getFullYear()} Family Essentials Inc. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} FairShare. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <Link to="/refund-policy" className="hover:text-on-surface cursor-pointer">
                 Refund Policy

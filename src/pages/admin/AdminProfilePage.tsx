@@ -134,7 +134,7 @@ export function AdminProfilePage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-5xl">
         <PageHeader
-          title="Platform Admin Profile Management"
+          title="Admin Profile"
           description="Manage root administrator account details, security credentials, contact preferences, and access permissions."
         />
 

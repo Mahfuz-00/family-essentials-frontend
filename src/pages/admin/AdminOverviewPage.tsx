@@ -171,7 +171,7 @@ export function AdminOverviewPage() {
               Platform Admin · All tenants
             </>
           }
-          title="Platform Analytics & Global Operations"
+          title="Overview & MRR"
           description="Cross-tenant telemetry and lifecycle health across every provisioned household."
           actions={
             <Link to="/admin/tenants" className="inline-flex">

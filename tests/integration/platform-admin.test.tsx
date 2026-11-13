@@ -313,7 +313,7 @@ describe('platform admin console enhancements', () => {
 
     renderApp('/admin/payment-gateways');
 
-    expect(await screen.findByRole('heading', { name: 'Payment Gateway Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gateways' })).toBeInTheDocument();
     expect(await screen.findByDisplayValue('pk_test_sample')).toBeInTheDocument();
 
     const pingBtn = screen.getByRole('button', { name: /Ping Stripe API/i });
@@ -335,7 +335,7 @@ describe('platform admin console enhancements', () => {
 
     renderApp('/admin/payment-gateways');
 
-    expect(await screen.findByRole('heading', { name: 'Payment Gateway Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gateways' })).toBeInTheDocument();
     expect(await screen.findByText('Cash Payment & Offline Settlement')).toBeInTheDocument();
     expect(screen.getByText('Cash Option Enabled')).toBeInTheDocument();
 
@@ -363,7 +363,7 @@ describe('platform admin console enhancements', () => {
 
     renderApp('/admin/billing');
 
-    expect(await screen.findByRole('heading', { name: 'Billing, Invoices & Cash Settlements' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Invoices' })).toBeInTheDocument();
     expect(await screen.findByText(/Pending In-Person Cash Settlements \(1\)/i)).toBeInTheDocument();
     expect(screen.getAllByText('INV-2026-PENDING-CASH').length).toBeGreaterThanOrEqual(1);
 
@@ -390,7 +390,7 @@ describe('platform admin console enhancements', () => {
 
     renderApp('/admin/email-config');
 
-    expect(await screen.findByRole('heading', { name: /Email & Notification Delivery/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Email Setup/i })).toBeInTheDocument();
     expect(await screen.findByDisplayValue('smtp.mailgun.org')).toBeInTheDocument();
 
     const recipientInput = screen.getByLabelText(/Target Recipient/i);
@@ -408,7 +408,7 @@ describe('platform admin console enhancements', () => {
   it('renders refund requests and policy tabs', async () => {
     renderApp('/admin/refunds');
 
-    expect(await screen.findByRole('heading', { name: 'Refund Policy & Transactions' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Refunds' })).toBeInTheDocument();
     expect(await screen.findByText('Duplicate billing during trial upgrade')).toBeInTheDocument();
     expect(screen.getByText('The Tanvir Household')).toBeInTheDocument();
 
@@ -422,7 +422,7 @@ describe('platform admin console enhancements', () => {
   it('renders platform analytics with MRR and performance velocity', async () => {
     renderApp('/admin/analytics');
 
-    expect(await screen.findByRole('heading', { name: 'Platform Analytics & Operations' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Platform Analytics' })).toBeInTheDocument();
     expect(await screen.findByText('$4,850')).toBeInTheDocument();
     expect(screen.getByText('94.6%')).toBeInTheDocument();
     expect(screen.getByText('plus Plan')).toBeInTheDocument();
@@ -431,7 +431,7 @@ describe('platform admin console enhancements', () => {
   it('opens household inspection details from tenant list', async () => {
     renderApp('/admin/tenants');
 
-    expect(await screen.findByRole('heading', { name: 'Tenant Workspaces & Client Families' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Workspaces' })).toBeInTheDocument();
     expect(await screen.findByText('The Tanvir Household')).toBeInTheDocument();
 
     const detailsBtn = screen.getByRole('button', { name: /Details/i });

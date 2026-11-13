@@ -9,6 +9,8 @@ import { create } from 'zustand';
  * exactly why "Add Request" appeared to do nothing.
  */
 interface UiState {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
   addRequestOpen: boolean;
   openAddRequest: () => void;
   closeAddRequest: () => void;
@@ -18,6 +20,8 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
+  searchQuery: '',
+  setSearchQuery: (query: string) => set({ searchQuery: query }),
   addRequestOpen: false,
   openAddRequest: () => set({ addRequestOpen: true }),
   closeAddRequest: () => set({ addRequestOpen: false }),

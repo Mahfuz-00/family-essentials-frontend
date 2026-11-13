@@ -50,7 +50,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     renderApp('/settings');
 
     // 1. Initially Profile tab is active
-    expect(await screen.findByRole('heading', { name: 'Household settings' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByText('Email Address')).toBeInTheDocument();
 
     // 2. Switch to Alerts & Reachability tab
@@ -103,7 +103,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
 
     renderApp('/billing');
 
-    expect(await screen.findByRole('heading', { name: 'Billing & Subscription Portal' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Billing & Plans' })).toBeInTheDocument();
 
     // Switch to Invoices & Receipts tab
     const invoicesTab = screen.getByRole('button', { name: /Invoices & Receipts/i });
@@ -195,7 +195,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
 
     renderApp('/billing');
 
-    expect(await screen.findByRole('heading', { name: 'Billing & Subscription Portal' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Billing & Plans' })).toBeInTheDocument();
 
     // 1. Open upgrade modal
     const upgradeBtn = screen.getByRole('button', { name: /Upgrade \/ Change Tier/i });
@@ -257,7 +257,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
 
     renderApp('/requests');
 
-    expect(await screen.findByRole('heading', { name: 'Household Kanban & Errand Hub' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tasks & Errands' })).toBeInTheDocument();
 
     // Click "Completed Archive" focus tab
     const completedTab = screen.getByRole('button', { name: /Completed Archive/i });
@@ -368,7 +368,7 @@ describe('progressive disclosure and elevated SaaS capabilities', () => {
     renderApp('/dashboard');
 
     // 1. Executive Summary & Pulse Metrics
-    expect(await screen.findByRole('heading', { name: "Today's Household Overview" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: "Household Overview" })).toBeInTheDocument();
     expect(await screen.findByText('Active Errands & Tasks')).toBeInTheDocument();
     expect(screen.getByText('Saved Stores & Geofences')).toBeInTheDocument();
     expect(screen.getByText('Shared Ledgers & Budget')).toBeInTheDocument();

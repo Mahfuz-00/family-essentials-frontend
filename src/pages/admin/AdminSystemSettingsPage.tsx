@@ -87,7 +87,7 @@ export function AdminSystemSettingsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-5xl">
         <PageHeader
-          title="Overall Platform &amp; System Settings"
+          title="System Settings"
           description="Configure global application branding, default tier allocations, membership restrictions, session timeouts, and maintenance banners."
         />
 

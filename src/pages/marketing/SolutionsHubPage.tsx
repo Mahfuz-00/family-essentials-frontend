@@ -19,11 +19,11 @@ export function SolutionsHubPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Every family is unique. Whether you are balancing dual corporate careers, coordinating split custody across two homes, or caring for aging parents, discover how Family Essentials adapts to your household.
+            Every family is unique. Whether you are balancing dual corporate careers or coordinating split custody across two homes, discover how FairShare adapts to your household.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 max-w-4xl mx-auto">
           {SOLUTIONS.map((solution) => (
             <Card
               key={solution.slug}

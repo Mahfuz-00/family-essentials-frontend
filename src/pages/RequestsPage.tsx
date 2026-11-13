@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
@@ -15,11 +15,14 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
+import { formatMoney, parseMoneyToMinor } from '@/lib/money';
 import { useAuthStore } from '@/stores/auth';
 import { useUiStore } from '@/stores/ui';
 import type {
+  Ledger,
   Place,
   RequestBoard,
+  RequestItem,
   RequestPriority,
   ServiceRequest,
   TenantMember,
@@ -89,7 +92,7 @@ const emptyForm = {
   title: '',
   quantity: '',
   store_name: '',
-  category: '',
+  category: 'grocery',
   notes: '',
   place_id: '',
   trigger_place_id: '',
@@ -97,6 +100,9 @@ const emptyForm = {
   priority: 'normal' as RequestPriority,
   due_at: '',
   assignee_id: '',
+  amount: '',
+  ledger_id: '',
+  items: [{ name: '', quantity_asked: '' }] as Array<{ name: string; quantity_asked: string }>,
 };
 
 // Reasons the escalation policy can decline a call, in plain language.
@@ -127,9 +133,24 @@ export function RequestsPage() {
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
 
+  const kanbanScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollKanban = (direction: 'prev' | 'next') => {
+    if (kanbanScrollRef.current) {
+      const scrollAmount = direction === 'next' ? 340 : -340;
+      kanbanScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
-  const [query, setQuery] = useState('');
+  const globalSearchQuery = useUiStore((state) => state.searchQuery);
+  const [query, setQuery] = useState(globalSearchQuery);
+
+  // Sync with global header search query
+  if (globalSearchQuery !== query) {
+    setQuery(globalSearchQuery);
+  }
   const [assignee, setAssignee] = useState('all');
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
@@ -167,6 +188,80 @@ export function RequestsPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
+  const ledgersQuery = useQuery({
+    queryKey: ['ledgers'],
+    queryFn: async () => (await api.get<{ data: Ledger[] }>('/v1/ledgers')).data.data,
+  });
+
+  const [fulfillRequest, setFulfillRequest] = useState<ServiceRequest | null>(null);
+  const [fulfillItems, setFulfillItems] = useState<RequestItem[]>([]);
+  const [fulfillAmount, setFulfillAmount] = useState('');
+  const [fulfillLedgerId, setFulfillLedgerId] = useState('');
+  const [fulfillQuantityGot, setFulfillQuantityGot] = useState('');
+
+  const addItemRow = () => {
+    setForm({
+      ...form,
+      items: [...form.items, { name: '', quantity_asked: '' }],
+    });
+  };
+
+  const removeItemRow = (index: number) => {
+    setForm({
+      ...form,
+      items: form.items.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateItemRow = (index: number, field: 'name' | 'quantity_asked', value: string) => {
+    const updated = [...form.items];
+    updated[index][field] = value;
+    setForm({ ...form, items: updated });
+  };
+
+  const openFulfillModal = (req: ServiceRequest) => {
+    const items: RequestItem[] =
+      req.items && req.items.length > 0
+        ? req.items.map((it) => ({
+            ...it,
+            quantity_got: it.quantity_got ?? it.quantity_asked ?? '',
+            is_picked: it.is_picked ?? true,
+          }))
+        : [
+            {
+              name: req.title,
+              quantity_asked: req.quantity ?? '1',
+              quantity_got: req.quantity_got ?? req.quantity ?? '1',
+              is_picked: true,
+            },
+          ];
+
+    setFulfillRequest(req);
+    setFulfillItems(items);
+    setFulfillAmount(req.amount_minor != null ? (req.amount_minor / 100).toFixed(2) : '');
+    setFulfillLedgerId(
+      req.ledger_id ? String(req.ledger_id) : ledgersQuery.data?.[0]?.id ? String(ledgersQuery.data[0].id) : ''
+    );
+    setFulfillQuantityGot(req.quantity_got ?? '');
+  };
+
+  const submitFulfill = () => {
+    if (!fulfillRequest) return;
+    const minor = fulfillAmount ? parseMoneyToMinor(fulfillAmount) : null;
+    act.mutate({
+      id: fulfillRequest.id,
+      action: 'complete',
+      payload: {
+        quantity_got:
+          fulfillQuantityGot.trim() ||
+          `${fulfillItems.filter((i) => i.is_picked).length} of ${fulfillItems.length} items picked`,
+        items: fulfillItems,
+        amount_minor: minor,
+        ledger_id: fulfillLedgerId ? Number(fulfillLedgerId) : null,
+      },
+    });
+  };
+
   // Today's escalation usage moved to the Escalation & voice module.
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['requests'] });
@@ -193,22 +288,38 @@ export function RequestsPage() {
   });
 
   const create = useMutation({
-    mutationFn: async () =>
-      api.post('/v1/requests', {
-        title: form.title,
-        quantity: form.quantity || null,
+    mutationFn: async () => {
+      const validItems = form.items
+        .filter((it) => it.name.trim() !== '')
+        .map((it) => ({
+          name: it.name.trim(),
+          quantity_asked: it.quantity_asked.trim() || null,
+          is_picked: false,
+        }));
+
+      const title =
+        form.title.trim() ||
+        (validItems.length > 0 ? validItems.map((it) => it.name).join(', ') : 'Household Errand');
+
+      const minor = form.amount ? parseMoneyToMinor(form.amount) : null;
+
+      return api.post('/v1/requests', {
+        title,
+        quantity: form.quantity || (validItems.length > 0 ? `${validItems.length} items` : null),
+        items: validItems.length > 0 ? validItems : undefined,
         store_name: form.store_name || null,
         category: form.category || null,
         notes: form.notes || null,
         place_id: form.place_id ? Number(form.place_id) : null,
-        // The reminder cue is separate from the shop above: where to buy it and
-        // where to remind me are different facts.
         location_trigger_place_id: form.trigger_place_id ? Number(form.trigger_place_id) : null,
         location_trigger_direction: form.trigger_direction || null,
         priority: form.priority,
         due_at: form.due_at || null,
         assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
-      }),
+        amount_minor: minor,
+        ledger_id: form.ledger_id ? Number(form.ledger_id) : null,
+      });
+    },
     onSuccess: async () => {
       setForm(emptyForm);
       closeAddRequest();
@@ -220,11 +331,19 @@ export function RequestsPage() {
   });
 
   const act = useMutation({
-    mutationFn: async ({ id, action }: { id: number; action: string }) =>
-      api.post(`/v1/requests/${id}/${action}`),
+    mutationFn: async ({
+      id,
+      action,
+      payload,
+    }: {
+      id: number;
+      action: string;
+      payload?: Record<string, any>;
+    }) => api.post(`/v1/requests/${id}/${action}`, payload ?? {}),
     onSuccess: async () => {
       setError(null);
       setNotice('Request updated.');
+      setFulfillRequest(null);
       await refresh();
     },
     onError,
@@ -402,7 +521,7 @@ export function RequestsPage() {
               Household Logistics · Live Sync
             </>
           }
-          title="Household Kanban & Errand Hub"
+          title="Tasks & Errands"
           description="Real-time domestic coordination for your household, synced across every paired device."
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -509,15 +628,15 @@ export function RequestsPage() {
           </section>
         )}
 
-        {/* Focus Mode Navigation */}
-        <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
+        {/* Focus Mode Navigation (Sunken Clay Track) */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
           <button
             type="button"
             onClick={() => setFocusMode('all')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'all'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="view_kanban" className="text-[16px]" />
@@ -526,10 +645,10 @@ export function RequestsPage() {
           <button
             type="button"
             onClick={() => setFocusMode('today')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'today'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="bolt" className="text-[16px]" />
@@ -538,33 +657,34 @@ export function RequestsPage() {
           <button
             type="button"
             onClick={() => setFocusMode('backlog')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'backlog'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="inventory_2" className="text-[16px]" />
-            Backlog ({filtered?.backlog?.length ?? 0})
+            Backlog {board.isLoading ? '' : `(${filtered?.backlog?.length ?? 0})`}
           </button>
           <button
             type="button"
             onClick={() => setFocusMode('completed')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'completed'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="check_circle" className="text-[16px]" />
-            Completed Archive ({filtered?.completed_today?.length ?? 0})
+            Completed Archive {board.isLoading ? '' : `(${filtered?.completed_today?.length ?? 0})`}
           </button>
         </div>
 
         {/* Filter bar */}
-        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3 shadow-e1 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative min-w-[240px] flex-1">
+        <section className="flex flex-col gap-3 rounded-[1.25rem] bg-surface p-4 shadow-e1 border border-white/70">
+          {/* Row 1: Search & Assignee Segmented Filter */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="relative w-full lg:max-w-sm shrink-0">
               <Icon
                 name="filter_list"
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
@@ -574,13 +694,23 @@ export function RequestsPage() {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Filter requests, stores, notes…"
                 aria-label="Filter requests"
-                className="h-10 pl-9"
+                className="h-9.5 pl-9 pr-8 text-sm"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface p-1"
+                  aria-label="Clear filter"
+                >
+                  <Icon name="close" className="text-[16px]" />
+                </button>
+              )}
             </div>
 
             {/* Assignee segmented control */}
             <div
-              className="flex flex-wrap items-center gap-1 rounded-xl bg-surface-container-low p-1"
+              className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)] overflow-x-auto no-scrollbar"
               role="group"
               aria-label="Filter by assignee"
             >
@@ -609,63 +739,92 @@ export function RequestsPage() {
                 Unassigned
               </Segmented>
             </div>
+          </div>
 
-            <div className="relative">
-              <Icon
-                name="local_grocery_store"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-primary"
-              />
-              <Select
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                aria-label="Filter by category"
-                className="h-10 w-auto min-w-[170px] pl-9 text-label-md"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {stores.length > 0 && (
+          {/* Row 2: Secondary Dropdown Filters, Columns Scroller & View Switcher */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-outline-variant/15">
+            <div className="flex flex-wrap items-center gap-2.5">
               <div className="relative">
                 <Icon
-                  name="storefront"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-primary"
+                  name="local_grocery_store"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-primary"
                 />
                 <Select
-                  value={store}
-                  onChange={(event) => setStore(event.target.value)}
-                  aria-label="Filter by store"
-                  className="h-10 w-auto min-w-[170px] pl-9 text-label-md"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  aria-label="Filter by category"
+                  className="h-9 w-auto min-w-[155px] pl-8.5 pr-8 text-label-sm"
                 >
-                  <option value="all">All Stores</option>
-                  {stores.map((option) => (
+                  <option value="all">All Categories</option>
+                  {categories.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
                   ))}
                 </Select>
               </div>
-            )}
-          </div>
 
-          {/* View switcher */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div
-              className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
-              role="group"
-              aria-label="View"
-            >
-              <Segmented active={view === 'board'} onClick={() => setView('board')} icon="view_kanban">
-                Kanban
-              </Segmented>
-              <Segmented active={view === 'list'} onClick={() => setView('list')} icon="view_list">
-                List
-              </Segmented>
+              {stores.length > 0 && (
+                <div className="relative">
+                  <Icon
+                    name="storefront"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-primary"
+                  />
+                  <Select
+                    value={store}
+                    onChange={(event) => setStore(event.target.value)}
+                    aria-label="Filter by store"
+                    className="h-9 w-auto min-w-[155px] pl-8.5 pr-8 text-label-sm"
+                  >
+                    <option value="all">All Stores</option>
+                    {stores.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* View switcher & Column Navigation */}
+            <div className="flex items-center gap-2.5 ml-auto">
+              {view === 'board' && (
+                <div className="flex items-center gap-1 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
+                  <button
+                    type="button"
+                    onClick={() => scrollKanban('prev')}
+                    aria-label="Previous columns"
+                    title="Scroll back to previous column"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors shadow-[var(--shadow-clay-sm)]"
+                  >
+                    <Icon name="arrow_back" className="text-[17px]" />
+                  </button>
+                  <span className="text-[11px] font-bold text-muted px-1.5 uppercase tracking-wider">Columns</span>
+                  <button
+                    type="button"
+                    onClick={() => scrollKanban('next')}
+                    aria-label="Next columns"
+                    title="Scroll forward to next column"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors shadow-[var(--shadow-clay-sm)]"
+                  >
+                    <Icon name="arrow_forward" className="text-[17px]" />
+                  </button>
+                </div>
+              )}
+
+              <div
+                className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
+                role="group"
+                aria-label="View"
+              >
+                <Segmented active={view === 'board'} onClick={() => setView('board')} icon="view_kanban">
+                  Kanban
+                </Segmented>
+                <Segmented active={view === 'list'} onClick={() => setView('list')} icon="view_list">
+                  List
+                </Segmented>
+              </div>
             </div>
           </div>
         </section>
@@ -681,50 +840,66 @@ export function RequestsPage() {
         {board.isError && <Alert>{apiError(board.error)}</Alert>}
 
         {board.data && filtered && view === 'board' && (
-          <section className={`grid grid-cols-1 items-start gap-4 ${
-            focusMode === 'today' ? 'md:grid-cols-3' :
-            focusMode === 'backlog' || focusMode === 'completed' ? 'grid-cols-1 max-w-3xl mx-auto w-full' :
-            'md:grid-cols-2 xl:grid-cols-5'
-          }`}>
-            {visibleColumns.map((column) => {
-              const requests = filtered[column.key];
+          <div ref={kanbanScrollRef} className="w-full overflow-x-auto pb-4 pt-1 scroll-smooth">
+            <section
+              className={`flex items-start gap-4 ${
+                focusMode === 'today'
+                  ? 'grid grid-cols-1 md:grid-cols-3 w-full'
+                  : focusMode === 'backlog' || focusMode === 'completed'
+                    ? 'grid grid-cols-1 max-w-3xl mx-auto w-full'
+                    : 'flex-col lg:flex-row lg:flex-nowrap min-w-full'
+              }`}
+            >
+              {visibleColumns.map((column) => {
+                const requests = filtered[column.key];
 
-              return (
-                <div key={column.key} className="flex flex-col gap-3 rounded-2xl bg-surface-container-low/60 p-2">
-                  <header className="flex items-center justify-between px-2 pt-1">
-                    <span className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${column.dot}`} />
-                      <h2 className="text-headline-sm text-on-surface">{column.title}</h2>
-                      <span className={`rounded-full px-2 py-0.5 text-label-sm ${column.pill}`}>
-                        {requests.length}
+                return (
+                  <div
+                    key={column.key}
+                    className={`flex flex-col gap-3 rounded-2xl bg-surface-container-low/60 p-2.5 ${
+                      focusMode === 'backlog' || focusMode === 'completed'
+                        ? 'w-full'
+                        : focusMode === 'today'
+                          ? 'w-full min-w-0'
+                          : 'w-full lg:w-72 xl:w-80 lg:min-w-[280px] lg:shrink-0 flex-1'
+                    }`}
+                  >
+                    <header className="flex items-center justify-between px-2 pt-1">
+                      <span className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${column.dot}`} />
+                        <h2 className="text-headline-sm text-on-surface">{column.title}</h2>
+                        <span className={`rounded-full px-2 py-0.5 text-label-sm ${column.pill}`}>
+                          {requests.length}
+                        </span>
                       </span>
-                    </span>
-                    <Icon name="more_horiz" className="text-[18px] text-muted" />
-                  </header>
+                      <Icon name="more_horiz" className="text-[18px] text-muted" />
+                    </header>
 
-                  {requests.length === 0 && (
-                    <p className="rounded-xl bg-surface/60 px-3 py-6 text-center text-body-sm text-muted">
-                      {column.empty}
-                    </p>
-                  )}
+                    {requests.length === 0 && (
+                      <p className="rounded-xl bg-surface/60 px-3 py-6 text-center text-body-sm text-muted">
+                        {column.empty}
+                      </p>
+                    )}
 
-                  {requests.map((request) => (
-                    <TaskCard
-                      key={request.id}
-                      request={request}
-                      busy={busy}
-                      isMine={request.assignee?.id === userId}
-                      members={memberList}
-                      onAction={(action) => act.mutate({ id: request.id, action })}
-                      onHandover={(assigneeId) => assign.mutate({ id: request.id, assigneeId })}
-                      onSnooze={() => snooze.mutate(request.id)}
-                      onThank={() => thank.mutate(request.id)}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </section>
+                    {requests.map((request) => (
+                      <TaskCard
+                        key={request.id}
+                        request={request}
+                        busy={busy}
+                        isMine={request.assignee?.id === userId}
+                        members={memberList}
+                        onAction={(action) => act.mutate({ id: request.id, action })}
+                        onFulfill={() => openFulfillModal(request)}
+                        onHandover={(assigneeId) => assign.mutate({ id: request.id, assigneeId })}
+                        onSnooze={() => snooze.mutate(request.id)}
+                        onThank={() => thank.mutate(request.id)}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </section>
+          </div>
         )}
 
         {board.data && filtered && view === 'list' && (
@@ -756,9 +931,16 @@ export function RequestsPage() {
                         <td className="px-5 py-3.5">
                           <span className="flex flex-col">
                             <span className="font-semibold text-on-surface">{request.title}</span>
-                            {request.quantity && (
-                              <span className="text-body-sm text-muted">{request.quantity}</span>
-                            )}
+                            {request.items && request.items.length > 0 ? (
+                              <span className="text-body-sm text-muted">
+                                {request.items.map((it) => `${it.name}${it.quantity_asked ? ` (${it.quantity_asked})` : ''}`).join(', ')}
+                              </span>
+                            ) : request.quantity ? (
+                              <span className="text-body-sm text-muted">
+                                Asked: {request.quantity}
+                                {request.quantity_got ? ` · Got: ${request.quantity_got}` : ''}
+                              </span>
+                            ) : null}
                           </span>
                         </td>
                         <td className="px-5 py-3.5 text-muted">{request.store_name ?? '—'}</td>
@@ -781,6 +963,18 @@ export function RequestsPage() {
                           </Badge>
                         </td>
                         <td className="px-5 py-3.5 text-right">
+                          {request.status !== 'completed' && (
+                            <button
+                              type="button"
+                              onClick={() => openFulfillModal(request)}
+                              disabled={busy}
+                              className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2.5 py-1 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs mr-2"
+                              title="Pick and complete items"
+                            >
+                              <Icon name="task_alt" className="text-[14px]" />
+                              <span>Pick &amp; Complete</span>
+                            </button>
+                          )}
                           {request.status === 'completed' && (
                             <button
                               type="button"
@@ -817,7 +1011,7 @@ export function RequestsPage() {
         open={addOpen}
         onClose={closeAddRequest}
         title="Add a request"
-        description="Capture what the family needs. The assignee gets notified."
+        description="List items to pick up and assign to a family member."
         footer={
           <>
             <Button variant="ghost" onClick={closeAddRequest}>
@@ -825,7 +1019,7 @@ export function RequestsPage() {
             </Button>
             <Button
               size="lg"
-              disabled={busy || form.title.trim() === ''}
+              disabled={busy || (form.title.trim() === '' && form.items.every((it) => it.name.trim() === ''))}
               onClick={() => create.mutate()}
             >
               {create.isPending ? 'Saving…' : 'Save & notify'}
@@ -835,34 +1029,71 @@ export function RequestsPage() {
       >
         <div className="flex flex-col gap-4">
           <div>
-            <Label htmlFor="title">What does the family need?</Label>
+            <Label htmlFor="title">Task / Errand Title</Label>
             <Input
               id="title"
               autoFocus
               value={form.title}
               onChange={(event) => setForm({ ...form, title: event.target.value })}
-              placeholder="Milk 2 litres"
+              placeholder="e.g. Grocery Run, Hardware Store, Pharmacy"
             />
+            <span className="text-[12px] text-muted">Optional if you list items below; will auto-generate from items.</span>
+          </div>
+
+          {/* Multi-Item List Builder */}
+          <div className="rounded-2xl border border-outline-variant bg-canvas p-3.5 flex flex-col gap-2.5 overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-label-md font-bold text-on-surface flex items-center gap-1.5">
+                <Icon name="checklist" className="text-[18px] text-secondary" />
+                Items to Pick Up (List)
+              </span>
+              <button
+                type="button"
+                onClick={addItemRow}
+                className="text-label-sm font-semibold text-secondary hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <Icon name="add" className="text-[15px]" /> Add Item
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {form.items.map((it, idx) => (
+                <div key={idx} className="flex items-center gap-2 w-full min-w-0">
+                  <Input
+                    placeholder="Item name (e.g. Whole Milk)"
+                    value={it.name}
+                    onChange={(e) => updateItemRow(idx, 'name', e.target.value)}
+                    className="flex-1 min-w-0"
+                  />
+                  <Input
+                    placeholder="Asked Qty (e.g. 2 gal)"
+                    value={it.quantity_asked}
+                    onChange={(e) => updateItemRow(idx, 'quantity_asked', e.target.value)}
+                    className="w-28 sm:w-36 shrink-0 min-w-0"
+                  />
+                  {form.items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItemRow(idx)}
+                      className="p-1 shrink-0 text-muted hover:text-error transition-colors flex items-center justify-center h-9 w-9 rounded-lg hover:bg-surface"
+                      title="Remove item"
+                    >
+                      <Icon name="close" className="text-[18px]" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input
-                id="quantity"
-                value={form.quantity}
-                onChange={(event) => setForm({ ...form, quantity: event.target.value })}
-                placeholder="2 litres"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="store_name">Store</Label>
+              <Label htmlFor="store_name">Store / Destination</Label>
               <Input
                 id="store_name"
                 value={form.store_name}
                 onChange={(event) => setForm({ ...form, store_name: event.target.value })}
-                placeholder="Whole Foods"
+                placeholder="Trader Joe's, Costco, CVS"
               />
             </div>
 
@@ -872,7 +1103,7 @@ export function RequestsPage() {
                 id="category"
                 value={form.category}
                 onChange={(event) => setForm({ ...form, category: event.target.value })}
-                placeholder="grocery"
+                placeholder="grocery, utility_bill, rent, etc."
               />
             </div>
 
@@ -916,7 +1147,6 @@ export function RequestsPage() {
                   setForm({
                     ...form,
                     trigger_place_id: event.target.value,
-                    // Choosing a place implies a direction; arriving is the default.
                     trigger_direction: event.target.value
                       ? form.trigger_direction || 'enter'
                       : '',
@@ -964,6 +1194,16 @@ export function RequestsPage() {
               </Select>
             </div>
 
+            <div>
+              <Label htmlFor="due">Due</Label>
+              <Input
+                id="due"
+                type="datetime-local"
+                value={form.due_at}
+                onChange={(event) => setForm({ ...form, due_at: event.target.value })}
+              />
+            </div>
+
             <div className="sm:col-span-2">
               <Label htmlFor="notes">Notes</Label>
               <Input
@@ -973,19 +1213,191 @@ export function RequestsPage() {
                 placeholder="Anything the runner should know"
               />
             </div>
+          </div>
 
-            <div className="sm:col-span-2">
-              <Label htmlFor="due">Due</Label>
-              <Input
-                id="due"
-                type="datetime-local"
-                value={form.due_at}
-                onChange={(event) => setForm({ ...form, due_at: event.target.value })}
-              />
+          {/* Household Expense / Ledger Charge Link */}
+          <div className="rounded-2xl border border-outline-variant/60 bg-surface p-3.5 flex flex-col gap-2">
+            <span className="text-label-sm font-bold text-on-surface flex items-center gap-1.5">
+              <Icon name="account_balance_wallet" className="text-[16px] text-secondary" />
+              Household Expense Tracker Link (Optional)
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="form-ledger">Charge to Ledger</Label>
+                <Select
+                  id="form-ledger"
+                  value={form.ledger_id}
+                  onChange={(e) => setForm({ ...form, ledger_id: e.target.value })}
+                >
+                  <option value="">Do not charge to a ledger</option>
+                  {(ledgersQuery.data ?? []).map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name} ({l.currency})
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="form-amount">Estimated Cost ($)</Label>
+                <Input
+                  id="form-amount"
+                  inputMode="decimal"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  placeholder="e.g. 35.00"
+                />
+              </div>
             </div>
           </div>
         </div>
       </Modal>
+
+      {/* Fulfill / Pick Items & Complete Modal */}
+      {fulfillRequest && (
+        <Modal
+          open
+          onClose={() => setFulfillRequest(null)}
+          title={`Pick & Fulfill: ${fulfillRequest.title}`}
+          description="Confirm what was asked versus what was actually got, and optionally record the expense to your household ledger."
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setFulfillRequest(null)}>
+                Cancel
+              </Button>
+              <Button disabled={act.isPending} onClick={submitFulfill}>
+                {act.isPending ? 'Saving…' : 'Complete & Record'}
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-outline-variant bg-canvas p-3.5 flex flex-col gap-2.5 overflow-hidden">
+              <span className="text-label-md font-bold text-on-surface">Items Picked</span>
+              <p className="text-[12px] text-muted">
+                Input the quantity you actually got. It can be the same as asked or different.
+              </p>
+
+              <div className="flex flex-col gap-2.5">
+                {fulfillItems.map((item, idx) => (
+                  <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-2.5 border border-outline-variant/60 overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      {item.quantity_asked !== null && item.quantity_asked !== undefined ? (
+                        <label className="flex items-center gap-2 cursor-pointer font-semibold text-on-surface text-label-md">
+                          <input
+                            type="checkbox"
+                            checked={item.is_picked ?? true}
+                            onChange={(e) => {
+                              const updated = [...fulfillItems];
+                              updated[idx].is_picked = e.target.checked;
+                              setFulfillItems(updated);
+                            }}
+                            className="rounded text-secondary focus:ring-secondary"
+                          />
+                          <span>{item.name}</span>
+                        </label>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-[11px] bg-forest-soft text-secondary px-2 py-0.5 rounded font-bold uppercase tracking-wider">Extra item</span>
+                          <Input
+                            value={item.name}
+                            onChange={(e) => {
+                              const updated = [...fulfillItems];
+                              updated[idx].name = e.target.value;
+                              setFulfillItems(updated);
+                            }}
+                            placeholder="Item name (e.g. Extra Avocado)"
+                            className="h-8 text-sm flex-1 min-w-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = fulfillItems.filter((_, i) => i !== idx);
+                              setFulfillItems(updated);
+                            }}
+                            className="text-muted hover:text-error p-1"
+                            title="Remove extra item"
+                          >
+                            <Icon name="close" className="text-[16px]" />
+                          </button>
+                        </div>
+                      )}
+                      {item.quantity_asked && (
+                        <span className="text-xs bg-sage-soft text-secondary px-2 py-0.5 rounded-full font-medium">
+                          Asked: {item.quantity_asked}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 w-full min-w-0">
+                      <span className="text-xs text-muted w-24 shrink-0 font-medium">Quantity got:</span>
+                      <Input
+                        value={item.quantity_got ?? ''}
+                        onChange={(e) => {
+                          const updated = [...fulfillItems];
+                          updated[idx].quantity_got = e.target.value;
+                          setFulfillItems(updated);
+                        }}
+                        placeholder="e.g. 2 gal, or 1 box"
+                        className="h-9 text-sm flex-1 min-w-0"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 flex items-center justify-center gap-1.5 text-xs text-secondary border-dashed border-secondary/40 hover:bg-forest-soft/30"
+                  onClick={() => {
+                    setFulfillItems([
+                      ...fulfillItems,
+                      { name: '', quantity_asked: null, quantity_got: '1', is_picked: true },
+                    ]);
+                  }}
+                >
+                  <Icon name="add" className="text-[16px]" />
+                  Add extra grocery / item bought
+                </Button>
+              </div>
+            </div>
+
+            {/* Expense Amount & Ledger */}
+            <div className="rounded-2xl border border-outline-variant/60 bg-surface p-3.5 flex flex-col gap-2.5">
+              <span className="text-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                <Icon name="account_balance_wallet" className="text-[16px] text-secondary" />
+                Post to Household Expense Tracker
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="fulfill-amount">Actual Spent Amount ($)</Label>
+                  <Input
+                    id="fulfill-amount"
+                    inputMode="decimal"
+                    value={fulfillAmount}
+                    onChange={(e) => setFulfillAmount(e.target.value)}
+                    placeholder="e.g. 32.50"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fulfill-ledger">Household Ledger</Label>
+                  <Select
+                    id="fulfill-ledger"
+                    value={fulfillLedgerId}
+                    onChange={(e) => setFulfillLedgerId(e.target.value)}
+                  >
+                    <option value="">None (do not record expense)</option>
+                    {(ledgersQuery.data ?? []).map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name} ({l.currency})
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Gap A: Calendar Feed (.ics) Sync Modal */}
       <Modal
@@ -1077,8 +1489,8 @@ function Segmented({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-label-md transition-all ${
-        active ? 'bg-surface font-semibold text-on-surface shadow-sm' : 'text-muted hover:text-on-surface'
+      className={`flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-label-md transition-all ${
+        active ? 'bg-surface font-semibold text-secondary shadow-[var(--shadow-clay-sm)]' : 'text-muted hover:text-on-surface'
       }`}
     >
       {dot && <span className={`h-2 w-2 rounded-full ${dot}`} />}
@@ -1094,6 +1506,7 @@ function TaskCard({
   isMine,
   members,
   onAction,
+  onFulfill,
   onHandover,
   onSnooze,
   onThank,
@@ -1103,6 +1516,7 @@ function TaskCard({
   isMine: boolean;
   members: TenantMember[];
   onAction: (action: string) => void;
+  onFulfill?: () => void;
   onHandover: (assigneeId: number) => void;
   onSnooze: () => void;
   onThank?: () => void;
@@ -1120,20 +1534,20 @@ function TaskCard({
 
   return (
     <article
-      className={`group relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-[rgba(43,45,66,0.05)] bg-surface p-4 shadow-e1 transition-shadow hover:shadow-e2 ${
+      className={`group relative flex flex-col gap-2.5 overflow-hidden rounded-[1.25rem] border border-white/70 bg-surface p-4 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 ${
         isDone ? 'opacity-80' : ''
       }`}
     >
       {isOverdue && isOpen && <span className="absolute left-0 top-0 h-full w-1.5 bg-error" />}
 
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2 min-w-0">
         <span
-          className={`rounded-md px-2 py-0.5 text-label-sm capitalize ${priorityChip[request.priority]}`}
+          className={`rounded-md px-2 py-0.5 text-label-sm capitalize shrink-0 ${priorityChip[request.priority]}`}
         >
           {chip}
         </span>
         {request.due_at && !isOverdue && (
-          <span className="text-label-sm text-muted">
+          <span className="text-label-sm text-muted shrink-0">
             {new Date(request.due_at).toLocaleString(undefined, {
               month: 'short',
               day: 'numeric',
@@ -1145,42 +1559,126 @@ function TaskCard({
       </div>
 
       <h3
-        className={`text-label-lg font-bold text-on-surface transition-colors group-hover:text-primary ${
+        className={`text-label-lg font-bold text-on-surface transition-colors group-hover:text-primary break-words min-w-0 ${
           isDone ? 'line-through' : ''
         }`}
       >
         {request.title}
       </h3>
 
-      {request.quantity && (
-        <p className="truncate text-body-sm text-muted" title={request.quantity}>
-          {request.quantity}
+      {/* Items list with dual quantities: asked and got */}
+      {request.items && request.items.length > 0 ? (
+        <div className="flex flex-col gap-1.5 rounded-xl bg-canvas p-2.5 border border-outline-variant/40 min-w-0 overflow-hidden">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            Items to Pick ({request.items.length})
+          </span>
+          <ul className="flex flex-col gap-1.5 min-w-0">
+            {request.items.map((it, idx) => (
+              <li key={idx} className="flex items-center justify-between gap-1.5 text-body-sm min-w-0">
+                <span className="flex items-center gap-1.5 font-medium text-on-surface min-w-0 flex-1 truncate">
+                  <Icon
+                    name={it.is_picked || isDone ? 'check_box' : 'check_box_outline_blank'}
+                    className={`text-[16px] shrink-0 ${it.is_picked || isDone ? 'text-secondary' : 'text-muted'}`}
+                  />
+                  <span className={`truncate ${it.is_picked || isDone ? 'line-through text-muted' : ''}`}>
+                    {it.name}
+                  </span>
+                </span>
+                <span className="text-[12px] text-muted shrink-0 text-right ml-1">
+                  {it.quantity_asked ? `${it.quantity_asked}` : ''}
+                  {it.quantity_got ? ` · Got: ${it.quantity_got}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        (request.quantity || request.quantity_got) && (
+          <p className="truncate text-body-sm text-muted min-w-0" title={request.quantity ?? ''}>
+            {request.quantity ? `Asked: ${request.quantity}` : ''}
+            {request.quantity_got ? ` · Got: ${request.quantity_got}` : ''}
+          </p>
+        )
+      )}
+
+      {request.amount_minor != null && (
+        <p className="flex items-center gap-1.5 text-body-sm font-semibold text-secondary min-w-0 truncate">
+          <Icon name="account_balance_wallet" className="text-[15px] shrink-0" />
+          <span className="truncate">Expense: {formatMoney(request.amount_minor, 'USD')}</span>
         </p>
       )}
 
       {request.store_name && (
-        <p className="flex items-center gap-1.5 truncate text-body-sm text-muted" title={request.store_name}>
-          <Icon name="storefront" className="text-[16px] text-primary" />
-          {request.store_name}
+        <p className="flex items-center gap-1.5 truncate text-body-sm text-muted min-w-0" title={request.store_name}>
+          <Icon name="storefront" className="text-[16px] text-primary shrink-0" />
+          <span className="truncate">{request.store_name}</span>
         </p>
       )}
 
       {request.notes && (
-        <p className="rounded-xl bg-canvas p-2 text-body-sm italic text-on-surface-variant">
+        <p className="rounded-xl bg-canvas p-2 text-body-sm italic text-on-surface-variant break-words min-w-0">
           {request.notes}
         </p>
       )}
 
-      <div className="flex items-center justify-between border-t border-canvas pt-2.5">
-        <span className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-canvas pt-2.5 min-w-0">
+        <span className="flex items-center gap-2 min-w-0 max-w-[140px] truncate">
           <Avatar name={request.assignee?.name ?? 'Unassigned'} size="sm" />
-          <span className="text-label-sm text-on-surface-variant">
+          <span className="text-label-sm text-on-surface-variant truncate">
             {request.assignee?.name ?? 'Unassigned'}
           </span>
         </span>
 
+        {/* Step Forward / Backward Quick Arrow Controls */}
+        <div className="flex items-center gap-1">
+          {request.status !== 'pending' && request.status !== 'completed' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('accept')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move backward by 1 step"
+            >
+              <Icon name="arrow_back" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'pending' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('accept')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to Accepted"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'accepted' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('start')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to In Progress"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'in_progress' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onFulfill ? onFulfill : () => onAction('complete')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to Completed"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+        </div>
+
         {isOpen && (
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 shrink-0 ml-auto">
             {request.status === 'pending' && (isMine || request.assignee == null) && (
               <IconAction
                 icon="check"
@@ -1200,13 +1698,16 @@ function TaskCard({
               />
             )}
             {request.status !== 'pending' && (
-              <IconAction
-                icon="task_alt"
-                label={`Complete ${request.title}`}
-                tone="success"
+              <button
+                type="button"
+                onClick={onFulfill ? onFulfill : () => onAction('complete')}
                 disabled={busy}
-                onClick={() => onAction('complete')}
-              />
+                className="inline-flex items-center gap-1 rounded-lg bg-sage-soft px-2.5 py-1 text-xs font-semibold text-secondary hover:bg-forest-soft hover:scale-105 active:scale-95 transition-all shadow-xs"
+                title={`Pick & Complete ${request.title}`}
+              >
+                <Icon name="task_alt" className="text-[14px]" />
+                <span>Pick &amp; Complete</span>
+              </button>
             )}
             <IconAction icon="snooze" label={`Snooze ${request.title}`} disabled={busy} onClick={onSnooze} />
             <HandoverMenu request={request} members={members} disabled={busy} onHandover={onHandover} />
@@ -1215,7 +1716,7 @@ function TaskCard({
 
         {isDone && (
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-label-sm text-secondary">
+            <span className="flex items-center gap-1.5 text-label-sm text-secondary font-semibold">
               <Icon name="check_circle" filled className="text-[16px]" />
               Completed
             </span>

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { useQuota } from '@/hooks/useQuota';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -139,19 +139,8 @@ export function DashboardPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Page Header as Single Unified Command Hub */}
         <PageHeader
-          eyebrow={
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary" />
-              </span>
-              <span className="text-xs font-semibold text-secondary">
-                {active?.name ?? 'Household'} · Live Operations Gateway
-              </span>
-            </div>
-          }
-          title="Today's Household Overview"
-          description={`Central executive summary for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
+          title="Activities Hub"
+          description={`Daily task coordination for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
           actions={
             <div className="flex flex-wrap items-center gap-2.5">
               <Button
@@ -189,143 +178,67 @@ export function DashboardPage() {
         )}
 
         {/* -------------------------------------------------------------------
-            ROW 1: Top Operational Pulse Strip (Summary of Software Metrics)
+            ROW 1: Top Operational Pulse Strip (Unified StatCards)
         -------------------------------------------------------------------- */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {board.isLoading ? (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          ) : (
-            <>
-              {/* Metric 1: Active Errands & Chores */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Active Errands & Tasks
-                    </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {totalOpenCount}
-                      </span>
-                      {overdueCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
-                          </span>
-                          {overdueCount} Overdue
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                          {dueTodayCount} Due Today
-                        </span>
-                      )}
-                    </div>
-                    <span className="mt-1 text-xs text-muted">
-                      {completedTodayCount} completed today
-                    </span>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="view_kanban" className="text-[22px]" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* Metric 2: Pantry & Safety Stock */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Pantry & Staples
-                    </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {essentialsSummary.total}
-                      </span>
-                      {essentialsSummary.due > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                          {essentialsSummary.due} Low / Due
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                          Well Stocked
-                        </span>
-                      )}
-                    </div>
-                    <span className="mt-1 text-xs text-muted">
-                      {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
-                    </span>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="inventory_2" className="text-[22px]" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* Metric 3: Saved Stores & Geofences */}
-              <Link to="/places" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Saved Stores & Geofences
-                    </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {places.length}
-                      </span>
-                      <span className="inline-flex items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
-                        Active Bounds
-                      </span>
-                    </div>
-                    <span className="mt-1 text-xs text-muted">
-                      Arrival triggers & store routing
-                    </span>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="pin_drop" className="text-[22px]" />
-                  </div>
-                </div>
-              </Link>
-
-              {/* Metric 4: Shared Household Ledgers */}
-              <Link to="/money" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Shared Ledgers & Budget
-                    </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                        {ledgers.length}
-                      </span>
-                      <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                        Active
-                      </span>
-                    </div>
-                    <span className="mt-1 text-xs text-muted">
-                      Domestic expenses & shared totals
-                    </span>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="account_balance_wallet" className="text-[22px]" />
-                  </div>
-                </div>
-              </Link>
-            </>
-          )}
-        </section>
+        {board.isLoading || essentialsQuery.isLoading || placesQuery.isLoading || ledgersQuery.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              to="/requests"
+              title="Active Errands & Tasks"
+              value={totalOpenCount}
+              icon="view_kanban"
+              tone="forest"
+              highlight={
+                overdueCount > 0 ? (
+                  <StatHighlight tone="danger" pulse>
+                    {overdueCount} Overdue
+                  </StatHighlight>
+                ) : (
+                  <StatHighlight tone="success">{dueTodayCount} Due Today</StatHighlight>
+                )
+              }
+            />
+            <StatCard
+              to="/pantry"
+              title="Pantry & Staples"
+              value={essentialsSummary.total}
+              icon="inventory_2"
+              tone={essentialsSummary.due > 0 ? 'coral' : 'sage'}
+              highlight={
+                essentialsSummary.due > 0 ? (
+                  <StatHighlight tone="danger">{essentialsSummary.due} Low / Due</StatHighlight>
+                ) : (
+                  <StatHighlight tone="success">Well Stocked</StatHighlight>
+                )
+              }
+            />
+            <StatCard
+              to="/places"
+              title="Saved Stores & Geofences"
+              value={places.length}
+              icon="pin_drop"
+              tone="forest"
+              highlight={<StatHighlight tone="neutral">Active Bounds</StatHighlight>}
+            />
+            <StatCard
+              to="/money"
+              title="Shared Ledgers & Budget"
+              value={ledgers.length}
+              icon="account_balance_wallet"
+              tone="sage"
+              highlight={<StatHighlight tone="success">Active</StatHighlight>}
+            />
+          </StatGrid>
+        )}
 
         {/* -------------------------------------------------------------------
             ROW 2: Active Operations Hub (Tasks List + Operational Widgets)
         -------------------------------------------------------------------- */}
         <section className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Left (8 Cols): Today's Active Errands & Chores Hub */}
-          <div className="rounded-3xl border border-outline-variant/30 bg-surface p-6 shadow-e1 lg:col-span-8">
+          <div className="rounded-[1.25rem] border border-white/70 bg-surface p-6 shadow-e1 lg:col-span-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -341,14 +254,14 @@ export function DashboardPage() {
                 </p>
               </div>
 
-              {/* Segmented Filter Pills */}
-              <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 text-xs">
+              {/* Segmented Filter Pills (Sunken Clay Track) */}
+              <div className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 text-xs shadow-[var(--shadow-inset)]">
                 <button
                   type="button"
                   onClick={() => setTaskFilter('focus')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'focus'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -357,9 +270,9 @@ export function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setTaskFilter('my')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'my'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -368,9 +281,9 @@ export function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setTaskFilter('completed')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'completed'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -380,7 +293,25 @@ export function DashboardPage() {
             </div>
 
             <div className="pt-4">
-              {displayedTasks.length === 0 ? (
+              {board.isLoading ? (
+                <div className="flex flex-col gap-3 animate-pulse">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-xl px-3 py-3 border border-outline-variant/15"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-6 w-6 rounded-full bg-forest-soft/50" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-44 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-28 rounded bg-forest-soft/30" />
+                        </div>
+                      </div>
+                      <div className="h-6 w-16 rounded-lg bg-forest-soft/40" />
+                    </div>
+                  ))}
+                </div>
+              ) : displayedTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
                     <Icon name="task_alt" className="text-[28px]" />
@@ -526,7 +457,22 @@ export function DashboardPage() {
               </div>
 
               <div className="mt-3.5 flex flex-col gap-2.5">
-                {lowStockItems.length === 0 ? (
+                {essentialsQuery.isLoading ? (
+                  <div className="flex flex-col gap-2.5 animate-pulse">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-low p-2.5"
+                      >
+                        <div className="space-y-1.5 flex-1 mr-2">
+                          <div className="h-3.5 w-24 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-32 rounded bg-forest-soft/30" />
+                        </div>
+                        <div className="h-7 w-16 rounded bg-forest-soft/40" />
+                      </div>
+                    ))}
+                  </div>
+                ) : lowStockItems.length === 0 ? (
                   <div className="py-4 text-center">
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-forest-soft text-secondary">
                       <Icon name="done_all" className="text-[18px]" />
@@ -584,7 +530,22 @@ export function DashboardPage() {
               </div>
 
               <div className="mt-3.5 flex flex-col gap-2">
-                {recurringRules.length === 0 ? (
+                {recurringQuery.isLoading ? (
+                  <div className="flex flex-col gap-2 animate-pulse">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between rounded-xl bg-surface-container-low p-2.5 text-xs"
+                      >
+                        <div className="space-y-1.5 flex-1 mr-2">
+                          <div className="h-3.5 w-28 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-20 rounded bg-forest-soft/30" />
+                        </div>
+                        <div className="h-3 w-12 rounded bg-forest-soft/40" />
+                      </div>
+                    ))}
+                  </div>
+                ) : recurringRules.length === 0 ? (
                   <div className="py-4 text-center text-xs text-muted">
                     No recurring habits configured yet.
                   </div>
@@ -637,20 +598,30 @@ export function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-on-surface">Family Seats</span>
-                  <span className="text-muted">
-                    {seatsUsed} of {seatCap} used
-                  </span>
+              {quota.isLoading ? (
+                <div className="mt-4 flex flex-col gap-2 animate-pulse">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 rounded bg-forest-soft/50" />
+                    <div className="h-3 w-16 rounded bg-forest-soft/30" />
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-forest-soft/40" />
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
-                  <div
-                    className="h-full rounded-full bg-secondary transition-all duration-300"
-                    style={{ width: `${seatPercent}%` }}
-                  />
+              ) : (
+                <div className="mt-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-on-surface">Family Seats</span>
+                    <span className="text-muted">
+                      {seatsUsed} of {seatCap} used
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
+                    <div
+                      className="h-full rounded-full bg-secondary transition-all duration-300"
+                      style={{ width: `${seatPercent}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="mt-4 flex items-center justify-between border-t border-outline-variant/15 pt-3 text-xs text-muted">
                 <Link to="/members" className="font-semibold text-secondary hover:underline">

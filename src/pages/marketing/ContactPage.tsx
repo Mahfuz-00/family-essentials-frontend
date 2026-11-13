@@ -37,7 +37,7 @@ export function ContactPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Have questions about multi-home setups, enterprise security, or how Family Essentials coordinates dual-career families? We typically respond in under 12 hours.
+            Have questions about multi-home setups, enterprise security, or how FairShare coordinates dual-career families? We typically respond in under 12 hours.
           </p>
         </div>
 

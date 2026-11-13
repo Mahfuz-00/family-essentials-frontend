@@ -126,7 +126,7 @@ describe('platform admin marketing console', () => {
   it('renders marketing overview and displays acquisition KPIs', async () => {
     renderApp('/admin/marketing');
 
-    expect(await screen.findByRole('heading', { name: /Marketing & Campaign Console/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Marketing' })).toBeInTheDocument();
     expect(await screen.findByText('142')).toBeInTheDocument();
     expect(screen.getByText('7.1%')).toBeInTheDocument();
     expect(screen.getByText('Spring Family Savings: 20% Off')).toBeInTheDocument();

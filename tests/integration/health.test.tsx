@@ -37,7 +37,7 @@ describe('system health console', () => {
   it('reports the overall status and every measured check', async () => {
     renderApp('/admin/health');
 
-    expect(await screen.findByRole('heading', { name: 'System health' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'System Health' })).toBeInTheDocument();
 
     // The worst check wins: this fixture has a failing database check.
     expect(await screen.findByText('Failing')).toBeInTheDocument();

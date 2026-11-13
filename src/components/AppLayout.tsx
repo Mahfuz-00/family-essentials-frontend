@@ -1,10 +1,16 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { Link, Outlet, useLocation, useNavigate, useRouterState } from '@tanstack/react-router';
+
+export const AppLayoutContext = createContext<boolean>(false);
 import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { api } from '@/lib/api';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
@@ -12,150 +18,14 @@ import { useTenantStore } from '@/stores/tenant';
 import { useUiStore } from '@/stores/ui';
 import type { PlatformNotificationsResponse } from '@/types';
 
-type RoutePath =
-  | '/'
-  | '/dashboard'
-  | '/app'
-  | '/requests'
-  | '/requests/escalation'
-  | '/recurring'
-  | '/places'
-  | '/places/console'
-  | '/members'
-  | '/members/roles'
-  | '/members/invitations'
-  | '/money'
-  | '/billing'
-  | '/settings'
-  | '/feedback'
-  | '/admin'
-  | '/admin/analytics'
-  | '/admin/tenants'
-  | '/admin/billing'
-  | '/admin/payment-gateways'
-  | '/admin/email-config'
-  | '/admin/refunds'
-  | '/admin/health'
-  | '/admin/backups'
-  | '/admin/marketing'
-  | '/admin/settings'
-  | '/admin/profile'
-  | '/admin/feedback'
-  | '/admin/audit-logs';
+import { breadcrumbForPath, householdSections, platformSections, routeLabels } from '@/lib/navigation';
 
-interface NavItem {
-  to: RoutePath;
-  label: string;
-  icon: string;
-  exact?: boolean;
-}
+export function AppLayout({ children }: { children?: ReactNode }) {
+  const isNested = useContext(AppLayoutContext);
+  if (isNested) {
+    return <>{children ?? <Outlet />}</>;
+  }
 
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const householdSections: NavSection[] = [
-  {
-    title: 'Today',
-    items: [
-      { to: '/dashboard', label: 'Dashboard', icon: 'cottage', exact: true },
-      { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
-      { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
-      { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
-    ],
-  },
-  {
-    title: 'Household',
-    items: [
-      { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
-      { to: '/places/console', label: 'Geofence Console', icon: 'map', exact: true },
-    ],
-  },
-  {
-    title: 'People',
-    items: [
-      { to: '/members', label: 'Family Members', icon: 'group', exact: true },
-      { to: '/members/roles', label: 'Roles & Permissions', icon: 'shield_person', exact: true },
-      { to: '/members/invitations', label: 'Invitations', icon: 'mark_email_unread', exact: true },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { to: '/money', label: 'Money', icon: 'account_balance_wallet', exact: true },
-      { to: '/billing', label: 'Billing & Invoices', icon: 'credit_card', exact: true },
-      { to: '/settings', label: 'Settings', icon: 'tune', exact: true },
-      { to: '/feedback', label: 'Help & Feedback', icon: 'forum', exact: true },
-    ],
-  },
-];
-
-const platformSections: NavSection[] = [
-  {
-    title: 'Platform Analytics & Households',
-    items: [
-      { to: '/admin', label: 'Overview & MRR', icon: 'monitoring', exact: true },
-      { to: '/admin/analytics', label: 'Platform Analytics', icon: 'analytics', exact: true },
-      { to: '/admin/tenants', label: 'Household Workspaces', icon: 'apartment', exact: true },
-    ],
-  },
-  {
-    title: 'System & Finance Controls',
-    items: [
-      { to: '/admin/settings', label: 'System Settings', icon: 'settings_suggest', exact: true },
-      { to: '/admin/billing', label: 'Invoices & Settlements', icon: 'receipt_long', exact: true },
-      { to: '/admin/payment-gateways', label: 'Payment Gateways', icon: 'payments', exact: true },
-      { to: '/admin/refunds', label: 'Refund Policy & Requests', icon: 'currency_exchange', exact: true },
-      { to: '/admin/email-config', label: 'Email Configuration', icon: 'mail', exact: true },
-      { to: '/admin/health', label: 'System Health & Ops', icon: 'monitor_heart', exact: true },
-      { to: '/admin/backups', label: 'Backups & Recovery', icon: 'cloud_sync', exact: true },
-    ],
-  },
-  {
-    title: 'Growth & Governance',
-    items: [
-      { to: '/admin/marketing', label: 'Marketing & Campaigns', icon: 'campaign', exact: true },
-      { to: '/admin/profile', label: 'Admin Profile', icon: 'badge', exact: true },
-      { to: '/admin/audit-logs', label: 'Audit & Security Logs', icon: 'verified_user', exact: true },
-      { to: '/admin/feedback', label: 'Household Feedback', icon: 'forum', exact: true },
-    ],
-  },
-];
-
-const routeLabels: Record<string, string> = {
-  '/': 'Welcome',
-  '/dashboard': 'Dashboard',
-  '/app': 'Dashboard',
-  '/requests': 'Requests & Errands',
-  '/requests/escalation': 'Escalation & Voice',
-  '/recurring': 'Recurring',
-  '/places': 'Saved Places',
-  '/places/console': 'Geofence Console',
-  '/members': 'Family Members',
-  '/members/roles': 'Roles & Permissions',
-  '/members/invitations': 'Invitations',
-  '/money': 'Money',
-  '/billing': 'Billing & Subscription',
-  '/settings': 'Settings',
-  '/feedback': 'Help & Feedback',
-  '/admin': 'Global Analytics Overview',
-  '/admin/analytics': 'Platform Analytics',
-  '/admin/tenants': 'Tenant Workspaces & Client Families',
-  '/admin/billing': 'Invoices & Cash Settlements',
-  '/admin/settings': 'System & Platform Settings',
-  '/admin/profile': 'Admin Profile Management',
-  '/admin/health': 'System Health',
-  '/admin/backups': 'Backups & Disaster Recovery',
-  '/admin/feedback': 'Feedback Inbox',
-  '/admin/marketing': 'Marketing & Campaigns',
-  '/admin/payment-gateways': 'Payment Gateways',
-  '/admin/email-config': 'Email Configuration',
-  '/admin/refunds': 'Refund Policy & Requests',
-  '/admin/audit-logs': 'Global Audit & Security Log',
-};
-
-export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const memberships = useTenantStore((state) => state.memberships);
@@ -185,11 +55,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pendingCashCount = notificationsQuery.data?.pending_cash_count ?? 0;
 
   const location = useLocation();
+  const isRoutePending = useRouterState({
+    select: (state) =>
+      state.status === 'pending' &&
+      Boolean(state.resolvedLocation) &&
+      state.location.pathname !== state.resolvedLocation?.pathname,
+  });
   const path = location.pathname;
   const routeLabel =
     routeLabels[path] ??
     routeLabels[`/${path.split('/')[1] ?? ''}`] ??
     (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
+
+  useDocumentTitle(routeLabel);
+
+  const breadcrumb = breadcrumbForPath(path);
+
+  const activeTenant = useTenantStore((state) => state.active);
+  const isSubscriptionLocked =
+    !isPlatformAdmin &&
+    ((activeTenant?.status as string) === 'cancelled' || activeTenant?.status === 'suspended') &&
+    path !== '/billing';
 
   // Keyboard close for mobile drawer and click outside for dropdowns
   useEffect(() => {
@@ -243,7 +129,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const sections = isPlatformAdmin ? platformSections : householdSections;
 
   return (
-    <div className="min-h-full bg-canvas text-on-surface">
+    <AppLayoutContext.Provider value={true}>
+      <div className="min-h-full bg-canvas text-on-surface">
       {/* ------------------------------- Desktop Sidebar ------------------------------- */}
       <aside
         className={`fixed left-0 top-0 z-50 hidden h-full flex-col border-r border-outline-variant/30 bg-surface shadow-e1 transition-all duration-300 lg:flex ${
@@ -463,13 +350,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </button>
 
             <div className="flex min-w-0 flex-col justify-center">
-              <div className="flex items-center gap-1.5 text-xs text-muted leading-tight">
-                <Link to={isPlatformAdmin ? '/admin' : '/dashboard'} className="transition-colors hover:text-on-surface">
-                  {isPlatformAdmin ? 'Platform' : 'Pages'}
-                </Link>
-                <span>/</span>
-                <span className="font-medium text-on-surface">{routeLabel}</span>
-              </div>
+              <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-xs text-muted leading-tight">
+                {breadcrumb.map((crumb, index) => (
+                  <span key={`${crumb}-${index}`} className="flex min-w-0 items-center gap-1.5">
+                    {index > 0 && <Icon name="chevron_right" className="text-[12px]" />}
+                    <span
+                      className={
+                        index === breadcrumb.length - 1
+                          ? 'truncate font-medium text-on-surface'
+                          : 'truncate'
+                      }
+                    >
+                      {crumb}
+                    </span>
+                  </span>
+                ))}
+              </nav>
               <span className="truncate text-base sm:text-lg font-bold leading-tight text-on-surface">
                 {routeLabel}
               </span>
@@ -477,19 +373,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-            {/* Search Bar */}
-            <div className="relative hidden md:flex items-center">
-              <span className="pointer-events-none absolute left-3 flex items-center text-muted">
-                <Icon name="search" className="text-[18px]" />
-              </span>
-              <input
-                type="text"
-                placeholder="Type here..."
-                aria-label="Search"
-                className="h-9 w-44 lg:w-56 rounded-xl border border-outline-variant/40 bg-canvas pl-9 pr-3 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
-              />
-            </div>
-
             {/* Household switcher */}
             {!isPlatformAdmin && memberships.length > 1 && (
               <label className="flex items-center">
@@ -512,10 +395,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={startAddRequest}
-                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-secondary px-3.5 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97] sm:px-4"
+                className="sr-only"
+                aria-label="Add Request"
               >
-                <Icon name="add" className="text-[18px]" />
-                <span className="inline">Add Request</span>
+                Add Request
               </button>
             )}
 
@@ -741,8 +624,54 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="w-full px-4 py-6 sm:px-6">{children}</main>
+        <main className="w-full px-4 py-6 sm:px-6">
+          <div key={path} className="animate-body-in">
+            {isRoutePending ? (
+              <div className="flex flex-col gap-6 animate-pulse" aria-busy="true">
+                <div className="space-y-2">
+                  <div className="h-7 w-56 rounded-xl bg-forest-soft/70" />
+                  <div className="h-4 w-80 max-w-full rounded-lg bg-forest-soft/50" />
+                </div>
+                <StatGridSkeleton count={path.startsWith('/money') || path.startsWith('/billing') ? 3 : 4} />
+                <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface p-6 shadow-e1" />
+              </div>
+            ) : (
+              children ?? <Outlet />
+            )}
+          </div>
+        </main>
       </div>
+
+      {/* Subscription Lockout Modal (Point 23) */}
+      <Modal
+        open={isSubscriptionLocked}
+        onClose={() => {}}
+        title="Active Subscription Required"
+        description="Your household subscription has expired or was cancelled."
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button variant="outline" onClick={signOut}>
+              Sign Out
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void navigate({ to: '/billing' })}
+            >
+              Go to Billing &amp; Subscriptions
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-3 p-1 text-xs">
+          <p className="text-on-surface">
+            All household features, activity tracking, budget tools, and members access are locked until an active subscription plan is chosen.
+          </p>
+          <div className="rounded-xl bg-forest-soft p-3 text-secondary font-semibold border border-secondary/20">
+            Please reactivate or select a plan on the Billing page to restore full household access.
+          </div>
+        </div>
+      </Modal>
     </div>
+    </AppLayoutContext.Provider>
   );
 }

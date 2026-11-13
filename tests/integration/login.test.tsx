@@ -66,7 +66,7 @@ describe('sign-in', () => {
     );
 
     expect(
-      await screen.findByRole('heading', { name: "Today's Household Overview" }),
+      await screen.findByRole('heading', { name: "Household Overview" }),
     ).toBeInTheDocument();
   });
 

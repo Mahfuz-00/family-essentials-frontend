@@ -129,7 +129,7 @@ export function PlatformFeedbackPage() {
               Platform Admin · Operations
             </>
           }
-          title="Feedback inbox"
+          title="User Feedback"
           description="What households are telling us, and what has been done about it."
         />
 

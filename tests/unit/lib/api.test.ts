@@ -34,10 +34,10 @@ describe('apiError', () => {
   it('falls back to the top-level message when there are no field errors', () => {
     const error = errorWith({
       status: 403,
-      data: { message: 'Only the primary tenant administrator can change roles.' },
+      data: { message: 'Only the primary household administrator can change roles.' },
     });
 
-    expect(apiError(error)).toBe('Only the primary tenant administrator can change roles.');
+    expect(apiError(error)).toBe('Only the primary household administrator can change roles.');
   });
 
   it('falls back to the transport message when the response carries no body', () => {

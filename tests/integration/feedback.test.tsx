@@ -38,7 +38,7 @@ describe('help & feedback', () => {
 
     renderApp('/feedback');
 
-    expect(await screen.findByRole('heading', { name: 'Help & feedback' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Help & Feedback' })).toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText('What kind of report?'), 'bug');
     await userEvent.type(screen.getByLabelText('Subject'), 'Shopping list loses items');

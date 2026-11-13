@@ -9,31 +9,52 @@ export function AboutPage() {
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = Boolean(token);
 
+  const missionPoints = [
+    'One named owner per errand — never shared and never orphaned',
+    'Context where the work happens, not an arbitrary alarm time',
+    'A single shared record the whole household can trust',
+  ];
+
+  const visionPoints = [
+    'Calm by default — no streaks, stars or guilt mechanics',
+    'Privacy enforced by the database, not promised in a policy',
+    'The same rules on every screen a family uses',
+  ];
+
   const principles = [
     {
-      title: 'Single Named Ownership',
+      title: 'One Named Owner',
       description:
-        'When everyone owns an errand, no one does. We eliminate bystander apathy by enforcing exactly one responsible owner per task.',
+        'Every request belongs to exactly one household member. It moves through explicit states — accepted, started, completed — so nobody has to ask who is handling it.',
       icon: 'person_check',
     },
     {
-      title: 'Context Beats Arbitrary Timers',
+      title: 'Location Beats a Timer',
       description:
-        'A reminder at 5:00 PM is useless if you are in a meeting. A reminder when you pull into the grocery store parking lot is indispensable.',
+        'Save the stores you actually visit. When the app checks your position inside one of them, that store’s open items surface ready to shop.',
       icon: 'pin_drop',
     },
     {
-      title: 'Zero Ads, Zero Data Selling',
+      title: 'Rules Live on the Server',
       description:
-        'Your family’s location beacons, shopping lists, and schedules are strictly confidential. We charge an honest subscription and never monetize your data.',
+        'Plan caps, member roles and household isolation are enforced by the API and by PostgreSQL row-level security — not by the interface.',
       icon: 'shield',
     },
     {
-      title: 'Direct One-Tap Phone Calling',
+      title: 'Direct Contact, With Consent',
       description:
-        'Critical errands like urgent medicine refills cannot be left to ignored push alerts. When it matters, one tap dials your partner or family member directly with zero robocalls.',
+        'When an errand is urgent, one tap opens your phone’s own dialer and calls the responsible member. Voice escalation is opt-in and respects quiet hours.',
       icon: 'phone',
     },
+  ];
+
+  const builtFeatures = [
+    'Assignable errands with item lists and asked-vs-got quantities',
+    'Saved stores, geofenced arrival checklists and recurring rules',
+    'Pantry inventory with restock buffers and auto-generated errands',
+    'Shared ledgers with budgets, roles and receipt OCR scanning',
+    'Goals, loans, assets and tax tracking in a household finances suite',
+    'Roles, invitations, audit history, calendar feed and data export',
   ];
 
   return (
@@ -43,50 +64,99 @@ export function AboutPage() {
         <div className="text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-secondary/20 bg-forest-soft px-3 py-1 text-xs font-semibold text-secondary">
             <span className="h-2 w-2 rounded-full bg-secondary" />
-            <span>Our Founding Mission</span>
+            <span>About FairShare</span>
           </div>
 
           <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-on-surface">
-            Enterprise-Grade Logistics for the Most Important Organization on Earth: Your Family
+            Household Logistics Built on Ownership, Not Reminders
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Businesses spend millions on ERP systems, Jira, and Slack to coordinate simple work projects. Yet modern families juggle careers, school schedules, grocery runs, and elder care using fragmented WhatsApp chats, crumpled receipts, and sticky notes. We built Family Essentials to fix that.
+            FairShare is a shared operating layer for the work a household already does — errands, staples, store runs, budgets and family finances — so nothing depends on one person remembering everything.
           </p>
         </div>
 
-        {/* Founding Story */}
-        <section className="mt-12 rounded-3xl bg-surface border border-outline-variant/30 p-6 sm:p-10">
-          <div className="max-w-3xl mx-auto">
-            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
-              The Genesis
+        {/* Mission & Vision */}
+        <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl bg-surface border border-outline-variant/30 p-6 sm:p-10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
+              <Icon name="flag" className="text-[24px]" />
+            </div>
+            <span className="mt-5 block text-xs font-bold uppercase tracking-wider text-secondary">
+              Our Mission
             </span>
             <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
-              Why We Rejected the Typical "Chore App" Playbook
+              Make household work explicit, owned and calm.
+            </h2>
+            <p className="mt-4 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+              Household work rarely fails because nobody cares. It fails because a request lives in a group chat, has no owner, and depends on somebody remembering at the right moment. We turn that invisible load into a shared record: what is needed, who owns it, where it happens and what state it is in.
+            </p>
+            <ul className="mt-5 flex flex-col gap-2.5">
+              {missionPoints.map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  <Icon name="check_circle" className="mt-0.5 text-[16px] text-secondary shrink-0" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-3xl bg-surface border border-outline-variant/30 p-6 sm:p-10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
+              <Icon name="visibility" className="text-[24px]" />
+            </div>
+            <span className="mt-5 block text-xs font-bold uppercase tracking-wider text-secondary">
+              Our Vision
+            </span>
+            <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
+              A home where nothing important depends on memory.
+            </h2>
+            <p className="mt-4 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+              We are building the default operating layer for shared domestic life: consistent, private and dependable across every screen a family uses. Privacy is enforced by the database rather than promised in a policy, and plan limits are enforced by the server rather than suggested by the interface.
+            </p>
+            <ul className="mt-5 flex flex-col gap-2.5">
+              {visionPoints.map((point) => (
+                <li key={point} className="flex items-start gap-2.5 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  <Icon name="check_circle" className="mt-0.5 text-[16px] text-secondary shrink-0" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* About Us */}
+        <section className="mt-16 rounded-3xl bg-surface border border-outline-variant/30 p-6 sm:p-10">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
+              <Icon name="groups" className="text-[24px]" />
+            </div>
+            <span className="mt-5 block text-xs font-bold uppercase tracking-wider text-secondary">
+              About Us
+            </span>
+            <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
+              A Small Team Building Software for the Work That Never Made It Onto a Roadmap
             </h2>
 
             <div className="mt-5 flex flex-col gap-3.5 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
               <p>
-                In 2024, our founders—two software engineers with five young kids between them—realized that the primary source of domestic fatigue was not the chores themselves, but the <em>invisible cognitive overhead</em> of remembering, reminding, and renegotiating them.
+                FairShare is an independent product built by a small team who wanted household coordination to work like good software: explicit, observable and forgiving. We start from the load-bearing rules — one owner, server-enforced limits, auditable actions — and let the interface follow.
               </p>
               <p>
-                Existing apps either gamified chores with digital stars for toddlers or acted as glorified note pads with no concept of physical store locations, single-person ownership, or urgent escalation.
+                The product ships as a React web dashboard and a Flutter app over a Laravel API, with PostgreSQL row-level security isolating every household. The same rules apply in every client, and every privileged action is written to an audit ledger.
               </p>
               <p>
-                We asked ourselves: <strong>What if a household ran on the same calm, asynchronous, decoupled architecture that powers modern high-reliability engineering teams?</strong>
-              </p>
-              <p>
-                The result was Family Essentials: a quiet, reliable operating system that operates in the background, alerts you when you are actually at the store, and gives both partners transparency without the nag.
+                It is deliberately not a medical, clinical or chore-gamification product. It is the domestic logistics a household already has, made explicit, shared and auditable.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Core Principles */}
+        {/* How We Build */}
         <section className="mt-16">
           <div className="text-center max-w-2xl mx-auto">
             <span className="text-xs font-bold uppercase tracking-wider text-secondary">
-              Core Architecture
+              How We Build
             </span>
             <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
               Our Four Engineering Principles
@@ -110,14 +180,40 @@ export function AboutPage() {
           </div>
         </section>
 
+        {/* What the product does */}
+        <section className="mt-16">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              What’s Inside
+            </span>
+            <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
+              One System for the Work a Household Already Does
+            </h2>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-4xl mx-auto">
+            {builtFeatures.map((feature) => (
+              <div
+                key={feature}
+                className="flex items-start gap-3 rounded-2xl border border-outline-variant/30 bg-surface px-4 py-3.5"
+              >
+                <Icon name="check_circle" className="mt-0.5 text-[18px] text-secondary" />
+                <span className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  {feature}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Privacy Promise Banner */}
         <section className="mt-16 rounded-3xl bg-secondary px-6 py-10 text-center text-on-secondary shadow-e3 sm:px-12 sm:py-14">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Your Family’s Trust Is Our Entire Business
+              Your Household’s Data Stays in Your Household
             </h2>
             <p className="mt-2.5 text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto leading-relaxed">
-              We operate under strict European GDPR and California CCPA privacy standards. We will never sell, analyze, or license your household coordinates or shopping habits.
+              Every household table runs behind PostgreSQL row-level security: a query without a valid household session returns zero rows. We charge for the product, and we do not sell or broker household data.
             </p>
             <div className="mt-7 flex justify-center">
               {isAuthenticated ? (
@@ -131,7 +227,7 @@ export function AboutPage() {
               ) : (
                 <Link to="/register">
                   <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
-                    Join Family Essentials
+                    Join FairShare
                   </Button>
                 </Link>
               )}

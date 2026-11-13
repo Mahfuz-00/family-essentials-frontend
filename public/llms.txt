@@ -1,4 +1,4 @@
-# Family Essentials — Household Logistics Operating System
+# FairShare — Household Logistics Operating System
 
 > The calm, single-assignee household logistics platform with store geofencing, recurring staples, and direct mobile phone calling.
 
@@ -7,16 +7,15 @@
 - [Store Geofencing & Location Reminders](https://familyessentials.app/features/geofencing): 150m arrival detection at frequent supermarkets and pharmacies.
 - [Recurring Household Staples](https://familyessentials.app/features/recurring): Weekly, bi-weekly, and monthly automated task generation with pause controls.
 - [Shared Family Ledger & Budgets](https://familyessentials.app/features/money): Lightweight, bank-free expense tracking with Owner, Manager, and Summary roles.
-- [Direct Phone Escalation](https://familyessentials.app/features/escalation): Direct native mobile phone calling for overdue life-critical health errands.
+- [Direct Phone Escalation](https://familyessentials.app/features/escalation): Direct native mobile phone calling for urgent household errands.
 - [Multi-Tenant Security & Family Roles](https://familyessentials.app/features/roles): Row-level PostgreSQL database isolation with Admin, Adult, Teen, and Child roles.
 
 ## Specialized Household Solutions
 - [Busy Working Parents](https://familyessentials.app/solutions/busy-parents): Eliminating the invisible cognitive load for dual-career couples.
 - [Co-Parents & Blended Families](https://familyessentials.app/solutions/co-parenting): Transparent expense splits and neutral accountability across separate homes.
-- [Elder Care & Caregivers](https://familyessentials.app/solutions/elder-care): Prescription reminders and automated voice calls that protect parental dignity.
 
 ## Company & Resources
-- [Transparent Pricing Plans](https://familyessentials.app/pricing): Free forever tier for up to 3 members, Family Pro ($19/mo), and Multi-Home Estate ($39/mo).
-- [About & Mission](https://familyessentials.app/about): Why enterprise engineering principles belong in domestic family life.
+- [Transparent Pricing Plans](https://familyessentials.app/pricing): Starter Family free for up to 2 members, Pilot Family ($14.99/mo), Household Pro ($24.99/mo), and Enterprise Household ($49.99/mo).
+- [About FairShare](https://familyessentials.app/about): Our mission, vision and the team behind the product.
 - [Frequently Asked Questions](https://familyessentials.app/faq): Technical and operational answers about geofencing, battery life, and privacy.
 - [Contact Support](https://familyessentials.app/contact): Direct assistance with a guaranteed response time under 12 hours.

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
+import { getCurrencySign } from '@/lib/money';
 import { useQuota } from '@/hooks/useQuota';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -34,6 +35,63 @@ export function SettingsPage() {
   const tenant = useQuery({
     queryKey: ['tenant'],
     queryFn: async () => (await api.get<{ data: Tenant }>('/v1/tenant')).data.data,
+  });
+
+  const tenantSettings = (tenant.data?.settings ?? {}) as Record<string, any>;
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => {
+    try {
+      return localStorage.getItem('family_essentials_currency') || 'BDT';
+    } catch {
+      return 'BDT';
+    }
+  });
+  const [selectedDateFormat, setSelectedDateFormat] = useState<string>('YYYY-MM-DD');
+  const [selectedTimeFormat, setSelectedTimeFormat] = useState<string>('12h');
+  const [defaultDueDays, setDefaultDueDays] = useState<number>(2);
+
+  useEffect(() => {
+    if (tenantSettings.currency) {
+      setSelectedCurrency(String(tenantSettings.currency));
+      try {
+        localStorage.setItem('family_essentials_currency', String(tenantSettings.currency));
+      } catch {
+        // ignore
+      }
+    }
+    if (tenantSettings.date_format) {
+      setSelectedDateFormat(String(tenantSettings.date_format));
+    }
+    if (tenantSettings.time_format) {
+      setSelectedTimeFormat(String(tenantSettings.time_format));
+    }
+    if (typeof tenantSettings.default_due_days === 'number') {
+      setDefaultDueDays(tenantSettings.default_due_days);
+    }
+  }, [tenantSettings.currency, tenantSettings.date_format, tenantSettings.time_format, tenantSettings.default_due_days]);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        localStorage.setItem('family_essentials_currency', selectedCurrency);
+      } catch {
+        // ignore
+      }
+      await api.patch('/v1/tenant', {
+        settings: {
+          currency: selectedCurrency,
+          date_format: selectedDateFormat,
+          time_format: selectedTimeFormat,
+          default_due_days: defaultDueDays,
+        },
+      });
+      await tenant.refetch();
+    },
+    onSuccess: () => {
+      const sign = getCurrencySign(selectedCurrency);
+      setNotice(`Household preferences saved! Platform currency symbol set to "${sign}" (${selectedCurrency}).`);
+      setError(null);
+    },
+    onError: (e) => setError(apiError(e)),
   });
 
   const voiceConsent = useMutation({
@@ -86,7 +144,7 @@ export function SettingsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-4xl">
         <PageHeader
-          title="Household settings"
+          title="Settings"
           description="Your personal profile, how family alerts reach you, and your shared household workspace."
           titleSize="headline"
         />
@@ -292,6 +350,118 @@ export function SettingsPage() {
                     Billing &amp; plan
                   </span>
                 </Link>
+              </div>
+            </Card>
+
+            {/* Household Preferences & Global Currency */}
+            <Card className="flex flex-col gap-5 p-6 border-outline-variant/30">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                    <Icon name="tune" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h3 className="text-headline-sm font-bold text-on-surface">Household Localization & Currency</h3>
+                    <p className="text-xs text-muted">Controls all currency markers, date formats, and task deadlines across the software.</p>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={saveSettingsMutation.isPending}
+                  onClick={() => saveSettingsMutation.mutate()}
+                >
+                  <Icon name="save" className="text-[16px]" />
+                  {saveSettingsMutation.isPending ? 'Saving...' : 'Save Preferences'}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-currency-select" className="text-label-sm font-bold text-on-surface">
+                    Global Currency
+                  </label>
+                  <select
+                    id="settings-currency-select"
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="BDT">৳ — BDT (Bangladeshi Taka)</option>
+                    <option value="USD">$ — USD (US Dollar)</option>
+                    <option value="EUR">€ — EUR (Euro)</option>
+                    <option value="GBP">£ — GBP (British Pound)</option>
+                    <option value="INR">₹ — INR (Indian Rupee)</option>
+                    <option value="JPY">¥ — JPY (Japanese Yen)</option>
+                    <option value="CNY">¥ — CNY (Chinese Yuan)</option>
+                    <option value="KRW">₩ — KRW (South Korean Won)</option>
+                    <option value="PHP">₱ — PHP (Philippine Peso)</option>
+                    <option value="THB">฿ — THB (Thai Baht)</option>
+                    <option value="VND">₫ — VND (Vietnamese Dong)</option>
+                    <option value="ILS">₪ — ILS (Israeli Shekel)</option>
+                    <option value="NGN">₦ — NGN (Nigerian Naira)</option>
+                    <option value="TRY">₺ — TRY (Turkish Lira)</option>
+                    <option value="UAH">₴ — UAH (Ukrainian Hryvnia)</option>
+                    <option value="RUB">₽ — RUB (Russian Ruble)</option>
+                    <option value="CAD">$ — CAD (Canadian Dollar)</option>
+                    <option value="AUD">$ — AUD (Australian Dollar)</option>
+                    <option value="SGD">$ — SGD (Singapore Dollar)</option>
+                    <option value="NZD">$ — NZD (New Zealand Dollar)</option>
+                    <option value="CHF">₣ — CHF (Swiss Franc)</option>
+                    <option value="ZAR">R — ZAR (South African Rand)</option>
+                    <option value="SAR">﷼ — SAR (Saudi Riyal)</option>
+                    <option value="PKR">₨ — PKR (Pakistani Rupee)</option>
+                    <option value="BRL">$ — BRL (Brazilian Real)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-date-format-select" className="text-label-sm font-bold text-on-surface">
+                    Date Format
+                  </label>
+                  <select
+                    id="settings-date-format-select"
+                    value={selectedDateFormat}
+                    onChange={(e) => setSelectedDateFormat(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="YYYY-MM-DD">YYYY-MM-DD (2026-11-13)</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY (13/11/2026)</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY (11/13/2026)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-time-format-select" className="text-label-sm font-bold text-on-surface">
+                    Time Format
+                  </label>
+                  <select
+                    id="settings-time-format-select"
+                    value={selectedTimeFormat}
+                    onChange={(e) => setSelectedTimeFormat(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="12h">12-hour (06:30 PM)</option>
+                    <option value="24h">24-hour (18:30)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-default-due-days-select" className="text-label-sm font-bold text-on-surface">
+                    Default Task Due
+                  </label>
+                  <select
+                    id="settings-default-due-days-select"
+                    value={defaultDueDays}
+                    onChange={(e) => setDefaultDueDays(Number(e.target.value))}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value={1}>1 Day (Tomorrow)</option>
+                    <option value={2}>2 Days</option>
+                    <option value={3}>3 Days</option>
+                    <option value={7}>7 Days (1 Week)</option>
+                  </select>
+                </div>
               </div>
             </Card>
 

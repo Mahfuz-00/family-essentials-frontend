@@ -9,9 +9,21 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import type { AuthUser } from '@/types';
+
+const CURRENCIES = [
+  { code: 'USD', label: 'USD ($) - US Dollar' },
+  { code: 'EUR', label: 'EUR (€) - Euro' },
+  { code: 'GBP', label: 'GBP (£) - British Pound' },
+  { code: 'CAD', label: 'CAD ($) - Canadian Dollar' },
+  { code: 'AUD', label: 'AUD ($) - Australian Dollar' },
+  { code: 'JPY', label: 'JPY (¥) - Japanese Yen' },
+  { code: 'INR', label: 'INR (₹) - Indian Rupee' },
+  { code: 'BDT', label: 'BDT (৳) - Bangladeshi Taka' },
+];
 
 const schema = z
   .object({
@@ -19,6 +31,8 @@ const schema = z
     email: z.string().email('Enter a valid email address like name@example.com'),
     phone: z.string().min(6, 'Enter a phone number for verification'),
     household_name: z.string().optional(),
+    currency: z.string().min(3).max(3),
+    monthly_budget: z.string().optional(),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     password_confirmation: z.string(),
   })
@@ -40,14 +54,31 @@ export function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      currency: 'USD',
+    },
+  });
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
 
+    const monthlyBudgetMinor = values.monthly_budget && !isNaN(Number(values.monthly_budget))
+      ? Math.round(Number(values.monthly_budget) * 100)
+      : undefined;
+
     try {
       const { data } = await api.post<{ user: AuthUser; token: string }>('/v1/auth/register', {
-        ...values,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        household_name: values.household_name || undefined,
+        currency: values.currency,
+        monthly_budget_minor: monthlyBudgetMinor,
+        yearly_budget_minor: monthlyBudgetMinor ? monthlyBudgetMinor * 12 : undefined,
+        password: values.password,
+        password_confirmation: values.password_confirmation,
         device_name: 'web-dashboard',
       });
 
@@ -89,6 +120,33 @@ export function RegisterPage() {
         <div>
           <Label htmlFor="household_name">Household name (optional)</Label>
           <Input id="household_name" placeholder="The Rahman Household" {...register('household_name')} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="currency">Household Currency</Label>
+            <Select id="currency" {...register('currency')}>
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </Select>
+            <p className="mt-1 text-xs text-muted">Used for ledgers, budgets, and expense tracking</p>
+          </div>
+
+          <div>
+            <Label htmlFor="monthly_budget">Starting Monthly Budget (optional)</Label>
+            <Input
+              id="monthly_budget"
+              type="number"
+              step="any"
+              min="0"
+              placeholder="e.g. 2500"
+              {...register('monthly_budget')}
+            />
+            <p className="mt-1 text-xs text-muted">Sets initial monthly & yearly spending limits</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -57,11 +58,29 @@ export function EscalationPage() {
     },
   ];
 
+  if (quota.isLoading || calls.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-8 w-60 rounded-xl bg-forest-soft/60" />
+            <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+          </div>
+
+          <StatGridSkeleton count={4} />
+
+          <div className="h-64 rounded-[1.25rem] border border-white/70 bg-surface p-5 shadow-e1" />
+          <div className="h-80 rounded-[1.25rem] border border-white/70 bg-surface p-5 shadow-e1" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Escalation & voice"
+          title="Voice Escalations"
           description="When the household gets called, how often, and what has actually been dialled."
           titleSize="headline"
         />
@@ -70,51 +89,53 @@ export function EscalationPage() {
           <QueryError error={quota.error} what="the call budget" onRetry={() => void quota.refetch()} />
         )}
 
-        {/* Budget */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Calls used today</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '—'}
-            </span>
-            <span className="text-body-sm text-muted">Daily household budget</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Attempts per item</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data?.max_attempts_per_request ?? '—'}
-            </span>
-            <span className="text-body-sm text-muted">Then the item waits for a human</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Cooldown</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {quota.data ? `${quota.data.cooldown_minutes}m` : '—'}
-            </span>
-            <span className="text-body-sm text-muted">Between attempts on one item</span>
-          </Card>
-          <Card className="flex flex-col gap-2 p-5">
-            <span className="text-label-sm uppercase tracking-wider text-muted">Your consent</span>
-            <span className="text-display-lg font-bold text-on-surface">
-              {user?.voice_opt_in ? 'On' : 'Off'}
-            </span>
-            <span className="text-body-sm text-muted">
-              {user?.phone_verified ? 'Number verified' : 'Verify your number to opt in'}
-            </span>
-          </Card>
-        </section>
+        {/* Budget — 4 Unified StatCards */}
+        <StatGrid count={4}>
+          <StatCard
+            title="Calls used today"
+            value={quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '0 / 0'}
+            icon="ring_volume"
+            tone="forest"
+            highlight={<StatHighlight tone="success">Daily Cap</StatHighlight>}
+          />
+          <StatCard
+            title="Attempts per item"
+            value={quota.data?.max_attempts_per_request ?? 0}
+            icon="repeat"
+            tone="forest"
+            highlight={<StatHighlight tone="success">Max Limit</StatHighlight>}
+          />
+          <StatCard
+            title="Cooldown"
+            value={quota.data ? `${quota.data.cooldown_minutes}m` : '0m'}
+            icon="hourglass_bottom"
+            tone="sage"
+            highlight={<StatHighlight tone="primary">Cooldown</StatHighlight>}
+          />
+          <StatCard
+            title="Your consent"
+            value={user?.voice_opt_in ? 'Opted In' : 'Opted Out'}
+            icon="verified_user"
+            tone={user?.phone_verified ? 'forest' : 'coral'}
+            highlight={
+              <StatHighlight tone={user?.phone_verified ? 'success' : 'danger'}>
+                {user?.phone_verified ? 'Verified' : 'Unverified'}
+              </StatHighlight>
+            }
+          />
+        </StatGrid>
 
         {/* Policy */}
-        <Card className="p-5">
+        <Card className="p-6">
           <h2 className="text-headline-sm text-on-surface">How escalation decides</h2>
           <p className="text-body-sm text-muted">
             The order below is enforced server-side; the app cannot talk round it.
           </p>
 
-          <ul className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <ul className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
             {rules.map((rule) => (
-              <li key={rule.title} className="flex items-start gap-3 rounded-xl bg-canvas p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+              <li key={rule.title} className="flex items-start gap-3.5 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
                   <Icon name={rule.icon} className="text-[20px]" />
                 </span>
                 <span className="flex flex-col">

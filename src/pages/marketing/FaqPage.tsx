@@ -14,7 +14,7 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     category: 'Errand Kanban',
-    question: 'How is Family Essentials different from Apple Reminders or Google Keep?',
+    question: 'How is FairShare different from Apple Reminders or Google Keep?',
     answer:
       'Apple Reminders and Google Keep are general-purpose scratchpads. They lack single-assignee enforcement (leading to bystander apathy), store geofence arrival detection, integer-minor-unit ledgers, and direct one-tap mobile calling when urgent tasks need immediate attention.',
   },
@@ -26,15 +26,15 @@ const FAQS: FaqItem[] = [
   },
   {
     category: 'Geofencing',
-    question: 'Does Family Essentials track my continuous GPS location or live speed?',
+    question: 'Does FairShare track my continuous GPS location or live speed?',
     answer:
-      'No. We strictly use native iOS and Android region-monitoring APIs (geofences). Your device only checks in when entering or leaving a 150m perimeter around your explicitly saved stores (e.g. Costco, Pharmacy). We never store or trace your continuous breadcrumb route.',
+      'No. The app reads your position only when it is open or resumes, then compares it with the radiuses of the stores you saved (e.g. Costco, Pharmacy). We never record a continuous breadcrumb route.',
   },
   {
     category: 'Geofencing',
-    question: 'Will background geofencing drain my smartphone battery?',
+    question: 'Will location checks drain my smartphone battery?',
     answer:
-      'No. Because we utilize cellular tower and Wi-Fi assisted OS region monitoring rather than constant high-power GPS polling, the daily battery impact is negligible (under 1% per full day).',
+      'No. There is no continuous GPS polling. A position is read only when the app is open or resumes, so the battery impact stays negligible.',
   },
   {
     category: 'Direct Calling',
@@ -46,25 +46,25 @@ const FAQS: FaqItem[] = [
     category: 'Direct Calling',
     question: 'Do I need any third-party telephony accounts or special setup to make calls?',
     answer:
-      'No! Family Essentials requires no third-party telephony or telecom APIs. It leverages your mobile phone’s built-in dialer (iOS Phone app or Android dialer) using standard device calling.',
+      'No! FairShare requires no third-party telephony or telecom APIs. It leverages your mobile phone’s built-in dialer (iOS Phone app or Android dialer) using standard device calling.',
   },
   {
     category: 'Shared Ledgers',
     question: 'Do I need to connect my credit card or bank login to use the Money ledger?',
     answer:
-      'Never. Family Essentials uses lightweight manual entry. We do not use Plaid or scrape your bank transactions. You maintain 100% financial privacy while keeping domestic reimbursements clear.',
+      'Never. FairShare uses lightweight manual entry. We do not use Plaid or scrape your bank transactions. You maintain 100% financial privacy while keeping domestic reimbursements clear.',
   },
   {
     category: 'Security & Privacy',
     question: 'How is our family’s data isolated in your database?',
     answer:
-      'Family Essentials is built on PostgreSQL Row-Level Security (RLS) with strict multi-tenant schema isolation. Every API request is verified against your tenant token, making it mathematically impossible for one household to query another household’s data.',
+      'FairShare is built on PostgreSQL Row-Level Security (RLS) with strict multi-tenant schema isolation. Every API request is verified against your tenant token, making it mathematically impossible for one household to query another household’s data.',
   },
   {
     category: 'Security & Privacy',
     question: 'Can kids access household billing or financial ledgers?',
     answer:
-      'No. We offer four distinct role tiers: Tenant Admin, Adult, Teen, and Child. Non-admin members are prevented from accessing billing, and Teen/Child roles can be restricted to view task checklists only.',
+      'No. We offer four distinct role tiers: Household Admin, Adult, Teen, and Child. Non-admin members are prevented from accessing billing, and Teen/Child roles can be restricted to view task checklists only.',
   },
 ];
 
@@ -100,7 +100,7 @@ export function FaqPage() {
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Everything you need to know about Family Essentials, geofences, phone escalations, privacy, and plans.
+            Everything you need to know about FairShare, geofences, phone escalations, privacy, and plans.
           </p>
 
           {/* Search Bar */}
@@ -187,7 +187,7 @@ export function FaqPage() {
           <div className="mt-6 flex justify-center gap-4">
             <Link to="/contact">
               <Button variant="primary" size="lg">
-                Contact Family Essentials Support
+                Contact FairShare Support
               </Button>
             </Link>
           </div>

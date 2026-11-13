@@ -19,7 +19,7 @@ export function MarketingPage() {
     '@graph': [
       {
         '@type': 'SoftwareApplication',
-        name: 'Family Essentials',
+        name: 'FairShare',
         headline: 'Household Logistics & Smart Shared Errands for Modern Families',
         operatingSystem: 'Web, iOS, Android',
         applicationCategory: 'LifestyleApplication, ProductivityApplication',
@@ -28,17 +28,31 @@ export function MarketingPage() {
         offers: [
           {
             '@type': 'Offer',
-            name: 'Free Household Tier',
+            name: 'Starter Family',
             price: '0',
             priceCurrency: 'USD',
-            description: 'Free forever for up to 3 family members with core logistics.',
+            description: 'Free forever for up to 2 family members, with 2 saved stores and 50 errands a month.',
           },
           {
             '@type': 'Offer',
-            name: 'Family Pro',
-            price: '19',
+            name: 'Pilot Family Tier',
+            price: '14.99',
             priceCurrency: 'USD',
-            description: 'Unlimited places, geofences, voice calls, and multi-currency ledgers.',
+            description: 'Up to 5 family members, 10 saved stores, 300 errands a month, and 15 member calls.',
+          },
+          {
+            '@type': 'Offer',
+            name: 'Household Pro',
+            price: '24.99',
+            priceCurrency: 'USD',
+            description: 'Up to 10 family members, 25 saved stores, 1,000 errands a month, and 60 member calls.',
+          },
+          {
+            '@type': 'Offer',
+            name: 'Enterprise Household',
+            price: '49.99',
+            priceCurrency: 'USD',
+            description: 'Up to 25 family members, 100 saved stores, 5,000 errands a month, and unlimited member calls.',
           },
         ],
         aggregateRating: {
@@ -52,20 +66,20 @@ export function MarketingPage() {
         mainEntity: [
           {
             '@type': 'Question',
-            name: 'What is Family Essentials?',
+            name: 'What is FairShare?',
             acceptedAnswer: {
               '@type': 'Answer',
               text:
-                'Family Essentials is a modern domestic logistics system designed for families to coordinate household needs, grocery runs, and recurring chores. It replaces chaotic group chats with named accountability, geofenced store reminders, and database-isolated security.',
+                'FairShare is a modern domestic logistics system designed for families to coordinate household needs, grocery runs, and recurring chores. It replaces chaotic group chats with named accountability, geofenced store reminders, and database-isolated security.',
             },
           },
           {
             '@type': 'Question',
-            name: 'How is Family Essentials different from a WhatsApp group or generic todo app?',
+            name: 'How is FairShare different from a WhatsApp group or generic todo app?',
             acceptedAnswer: {
               '@type': 'Answer',
               text:
-                'Unlike group chats where requests get buried, or generic todo apps built for office workers, Family Essentials is built specifically for domestic life. Every request has exactly one clear owner and deadline; shopping lists trigger automatically when you arrive at a geofenced grocery store; and recurring staples replenish on predictable cadences.',
+                'Unlike group chats where requests get buried, or generic todo apps built for office workers, FairShare is built specifically for domestic life. Every request has exactly one clear owner and deadline; shopping lists trigger automatically when you arrive at a geofenced grocery store; and recurring staples replenish on predictable cadences.',
             },
           },
           {
@@ -74,16 +88,16 @@ export function MarketingPage() {
             acceptedAnswer: {
               '@type': 'Answer',
               text:
-                'When you save a frequent destination (such as your local grocery store, pharmacy, or home depot), Family Essentials watches for arrival. The moment you step into the store, your phone notifies you with exactly what your household needs from that location, organized for rapid in-store checkout.',
+                'When you save a frequent destination (such as your local grocery store, pharmacy, or home depot), FairShare watches for arrival. The moment you step into the store, your phone notifies you with exactly what your household needs from that location, organized for rapid in-store checkout.',
             },
           },
           {
             '@type': 'Question',
-            name: 'How does Family Essentials protect family privacy?',
+            name: 'How does FairShare protect family privacy?',
             acceptedAnswer: {
               '@type': 'Answer',
               text:
-                'Family Essentials enforces PostgreSQL Row-Level Security (RLS) at the database level. Every household has complete cryptographic and relational isolation. Your family data is never mined, tracked, or sold to advertising brokers.',
+                'FairShare enforces PostgreSQL Row-Level Security (RLS) at the database level. Every household has complete cryptographic and relational isolation. Your family data is never mined, tracked, or sold to advertising brokers.',
             },
           },
         ],
@@ -93,24 +107,24 @@ export function MarketingPage() {
 
   const faqs = [
     {
-      q: 'What makes Family Essentials different from a family WhatsApp chat or Apple Reminders?',
-      a: 'Group chats are where domestic tasks go to die: messages get buried under memes, nobody knows who actually bought the eggs, or both partners end up buying milk on the way home. Generic todo apps lack domestic awareness. Family Essentials solves this with single named ownership, geofenced in-store shopping triggers, automated safety-stock buffers, and optional voice escalation for urgent medicines.',
+      q: 'What makes FairShare different from a family WhatsApp chat or Apple Reminders?',
+      a: 'Group chats are where domestic tasks go to die: messages get buried under memes, nobody knows who actually bought the eggs, or both partners end up buying milk on the way home. Generic todo apps lack domestic awareness. FairShare solves this with single named ownership, store-aware shopping lists, automated safety-stock buffers, and one-tap direct calling for urgent items.',
     },
     {
       q: 'How does geofenced location reminders work without draining battery?',
-      a: 'The mobile app uses standard passive circular geofences registered with iOS CoreLocation and Android Geofencing API. Your phone does not constantly track continuous GPS coordinates in the background. It only checks into the household server when you transition across a saved store radius.',
+      a: 'The app reads your position only when it is open or resumes, then compares it with the radiuses of the stores you saved. If you are inside one, that store’s open items surface. It does not stream continuous GPS or record a movement history.',
     },
     {
-      q: 'Is Family Essentials free to use for our family?',
-      a: 'Yes! The Free Household plan is free forever for up to 3 family members. It includes all core features: the Kanban errand hub, geofenced saved places, shopping mode, recurring staples, and mobile/web sync. Paid tiers are available for larger families, extra voice calls, or multiple homes.',
+      q: 'Is FairShare free to use for our family?',
+      a: 'Yes! The Starter Family plan is free forever for up to 2 family members. It includes the shared errand board, 2 saved stores, shopping mode, recurring staples, 50 errands a month, 5 receipt scans, and mobile/web sync. Paid tiers add seats, stores, calls and more.',
     },
     {
-      q: 'How does voice escalation work for urgent deadlines?',
-      a: 'If a critical task (like picking up an urgent prescription or school medicine) becomes overdue and unacknowledged, Family Essentials can dispatch a calm automated voice call to the assigned family member. It strictly obeys household quiet hours and requires explicit voice consent.',
+      q: 'How does calling work when an errand is urgent?',
+      a: 'Urgent requests carry a call action. Tapping it passes the responsible member’s phone number into your phone’s own dialer so you can ring them directly. There is no third-party telephony service, per-minute fee or robocall infrastructure.',
     },
     {
       q: 'Can family members use different phones (iOS, Android, and Web)?',
-      a: 'Yes. Family Essentials is built with cross-platform parity. Family members can manage tasks from iPhones, Android devices, or any modern web browser with real-time synchronization.',
+      a: 'Yes. FairShare is built with cross-platform parity. Family members can manage tasks from iPhones, Android devices, or any modern web browser with real-time synchronization.',
     },
   ];
 
@@ -197,7 +211,7 @@ export function MarketingPage() {
               Live Software Simulation
             </span>
             <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold text-on-surface">
-              How Family Essentials Works On Mobile
+              How FairShare Works On Mobile
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
               Watch the interactive mobile app simulation below to see how erranding, OpenStreetMap arrival triggers, in-store shopping checklists, and direct carrier calling operate in real time.
@@ -364,7 +378,7 @@ export function MarketingPage() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-white">
                   <Icon name="check" className="text-[20px]" />
                 </span>
-                <h3 className="text-headline-md font-bold text-on-surface">Family Essentials</h3>
+                <h3 className="text-headline-md font-bold text-on-surface">FairShare</h3>
               </div>
               <ul className="mt-6 space-y-4 text-body-md text-on-surface-variant">
                 <li className="flex items-start gap-2.5">
@@ -377,7 +391,7 @@ export function MarketingPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="mt-1 text-secondary">✓</span>
-                  <span><strong>Automated Phone Escalation:</strong> When critical health tasks are overdue, a voice call rings through.</span>
+                  <span><strong>Direct One-Tap Calling:</strong> When an errand is urgent, tap to call its owner from your phone’s dialer.</span>
                 </li>
               </ul>
             </div>
@@ -441,13 +455,13 @@ export function MarketingPage() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
             Give Your Household the Calm It Deserves.
           </h2>
-          <p className="mt-2.5 max-w-xl mx-auto text-xs sm:text-sm text-emerald-100 leading-relaxed">
+          <p className="mt-2.5 max-w-xl mx-auto text-xs sm:text-sm text-white leading-relaxed">
             Set up your family workspace in under 60 seconds. Free forever for up to 3 family members.
           </p>
           <div className="mt-7 flex justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold shadow-e2 gap-2">
+                <Button size="xl" className="bg-surface text-white hover:bg-canvas font-bold shadow-e2 gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -455,7 +469,7 @@ export function MarketingPage() {
               </Link>
             ) : (
               <Link to="/register">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold shadow-e2">
+                <Button size="xl" className="bg-surface text-white hover:bg-canvas font-bold shadow-e2">
                   Create Free Family Workspace
                 </Button>
               </Link>

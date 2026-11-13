@@ -3,12 +3,12 @@ import { cn } from '@/lib/utils';
 
 export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <div className="relative">
+    <div className="relative min-w-0 max-w-full">
       <select
         className={cn(
-          'h-12 w-full cursor-pointer appearance-none rounded-xl bg-canvas px-3.5 pr-9 text-[15px] text-on-surface shadow-inner',
-          'outline-none transition-all',
-          'focus:ring-2 focus:ring-primary/40',
+          'h-12 w-full min-w-0 max-w-full box-border cursor-pointer appearance-none rounded-xl bg-canvas px-3.5 pr-9 text-[15px] text-on-surface shadow-[var(--shadow-inset)] border border-transparent',
+          'outline-none transition-colors',
+          'focus:border-primary focus:ring-2 focus:ring-primary/40',
           'disabled:cursor-not-allowed disabled:opacity-60',
           className,
         )}

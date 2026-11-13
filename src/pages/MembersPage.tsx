@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import type { MemberRole, TenantMember, TenantRoleCatalogue } from '@/types';
@@ -53,6 +54,21 @@ export function MembersPage() {
     onError,
   });
 
+  const callMember = useMutation({
+    mutationFn: async ({ memberId, phone }: { memberId: number; phone?: string | null }) => {
+      const res = (await api.post<{ success: boolean; message: string; remaining_calls?: number }>(`/v1/members/${memberId}/call`)).data;
+      if (phone) {
+        window.location.href = `tel:${phone}`;
+      }
+      return res;
+    },
+    onSuccess: (data) => {
+      setError(null);
+      setNotice(data.message || 'Household direct call initiated.');
+    },
+    onError,
+  });
+
   const memberList = members.data ?? [];
   const canManage = catalogue.data?.can_manage_roles === true;
 
@@ -64,8 +80,13 @@ export function MembersPage() {
     return memberList.filter((member) => member.role === filter);
   }, [memberList, filter]);
 
-  const roleLabel = (role: MemberRole) =>
-    catalogue.data?.roles.find((entry) => entry.key === role)?.label ?? role;
+  const roleLabel = (role: MemberRole) => {
+    if (role === 'tenant_admin') return 'Household Admin';
+    if (role === 'co_admin') return 'Household Co-Admin';
+    if (role === 'member') return 'Household Member';
+    if (role === 'junior') return 'Junior Member';
+    return catalogue.data?.roles.find((entry) => entry.key === role)?.label ?? 'Household Member';
+  };
 
   return (
     <AppLayout>
@@ -98,7 +119,7 @@ export function MembersPage() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter members">
           <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
-            All members ({memberList.length})
+            All members {members.isLoading ? '' : `(${memberList.length})`}
           </FilterPill>
           {(catalogue.data?.roles ?? []).map((role) => {
             const total = memberList.filter((member) => member.role === role.key).length;
@@ -109,13 +130,19 @@ export function MembersPage() {
                 active={filter === role.key}
                 onClick={() => setFilter(role.key)}
               >
-                {role.label} ({total})
+                {role.label} {members.isLoading ? '' : `(${total})`}
               </FilterPill>
             );
           })}
         </div>
 
-        {members.isLoading && <p className="text-body-md text-muted">Loading members…</p>}
+        {members.isLoading && (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
         {members.isError && (
           <QueryError error={members.error} what="the household roster" onRetry={() => void members.refetch()} />
         )}
@@ -192,6 +219,32 @@ export function MembersPage() {
                           )}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {!isSelf && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-outline-variant/20">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={callMember.isPending}
+                        onClick={() => callMember.mutate({ memberId: member.id, phone: member.phone })}
+                        className="text-secondary hover:bg-forest-soft font-semibold"
+                      >
+                        <Icon name="call" className="text-[16px] mr-1 text-secondary" />
+                        Call ({member.phone ? 'Direct' : 'Voice'})
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setNotice(`Direct chat channel with ${member.name} open. Plan limits apply.`);
+                        }}
+                        className="text-primary hover:bg-sage-soft font-semibold"
+                      >
+                        <Icon name="chat" className="text-[16px] mr-1 text-primary" />
+                        Chat
+                      </Button>
                     </div>
                   )}
 
