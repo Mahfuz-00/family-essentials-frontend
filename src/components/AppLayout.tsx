@@ -795,7 +795,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                   <div className="h-7 w-56 rounded-xl bg-forest-soft/70" />
                   <div className="h-4 w-80 max-w-full rounded-lg bg-forest-soft/50" />
                 </div>
-                <StatGridSkeleton count={4} />
+                <StatGridSkeleton count={path.startsWith('/money') || path.startsWith('/billing') ? 3 : 4} />
                 <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface p-6 shadow-e1" />
               </div>
             ) : (

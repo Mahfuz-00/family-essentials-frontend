@@ -35,10 +35,20 @@ export function FinancesOverviewPage() {
         )}
 
         {overview.isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+          <div className="flex flex-col gap-6">
+            <Card className="p-6 animate-pulse">
+              <div className="h-4 w-48 rounded bg-forest-soft/60" />
+              <div className="mt-3 h-9 w-64 rounded-lg bg-forest-soft/80" />
+              <div className="mt-2 h-4 w-80 max-w-full rounded bg-forest-soft/50" />
+            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           </div>
         )}
 

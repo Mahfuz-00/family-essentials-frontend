@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatGridSkeleton } from '@/components/ui/stat-card';
 import { api, apiError } from '@/lib/api';
 import { parseMoneyToMinor } from '@/lib/money';
 import type { Ledger, LedgerRole } from '@/types';
@@ -102,13 +102,48 @@ export function MoneyPage() {
         <div className="flex flex-col gap-6 max-w-6xl">
           <PageHeader
             title="Expenses &amp; Money"
-            description="Opening your household ledger..."
+            description="Loading this ledger…"
             titleSize="headline"
           />
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <SkeletonCard />
-            <SkeletonCard />
+          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)] animate-pulse">
+            <div className="h-10 w-48 rounded-xl bg-secondary/40" />
+            <div className="h-10 w-36 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-36 rounded-xl bg-forest-soft/60" />
           </div>
+          <Card className="p-4 flex flex-wrap items-center justify-between gap-3 animate-pulse">
+            <div className="space-y-2">
+              <div className="h-6 w-32 rounded-lg bg-forest-soft/70" />
+              <div className="h-4 w-56 rounded bg-forest-soft/50" />
+            </div>
+            <div className="flex gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
+              <div className="h-8 w-28 rounded-xl bg-surface" />
+              <div className="h-8 w-28 rounded-xl bg-forest-soft/40" />
+              <div className="h-8 w-28 rounded-xl bg-forest-soft/40" />
+            </div>
+          </Card>
+          <StatGridSkeleton count={3} />
+          <Card className="overflow-hidden p-0 animate-pulse">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
+              <div className="space-y-2">
+                <div className="h-6 w-56 rounded-lg bg-forest-soft/70" />
+                <div className="h-4 w-48 rounded bg-forest-soft/50" />
+              </div>
+            </div>
+            <div className="divide-y divide-outline-variant/30 p-5 space-y-4">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="flex items-center justify-between gap-4 pt-3 first:pt-0">
+                  <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                  <div className="h-5 w-48 rounded bg-forest-soft/60" />
+                  <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                  <div className="h-6 w-28 rounded-full bg-forest-soft/50" />
+                  <div className="h-5 w-24 rounded bg-forest-soft/70" />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </AppLayout>
     );

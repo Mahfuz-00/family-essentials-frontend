@@ -348,24 +348,72 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     (rule) => rule.ledger_id === ledgerId || (rule.amount_minor && rule.amount_minor > 0)
   );
 
-  if (ledgers.isLoading || (ledger && summary.isLoading && !summary.data)) {
+  if (ledgers.isLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col gap-6 max-w-6xl animate-pulse">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-6 max-w-6xl">
+          <PageHeader
+            title="Expenses &amp; Money"
+            description="Loading this ledger…"
+            titleSize="headline"
+            actions={
+              <div className="flex items-center gap-2.5 animate-pulse">
+                <div className="h-10 w-36 rounded-xl bg-forest-soft/60" />
+                <div className="h-10 w-32 rounded-xl bg-forest-soft/50" />
+              </div>
+            }
+          />
+
+          {/* Submodule Navigation Bar Skeleton */}
+          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)] animate-pulse">
+            <div className="h-10 w-48 rounded-xl bg-secondary/40" />
+            <div className="h-10 w-36 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-44 rounded-xl bg-forest-soft/60" />
+            <div className="h-10 w-36 rounded-xl bg-forest-soft/60" />
+          </div>
+
+          {/* This Period Card Skeleton */}
+          <Card className="p-4 flex flex-wrap items-center justify-between gap-3 animate-pulse">
             <div className="space-y-2">
-              <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
-              <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+              <div className="h-6 w-32 rounded-lg bg-forest-soft/70" />
+              <div className="h-4 w-56 rounded bg-forest-soft/50" />
             </div>
-            <div className="h-10 w-32 rounded-xl bg-forest-soft/50" />
-          </div>
+            <div className="flex gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
+              <div className="h-8 w-28 rounded-xl bg-surface" />
+              <div className="h-8 w-28 rounded-xl bg-forest-soft/40" />
+              <div className="h-8 w-28 rounded-xl bg-forest-soft/40" />
+            </div>
+          </Card>
 
-          <div className="h-56 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+          {/* 3 Stat Cards Skeleton (Matches Total Spent / Total Income / Net Outflow 1:1) */}
+          <StatGridSkeleton count={3} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
-            <div className="h-96 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
-          </div>
+          {/* Household Ledger Entries Table Card Skeleton */}
+          <Card className="overflow-hidden p-0 animate-pulse">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
+              <div className="space-y-2">
+                <div className="h-6 w-56 rounded-lg bg-forest-soft/70" />
+                <div className="h-4 w-48 rounded bg-forest-soft/50" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-56 rounded-xl bg-forest-soft/50" />
+                <div className="h-8 w-28 rounded-xl bg-forest-soft/50" />
+              </div>
+            </div>
+            <div className="divide-y divide-outline-variant/30 p-5 space-y-4">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="flex items-center justify-between gap-4 pt-3 first:pt-0">
+                  <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                  <div className="h-5 w-48 rounded bg-forest-soft/60" />
+                  <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                  <div className="h-6 w-28 rounded-full bg-forest-soft/50" />
+                  <div className="h-5 w-24 rounded bg-forest-soft/70" />
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </AppLayout>
     );
@@ -652,7 +700,19 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               </div>
             </div>
 
-            {entries.isLoading && <p className="px-5 py-6 text-body-md text-muted">Loading entries…</p>}
+            {entries.isLoading && (
+              <div className="divide-y divide-outline-variant/30 p-5 space-y-4 animate-pulse" aria-busy="true">
+                {[0, 1, 2, 3].map((row) => (
+                  <div key={row} className="flex items-center justify-between gap-4 pt-3 first:pt-0">
+                    <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                    <div className="h-5 w-48 rounded bg-forest-soft/60" />
+                    <div className="h-4 w-24 rounded bg-forest-soft/50" />
+                    <div className="h-6 w-28 rounded-full bg-forest-soft/50" />
+                    <div className="h-5 w-24 rounded bg-forest-soft/70" />
+                  </div>
+                ))}
+              </div>
+            )}
             {entries.isError && <p className="px-5 py-6 text-body-md text-error">{apiError(entries.error)}</p>}
 
             {entries.isSuccess && entryList.length === 0 && (
@@ -1408,19 +1468,19 @@ function SummaryCard({
     return <QueryError error={error} what="this period's totals" onRetry={onRetry} />;
   }
 
-  if (loading || !summary) {
-    return <StatGridSkeleton count={3} />;
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-headline-sm text-on-surface">This period</h2>
-          <span className="text-label-sm text-muted">
-            {summary.period?.from ?? summary.from} to {summary.period?.to ?? summary.to} · {summary.entry_count}{' '}
-            {summary.entry_count === 1 ? 'entry' : 'entries'} · {currency}
-          </span>
+          {loading || !summary ? (
+            <div className="mt-1.5 h-4 w-56 animate-pulse rounded bg-forest-soft/60" />
+          ) : (
+            <span className="text-label-sm text-muted">
+              {summary.period?.from ?? summary.from} to {summary.period?.to ?? summary.to} · {summary.entry_count}{' '}
+              {summary.entry_count === 1 ? 'entry' : 'entries'} · {currency}
+            </span>
+          )}
         </div>
 
         {/* Period Switcher (Monthly vs Weekly vs Yearly Ledger) */}
@@ -1461,45 +1521,49 @@ function SummaryCard({
         </div>
       </Card>
 
-      {/* 3 Soft UI Stat Cards */}
-      <StatGrid count={3}>
-        <StatCard
-          title="Total Spent"
-          value={formatMoney(summary.expense_minor, currency)}
-          icon="payments"
-          tone="coral"
-          valueClassName="text-tertiary"
-          highlight={
-            <StatHighlight tone="danger">
-              {summary.entry_count} {summary.entry_count === 1 ? 'Entry' : 'Entries'}
-            </StatHighlight>
-          }
-        />
-        <StatCard
-          title="Total Income"
-          value={formatMoney(summary.income_minor, currency)}
-          icon="trending_up"
-          tone="forest"
-          valueClassName="text-secondary"
-          highlight={
-            <StatHighlight tone="success">
-              {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Inflow
-            </StatHighlight>
-          }
-        />
-        <StatCard
-          title={summary.net_minor < 0 ? 'Net Outflow' : 'Net Surplus'}
-          value={formatMoney(summary.net_minor, currency)}
-          icon="account_balance_wallet"
-          tone={summary.net_minor < 0 ? 'coral' : 'sage'}
-          valueClassName={summary.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}
-          highlight={
-            <StatHighlight tone={summary.net_minor < 0 ? 'danger' : 'success'}>
-              {summary.net_minor < 0 ? 'Deficit' : 'Positive Net'}
-            </StatHighlight>
-          }
-        />
-      </StatGrid>
+      {/* 3 Soft UI Stat Cards (or 1:1 matching StatGridSkeleton when loading) */}
+      {loading || !summary ? (
+        <StatGridSkeleton count={3} />
+      ) : (
+        <StatGrid count={3}>
+          <StatCard
+            title="Total Spent"
+            value={formatMoney(summary.expense_minor, currency)}
+            icon="payments"
+            tone="coral"
+            valueClassName="text-tertiary"
+            highlight={
+              <StatHighlight tone="danger">
+                {summary.entry_count} {summary.entry_count === 1 ? 'Entry' : 'Entries'}
+              </StatHighlight>
+            }
+          />
+          <StatCard
+            title="Total Income"
+            value={formatMoney(summary.income_minor, currency)}
+            icon="trending_up"
+            tone="forest"
+            valueClassName="text-secondary"
+            highlight={
+              <StatHighlight tone="success">
+                {periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} Inflow
+              </StatHighlight>
+            }
+          />
+          <StatCard
+            title={summary.net_minor < 0 ? 'Net Outflow' : 'Net Surplus'}
+            value={formatMoney(summary.net_minor, currency)}
+            icon="account_balance_wallet"
+            tone={summary.net_minor < 0 ? 'coral' : 'sage'}
+            valueClassName={summary.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}
+            highlight={
+              <StatHighlight tone={summary.net_minor < 0 ? 'danger' : 'success'}>
+                {summary.net_minor < 0 ? 'Deficit' : 'Positive Net'}
+              </StatHighlight>
+            }
+          />
+        </StatGrid>
+      )}
     </div>
   );
 }
