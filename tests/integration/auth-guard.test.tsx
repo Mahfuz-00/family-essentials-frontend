@@ -49,7 +49,7 @@ describe('route guards', () => {
     renderApp('/dashboard');
 
     expect(
-      await screen.findByRole('heading', { name: "Today's Household Overview" }),
+      await screen.findByRole('heading', { name: "Household Overview" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe('route guards', () => {
 
     // requirePlatformAdmin redirects to '/dashboard', which resolves to the household dashboard.
     expect(
-      await screen.findByRole('heading', { name: "Today's Household Overview" }),
+      await screen.findByRole('heading', { name: "Household Overview" }),
     ).toBeInTheDocument();
   });
 
@@ -93,7 +93,7 @@ describe('route guards', () => {
     renderApp('/admin');
 
     expect(
-      await screen.findByRole('heading', { name: 'Platform Analytics & Global Operations' }),
+      await screen.findByRole('heading', { name: 'Overview & MRR' }),
     ).toBeInTheDocument();
   });
 

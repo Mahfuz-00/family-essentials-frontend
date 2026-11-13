@@ -213,7 +213,7 @@ export function MarketingPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Marketing &amp; Campaign Console"
+          title="Marketing"
           description="Manage promotional coupons, broadcast announcement banners, inbound waitlist leads, and the household referral reward program."
         />
 

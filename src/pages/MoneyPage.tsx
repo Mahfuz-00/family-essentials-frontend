@@ -118,7 +118,7 @@ export function MoneyPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          title="Household Money &amp; Budgets"
+          title="Expenses &amp; Money"
           description="What the household has spent and taken in, held in shared ledgers with separate balances and budget limits."
           titleSize="headline"
           actions={
@@ -148,9 +148,9 @@ export function MoneyPage() {
         )}
 
         {list.length > 1 && (
-          <section aria-label="Your ledgers" className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <section aria-label="Your ledgers" className="grid grid-cols-1 gap-4 xl:grid-cols-2 items-stretch">
             {list.map((item) => (
-              <Card key={item.id} className="flex flex-col gap-4 p-5">
+              <Card key={item.id} className="flex flex-col justify-between gap-4 p-5 h-full w-full">
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary">

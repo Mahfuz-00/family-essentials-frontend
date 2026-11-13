@@ -139,7 +139,7 @@ export function DashboardPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Page Header as Single Unified Command Hub */}
         <PageHeader
-          title="Household Activities Hub"
+          title="Activities Hub"
           description={`Daily task coordination for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
           actions={
             <div className="flex flex-wrap items-center gap-2.5">
@@ -180,7 +180,7 @@ export function DashboardPage() {
         {/* -------------------------------------------------------------------
             ROW 1: Top Operational Pulse Strip (Summary of Software Metrics)
         -------------------------------------------------------------------- */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
           {board.isLoading || essentialsQuery.isLoading || placesQuery.isLoading || ledgersQuery.isLoading ? (
             <>
               <SkeletonCard />
@@ -191,118 +191,126 @@ export function DashboardPage() {
           ) : (
             <>
               {/* Metric 1: Active Errands & Chores */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex flex-col min-w-0 flex-1 pr-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                      Active Errands & Tasks
-                    </span>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                        {totalOpenCount}
+              <Link to="/requests" className="group flex flex-col h-full w-full">
+                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
+                        Active Errands & Tasks
                       </span>
-                      {overdueCount > 0 ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
+                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                          {totalOpenCount}
+                        </span>
+                        {overdueCount > 0 ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
+                            </span>
+                            {overdueCount} Overdue
                           </span>
-                          {overdueCount} Overdue
-                        </span>
-                      ) : (
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                          {dueTodayCount} Due Today
-                        </span>
-                      )}
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                            {dueTodayCount} Due Today
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
-                      {completedTodayCount} completed today
-                    </span>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                      <Icon name="view_kanban" className="text-[22px]" />
+                    </div>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="view_kanban" className="text-[22px]" />
-                  </div>
+                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+                    {completedTodayCount} completed today
+                  </span>
                 </div>
               </Link>
 
               {/* Metric 2: Pantry & Safety Stock */}
-              <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex flex-col min-w-0 flex-1 pr-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                      Pantry & Staples
-                    </span>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                        {essentialsSummary.total}
+              <Link to="/requests" className="group flex flex-col h-full w-full">
+                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
+                        Pantry & Staples
                       </span>
-                      {essentialsSummary.due > 0 ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                          {essentialsSummary.due} Low / Due
+                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                          {essentialsSummary.total}
                         </span>
-                      ) : (
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                          Well Stocked
-                        </span>
-                      )}
+                        {essentialsSummary.due > 0 ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                            {essentialsSummary.due} Low / Due
+                          </span>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                            Well Stocked
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
-                      {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
-                    </span>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                      <Icon name="inventory_2" className="text-[22px]" />
+                    </div>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="inventory_2" className="text-[22px]" />
-                  </div>
+                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+                    {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
+                  </span>
                 </div>
               </Link>
 
               {/* Metric 3: Saved Stores & Geofences */}
-              <Link to="/places" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex flex-col min-w-0 flex-1 pr-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                      Saved Stores & Geofences
-                    </span>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                        {places.length}
+              <Link to="/places" className="group flex flex-col h-full w-full">
+                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
+                        Saved Stores & Geofences
                       </span>
-                      <span className="inline-flex shrink-0 items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
-                        Active Bounds
-                      </span>
+                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                          {places.length}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
+                          Active Bounds
+                        </span>
+                      </div>
                     </div>
-                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
-                      Arrival triggers & store routing
-                    </span>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                      <Icon name="pin_drop" className="text-[22px]" />
+                    </div>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="pin_drop" className="text-[22px]" />
-                  </div>
+                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+                    Arrival triggers & store routing
+                  </span>
                 </div>
               </Link>
 
               {/* Metric 4: Shared Household Ledgers */}
-              <Link to="/money" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex flex-col min-w-0 flex-1 pr-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                      Shared Ledgers & Budget
-                    </span>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                        {ledgers.length}
+              <Link to="/money" className="group flex flex-col h-full w-full">
+                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
+                        Shared Ledgers & Budget
                       </span>
-                      <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                        Active
-                      </span>
+                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                          {ledgers.length}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                          Active
+                        </span>
+                      </div>
                     </div>
-                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
-                      Domestic expenses & shared totals
-                    </span>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                      <Icon name="account_balance_wallet" className="text-[22px]" />
+                    </div>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="account_balance_wallet" className="text-[22px]" />
-                  </div>
+                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+                    Domestic expenses & shared totals
+                  </span>
                 </div>
               </Link>
             </>

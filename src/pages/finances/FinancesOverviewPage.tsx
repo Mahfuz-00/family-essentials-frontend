@@ -21,7 +21,7 @@ export function FinancesOverviewPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Household Financial Overview"
+          title="Financial Health"
           description="Holistic tracking of household net worth, assets, mortgages, loans, goals, and upcoming taxes."
           titleSize="headline"
         />
@@ -75,9 +75,9 @@ export function FinancesOverviewPage() {
             </Card>
 
             {/* Assets & Liabilities Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
               {/* Assets Card */}
-              <Card className="p-5 flex flex-col justify-between">
+              <Card className="p-5 flex flex-col justify-between h-full w-full">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2.5">
@@ -129,7 +129,7 @@ export function FinancesOverviewPage() {
               </Card>
 
               {/* Liabilities Card */}
-              <Card className="p-5 flex flex-col justify-between">
+              <Card className="p-5 flex flex-col justify-between h-full w-full">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2.5">
@@ -182,9 +182,9 @@ export function FinancesOverviewPage() {
             </div>
 
             {/* Goals & Taxes Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
               {/* Financial Goals Overview */}
-              <Card className="p-5 flex flex-col justify-between">
+              <Card className="p-5 flex flex-col justify-between h-full w-full">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export function FinancesOverviewPage() {
               </Card>
 
               {/* Taxes Overview */}
-              <Card className="p-5 flex flex-col justify-between">
+              <Card className="p-5 flex flex-col justify-between h-full w-full">
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">

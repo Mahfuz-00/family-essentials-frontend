@@ -30,7 +30,7 @@ describe('roles & permissions module', () => {
     renderApp('/members/roles');
 
     expect(
-      await screen.findByRole('heading', { name: 'Roles & Permissions' }),
+      await screen.findByRole('heading', { name: 'Roles & Access' }),
     ).toBeInTheDocument();
 
     // Comes from /v1/tenant/roles, not a hardcoded table in the component.

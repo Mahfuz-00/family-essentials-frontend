@@ -153,7 +153,7 @@ export function RefundPolicyPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Refund Policy &amp; Transactions"
+          title="Refunds"
           description="Enforce household refund terms, review disputed charges, issue partial credits, and maintain tenant satisfaction."
         />
 

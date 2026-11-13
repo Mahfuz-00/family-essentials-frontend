@@ -119,7 +119,7 @@ export function AdminBillingPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-7xl">
         <PageHeader
-          title="Billing, Invoices &amp; Cash Settlements"
+          title="Invoices"
           description="Approve in-person cash payments, track subscription revenue, and manage household billing transactions across the platform."
           actions={
             <Link to="/admin/payment-gateways">

@@ -60,7 +60,7 @@ describe('platform feedback inbox', () => {
   it('gathers reports from every household with what triage needs', async () => {
     renderApp('/admin/feedback');
 
-    expect(await screen.findByRole('heading', { name: 'Feedback inbox' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'User Feedback' })).toBeInTheDocument();
 
     // Summary tiles.
     expect(screen.getByText('Critical open')).toBeInTheDocument();

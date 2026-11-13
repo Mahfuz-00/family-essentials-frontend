@@ -281,7 +281,7 @@ export function BillingPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          title="Billing &amp; Subscription Portal"
+          title="Billing &amp; Plans"
           description="Your household plan, seat allocation, usage quotas, and official downloadable payment invoices."
           actions={
             <Button
@@ -399,11 +399,11 @@ export function BillingPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
                     {usage.map((meter) => (
                       <div
                         key={meter.label}
-                        className="flex flex-col gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
+                        className="flex flex-col justify-between h-full w-full gap-2 rounded-2xl border border-[rgba(43,45,66,0.04)] bg-canvas p-4"
                       >
                         <span className="flex items-center justify-between">
                           <span className="text-label-sm text-muted">{meter.label}</span>
@@ -440,7 +440,7 @@ export function BillingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
                 {plans.map((tier) => {
                   const isCurrent = tier.key === active?.subscription_tier;
                   const details = planFeaturePoints[tier.key] ?? {
@@ -451,7 +451,7 @@ export function BillingPage() {
                   return (
                     <Card
                       key={tier.key}
-                      className={`flex flex-col gap-4 p-5 ${
+                      className={`flex flex-col justify-between h-full w-full gap-4 p-5 ${
                         isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
                       }`}
                     >

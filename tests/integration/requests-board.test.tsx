@@ -24,7 +24,7 @@ async function openBoard() {
   renderApp('/requests');
 
   expect(
-    await screen.findByRole('heading', { name: 'Household Kanban & Errand Hub' }),
+    await screen.findByRole('heading', { name: 'Tasks & Errands' }),
   ).toBeInTheDocument();
 
   await screen.findByRole('heading', { name: 'Overdue' });
@@ -48,7 +48,7 @@ describe('household kanban', () => {
   it('opens the create form from the shell header', async () => {
     renderApp('/requests');
 
-    await screen.findByRole('heading', { name: 'Household Kanban & Errand Hub' });
+    await screen.findByRole('heading', { name: 'Tasks & Errands' });
 
     // This button used to be a link to /requests — a no-op from /requests itself.
     await userEvent.click(screen.getByRole('button', { name: 'Add Request' }));

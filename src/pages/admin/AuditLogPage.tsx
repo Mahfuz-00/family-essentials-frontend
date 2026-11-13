@@ -154,7 +154,7 @@ export function AuditLogPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Global Audit & Security Log Explorer"
+          title="Audit Logs"
           description="Every privileged and security-relevant action, written to an append-only platform ledger."
           actions={
             <>

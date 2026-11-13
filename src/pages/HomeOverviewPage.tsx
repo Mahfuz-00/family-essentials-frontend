@@ -160,7 +160,7 @@ export function HomeOverviewPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
           <div>
             <h1 className="text-display-sm font-black text-on-surface tracking-tight">
-              Today's Household Overview
+              Household Overview
             </h1>
             <p className="text-body-md text-muted mt-1">
               Domestic logistics, shared ledgers, and household wealth in one place.
@@ -185,9 +185,9 @@ export function HomeOverviewPage() {
         </div>
 
         {/* 1. Household Overview Summary Pulse Cards matching software UI */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to="/finances/overview" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          <Link to="/finances/overview" className="group flex flex-col h-full w-full">
+            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
               <div className="flex flex-col min-w-0 flex-1 pr-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Shared Ledgers &amp; Budget
@@ -210,8 +210,8 @@ export function HomeOverviewPage() {
             </div>
           </Link>
 
-          <Link to="/requests" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+          <Link to="/requests" className="group flex flex-col h-full w-full">
+            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
               <div className="flex flex-col min-w-0 flex-1 pr-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Active Errands &amp; Tasks
@@ -244,8 +244,8 @@ export function HomeOverviewPage() {
             </div>
           </Link>
 
-          <Link to="/places" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+          <Link to="/places" className="group flex flex-col h-full w-full">
+            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
               <div className="flex flex-col min-w-0 flex-1 pr-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Saved Stores &amp; Geofences
@@ -268,8 +268,8 @@ export function HomeOverviewPage() {
             </div>
           </Link>
 
-          <Link to="/pantry" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+          <Link to="/pantry" className="group flex flex-col h-full w-full">
+            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
               <div className="flex flex-col min-w-0 flex-1 pr-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Standing Chores

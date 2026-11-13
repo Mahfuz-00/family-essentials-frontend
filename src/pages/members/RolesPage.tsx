@@ -101,7 +101,7 @@ export function RolesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Roles & Permissions"
+          title="Roles & Access"
           description="What each household role may do, and who holds which role."
           titleSize="headline"
         />
@@ -133,7 +133,7 @@ export function RolesPage() {
         {data && (
           <section
             aria-label="Role catalogue"
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch"
           >
             {(data?.roles ?? []).map((role) => {
               const roleMembers = memberList.filter((m) => m.role === role.key);
@@ -141,7 +141,7 @@ export function RolesPage() {
               return (
                 <Card
                   key={role.key}
-                  className="flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2"
+                  className="flex flex-col justify-between h-full w-full gap-3 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h2 className="text-title-md font-bold text-on-surface">{label}</h2>

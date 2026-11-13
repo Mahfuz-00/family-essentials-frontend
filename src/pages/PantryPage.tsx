@@ -296,18 +296,18 @@ export function PantryPage() {
       <AppLayout>
         <div className="flex flex-col gap-6">
           <PageHeader
-            title="Pantry & Essentials"
+            title="Pantry Inventory"
             description="Track household stock levels, projected restock costs, and historic grocery spending."
             titleSize="headline"
           />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </div>
           <div className="h-14 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 animate-pulse" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 items-stretch">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <SkeletonCard key={i} />
             ))}
@@ -321,7 +321,7 @@ export function PantryPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Pantry & Essentials"
+          title="Pantry Inventory"
           description="Track household stock levels, projected restock costs, and historic grocery spending."
           titleSize="headline"
           actions={
@@ -336,73 +336,81 @@ export function PantryPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
 
         {/* 4 Standard Executive Pulse Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex flex-col min-w-0 flex-1 pr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Total Pantry Spent</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-secondary truncate max-w-full">
-                  {formatMoney(summary.total_spent_minor, currency)}
-                </span>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Total Pantry Spent</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-secondary truncate max-w-full">
+                    {formatMoney(summary.total_spent_minor, currency)}
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Historical restocking expenses</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                <Icon name="payments" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-              <Icon name="payments" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Historical restocking expenses</span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex flex-col min-w-0 flex-1 pr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Projected Restock Cost</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                  {formatMoney(summary.projected_restock_minor, currency)}
-                </span>
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Projected Restock Cost</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                    {formatMoney(summary.projected_restock_minor, currency)}
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Estimated budget to fill targets</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-error shadow-xs">
+                <Icon name="trending_up" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-error shadow-xs">
-              <Icon name="trending_up" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Estimated budget to fill targets</span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex flex-col min-w-0 flex-1 pr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Low Stock Alerts</span>
-              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                  {summary.low_stock_count}
-                </span>
-                {summary.low_stock_count > 0 && (
-                  <Badge tone={summary.out_of_stock_count > 0 ? 'danger' : 'warning'}>
-                    {summary.out_of_stock_count > 0 ? `${summary.out_of_stock_count} depleted` : 'Needs reorder'}
-                  </Badge>
-                )}
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Low Stock Alerts</span>
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                    {summary.low_stock_count}
+                  </span>
+                  {summary.low_stock_count > 0 && (
+                    <Badge tone={summary.out_of_stock_count > 0 ? 'danger' : 'warning'}>
+                      {summary.out_of_stock_count > 0 ? `${summary.out_of_stock_count} depleted` : 'Needs reorder'}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
-                {summary.out_of_stock_count} out of stock · {summary.low_stock_count} below threshold
-              </span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
+                <Icon name="warning" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
-              <Icon name="warning" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+              {summary.out_of_stock_count} out of stock · {summary.low_stock_count} below threshold
+            </span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex flex-col min-w-0 flex-1 pr-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Tracked Essentials</span>
-              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                  {items.length}
-                </span>
-                <Badge tone="neutral">Active Catalog</Badge>
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Tracked Essentials</span>
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
+                    {items.length}
+                  </span>
+                  <Badge tone="neutral">Active Catalog</Badge>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Categorized domestic inventory</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
+                <Icon name="inventory_2" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
-              <Icon name="inventory_2" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Categorized domestic inventory</span>
           </div>
         </div>
 
@@ -467,14 +475,14 @@ export function PantryPage() {
         )}
 
         {/* Essentials Grid */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 items-stretch">
           {visible.map((item) => {
             const isDepleted = item.current_stock <= 0;
             const isLow = item.is_low_stock;
             const stockPct = Math.min(100, Math.round((item.current_stock / Math.max(1, item.target_stock)) * 100));
 
             return (
-              <Card key={item.id} className="flex flex-col justify-between p-5 border border-outline-variant/30">
+              <Card key={item.id} className="flex flex-col justify-between p-5 border border-outline-variant/30 h-full w-full">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">

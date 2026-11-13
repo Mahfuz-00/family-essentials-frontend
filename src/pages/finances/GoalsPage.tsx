@@ -125,7 +125,7 @@ export function GoalsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Household Financial Goals"
+          title="Savings Goals"
           description="Set and track progress towards family savings targets, emergency funds, and major milestones."
           titleSize="headline"
           actions={
@@ -144,7 +144,7 @@ export function GoalsPage() {
         )}
 
         {goals.isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -160,11 +160,11 @@ export function GoalsPage() {
         )}
 
         {goals.data && goals.data.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
             {goals.data.map((goal) => {
               const isAchieved = goal.status === 'achieved' || goal.progress_percent >= 100;
               return (
-                <Card key={goal.id} className="p-5 flex flex-col justify-between">
+                <Card key={goal.id} className="p-5 flex flex-col justify-between h-full w-full">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div>

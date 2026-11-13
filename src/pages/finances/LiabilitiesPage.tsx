@@ -153,7 +153,7 @@ export function LiabilitiesPage() {
         )}
 
         {liabilities.isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -169,11 +169,11 @@ export function LiabilitiesPage() {
         )}
 
         {liabilities.data && liabilities.data.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
             {liabilities.data.map((item) => {
               const isPaid = item.status === 'paid_off' || item.remaining_balance_minor === 0;
               return (
-                <Card key={item.id} className="p-5 flex flex-col justify-between">
+                <Card key={item.id} className="p-5 flex flex-col justify-between h-full w-full">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>

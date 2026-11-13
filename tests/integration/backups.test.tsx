@@ -38,7 +38,7 @@ describe('backups & recovery console', () => {
     renderApp('/admin/backups');
 
     expect(
-      await screen.findByRole('heading', { name: 'Backups & disaster recovery' }),
+      await screen.findByRole('heading', { name: 'Backups' }),
     ).toBeInTheDocument();
 
     expect(await screen.findByText('Recoverable')).toBeInTheDocument();

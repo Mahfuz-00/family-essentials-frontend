@@ -144,7 +144,7 @@ export function SettingsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-4xl">
         <PageHeader
-          title="Household settings"
+          title="Settings"
           description="Your personal profile, how family alerts reach you, and your shared household workspace."
           titleSize="headline"
         />

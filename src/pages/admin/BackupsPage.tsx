@@ -133,7 +133,7 @@ export function BackupsPage() {
               Platform Admin · Operations
             </>
           }
-          title="Backups & disaster recovery"
+          title="Backups"
           description="What has been dumped, whether it can still be restored, and how to bring the platform back."
           actions={
             <Button size="lg" disabled={run.isPending} onClick={() => run.mutate()}>

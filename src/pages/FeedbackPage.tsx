@@ -89,7 +89,7 @@ export function FeedbackPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Help & feedback"
+          title="Help & Feedback"
           description="Report a bug, ask for something, or tell us how it is going. A person reads every one."
           titleSize="headline"
         />

@@ -521,7 +521,7 @@ export function RequestsPage() {
               Household Logistics · Live Sync
             </>
           }
-          title="Household Kanban & Errand Hub"
+          title="Tasks & Errands"
           description="Real-time domestic coordination for your household, synced across every paired device."
           actions={
             <div className="flex flex-wrap items-center gap-2">

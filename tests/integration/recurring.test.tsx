@@ -70,7 +70,7 @@ describe('recurring rules', () => {
   it('lists each rule with its cadence in words, owner, place and state', async () => {
     renderApp('/recurring');
 
-    expect(await screen.findByRole('heading', { name: 'Recurring' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Recurring Tasks' })).toBeInTheDocument();
 
     // The cadence, spelled out, not the raw enum.
     expect(await screen.findByText('Every Thursday')).toBeInTheDocument();

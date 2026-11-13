@@ -230,7 +230,7 @@ export function PlacesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Saved Places & Geofencing"
+          title="Places & Geofences"
           description="The stores, schools, and homes your family visits, each with an automated geofence radius that arms shopping lists on arrival."
           titleSize="headline"
           actions={

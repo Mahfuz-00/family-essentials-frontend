@@ -126,7 +126,7 @@ export function AssetsPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Savings & Investments"
+          title="Assets & Funds"
           description="Portfolio tracking, high-yield savings accounts, retirement funds, and asset growth."
           titleSize="headline"
           actions={
@@ -145,7 +145,7 @@ export function AssetsPage() {
         )}
 
         {assets.isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -161,9 +161,9 @@ export function AssetsPage() {
         )}
 
         {assets.data && assets.data.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
             {assets.data.map((item) => (
-              <Card key={item.id} className="p-5 flex flex-col justify-between">
+              <Card key={item.id} className="p-5 flex flex-col justify-between h-full w-full">
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>

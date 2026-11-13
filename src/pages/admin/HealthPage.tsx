@@ -155,7 +155,7 @@ export function HealthPage() {
               Platform Admin · Operations
             </>
           }
-          title="System health"
+          title="System Health"
           description="Measured checks, queue failures and the operator incident log."
           actions={
             <Button variant="outline" size="lg" onClick={refresh}>

@@ -152,7 +152,7 @@ export function PaymentGatewayConfigPage() {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-7xl">
         <PageHeader
-          title="Payment Gateway Configuration"
+          title="Gateways"
           description="Manage global and regional merchant gateways, test sandbox environments, currency, and offline collection workflows."
         />
 

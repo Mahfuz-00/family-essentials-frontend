@@ -93,7 +93,7 @@ export function EscalationPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Escalation & voice"
+          title="Voice Escalations"
           description="When the household gets called, how often, and what has actually been dialled."
           titleSize="headline"
         />
@@ -103,81 +103,89 @@ export function EscalationPage() {
         )}
 
         {/* Budget */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Calls used today</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                  {quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '0 / 0'}
-                </span>
-                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                  Daily Cap
-                </span>
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Calls used today</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {quota.data ? `${quota.data.used_today} / ${quota.data.daily_budget}` : '0 / 0'}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                    Daily Cap
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Daily household budget</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                <Icon name="ring_volume" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-              <Icon name="ring_volume" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Daily household budget</span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Attempts per item</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                  {quota.data?.max_attempts_per_request ?? 0}
-                </span>
-                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                  Max Limit
-                </span>
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Attempts per item</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {quota.data?.max_attempts_per_request ?? 0}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                    Max Limit
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Then the item waits for a human</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                <Icon name="repeat" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-              <Icon name="repeat" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Then the item waits for a human</span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Cooldown</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                  {quota.data ? `${quota.data.cooldown_minutes}m` : '0m'}
-                </span>
-                <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                  Cooldown
-                </span>
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Cooldown</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {quota.data ? `${quota.data.cooldown_minutes}m` : '0m'}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                    Cooldown
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Between attempts on one item</span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                <Icon name="hourglass_bottom" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-              <Icon name="hourglass_bottom" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Between attempts on one item</span>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Your consent</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
-                  {user?.voice_opt_in ? 'Opted In' : 'Opted Out'}
-                </span>
-                <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold leading-none ${
-                  user?.phone_verified ? 'bg-forest-soft text-success' : 'bg-coral-soft text-error'
-                }`}>
-                  {user?.phone_verified ? 'Verified' : 'Unverified'}
-                </span>
+          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">Your consent</span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {user?.voice_opt_in ? 'Opted In' : 'Opted Out'}
+                  </span>
+                  <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold leading-none ${
+                    user?.phone_verified ? 'bg-forest-soft text-success' : 'bg-coral-soft text-error'
+                  }`}>
+                    {user?.phone_verified ? 'Verified' : 'Unverified'}
+                  </span>
+                </div>
               </div>
-              <span className="mt-1.5 text-xs text-muted">
-                {user?.phone_verified ? 'Direct voice notifications active' : 'Verify phone number to opt in'}
-              </span>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                <Icon name="verified_user" className="text-[22px]" />
+              </div>
             </div>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-              <Icon name="verified_user" className="text-[22px]" />
-            </div>
+            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
+              {user?.phone_verified ? 'Direct voice notifications active' : 'Verify phone number to opt in'}
+            </span>
           </div>
         </section>
 
