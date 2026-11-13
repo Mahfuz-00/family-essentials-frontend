@@ -248,12 +248,15 @@ export function BillingPage() {
     // Card payments go through the configured provider's hosted checkout. The
     // invoice stays pending until its signed webhook settles it. When the
     // platform has no provider keys, keep the local simulated flow.
-    if (paymentMethod === 'card' && paymentMethodsQuery.data?.active_gateway === 'stripe') {
+    const activeGateway = paymentMethodsQuery.data?.active_gateway;
+    const hostedGateways = ['stripe', 'paypal'];
+
+    if (paymentMethod === 'card' && activeGateway && hostedGateways.includes(activeGateway)) {
       try {
         const response = await api.post('/v1/billing/checkout-session', {
           tier: selectedTier,
           billing_period: selectedPeriod,
-          gateway: 'stripe',
+          gateway: activeGateway,
           success_url: `${window.location.origin}/billing?checkout=success`,
           cancel_url: `${window.location.origin}/billing?checkout=cancelled`,
         });
