@@ -11,29 +11,38 @@ export function AboutPage() {
 
   const principles = [
     {
-      title: 'Single Named Ownership',
+      title: 'One Named Owner',
       description:
-        'When everyone owns an errand, no one does. We eliminate bystander apathy by enforcing exactly one responsible owner per task.',
+        'Every request belongs to exactly one household member. It moves through explicit states — accepted, started, completed — so nobody has to ask who is handling it.',
       icon: 'person_check',
     },
     {
-      title: 'Context Beats Arbitrary Timers',
+      title: 'Location Beats a Timer',
       description:
-        'A reminder at 5:00 PM is useless if you are in a meeting. A reminder when you pull into the grocery store parking lot is indispensable.',
+        'A reminder at 5:00 PM is useless if you are in a meeting. Save the stores you actually visit, and when the app checks your position inside one of them, that store’s open items surface ready to shop.',
       icon: 'pin_drop',
     },
     {
-      title: 'Zero Ads, Zero Data Selling',
+      title: 'Rules Live on the Server',
       description:
-        'Your family’s location beacons, shopping lists, and schedules are strictly confidential. We charge an honest subscription and never monetize your data.',
+        'Plan caps, member roles and household isolation are enforced by the API and by PostgreSQL row-level security — not by the interface. The dashboard cannot grant access the database refuses.',
       icon: 'shield',
     },
     {
-      title: 'Direct One-Tap Phone Calling',
+      title: 'Direct Contact, With Consent',
       description:
-        'Critical errands like urgent medicine refills cannot be left to ignored push alerts. When it matters, one tap dials your partner or family member directly with zero robocalls.',
+        'When an errand is urgent, one tap opens your phone’s own dialer and calls the responsible member. Voice escalation is opt-in per member and respects the household quiet window.',
       icon: 'phone',
     },
+  ];
+
+  const builtFeatures = [
+    'Assignable errands with item lists and asked-vs-got quantities',
+    'Saved stores, geofenced arrival checklists and recurring rules',
+    'Pantry inventory with restock buffers and auto-generated errands',
+    'Shared ledgers with budgets, roles and receipt OCR scanning',
+    'Goals, loans, assets and tax tracking in a household finances suite',
+    'Roles, invitations, audit history, calendar feed and data export',
   ];
 
   return (
@@ -43,15 +52,15 @@ export function AboutPage() {
         <div className="text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-secondary/20 bg-forest-soft px-3 py-1 text-xs font-semibold text-secondary">
             <span className="h-2 w-2 rounded-full bg-secondary" />
-            <span>Our Founding Mission</span>
+            <span>Our Mission</span>
           </div>
 
           <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-on-surface">
-            Enterprise-Grade Logistics for the Most Important Organization on Earth: Your Family
+            Calm, Accountable Logistics for the Households That Keep Everything Else Running
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
-            Businesses spend millions on ERP systems, Jira, and Slack to coordinate simple work projects. Yet modern families juggle careers, school schedules, grocery runs, and elder care using fragmented WhatsApp chats, crumpled receipts, and sticky notes. We built Family Essentials to fix that.
+            Family Essentials is a household logistics system. It gives errands, recurring staples, store runs, budgets and family finances one shared board — with a single owner per task, so nothing depends on someone remembering.
           </p>
         </div>
 
@@ -59,26 +68,52 @@ export function AboutPage() {
         <section className="mt-12 rounded-3xl bg-surface border border-outline-variant/30 p-6 sm:p-10">
           <div className="max-w-3xl mx-auto">
             <span className="text-xs font-bold uppercase tracking-wider text-secondary">
-              The Genesis
+              Why We Built It
             </span>
             <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
-              Why We Rejected the Typical "Chore App" Playbook
+              Household Work Rarely Fails Because Nobody Cares
             </h2>
 
             <div className="mt-5 flex flex-col gap-3.5 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
               <p>
-                In 2024, our founders—two software engineers with five young kids between them—realized that the primary source of domestic fatigue was not the chores themselves, but the <em>invisible cognitive overhead</em> of remembering, reminding, and renegotiating them.
+                It fails because a request lives in a group chat, has no owner, and depends on somebody remembering at the right moment. The cognitive overhead of tracking, reminding and renegotiating is the real burden — not the errand itself.
               </p>
               <p>
-                Existing apps either gamified chores with digital stars for toddlers or acted as glorified note pads with no concept of physical store locations, single-person ownership, or urgent escalation.
+                Family Essentials takes the opposite approach. A request becomes a record with one assignee, a due time, a priority and a saved place. It moves through explicit states, and the household board shows the truth without anyone asking for an update.
               </p>
               <p>
-                We asked ourselves: <strong>What if a household ran on the same calm, asynchronous, decoupled architecture that powers modern high-reliability engineering teams?</strong>
+                Around that core we built the rest of household logistics: recurring staples that spawn before they run out, a pantry that tracks what is actually at home, ledgers with budgets and receipt scanning, and a finances suite for goals, loans, assets and taxes.
               </p>
               <p>
-                The result was Family Essentials: a quiet, reliable operating system that operates in the background, alerts you when you are actually at the store, and gives both partners transparency without the nag.
+                It is deliberately not a medical, clinical or chore-gamification product. It is the domestic logistics a household already has, made explicit, shared and auditable.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* What the product actually does */}
+        <section className="mt-16">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              What’s Inside
+            </span>
+            <h2 className="mt-1 text-xl sm:text-2xl font-bold text-on-surface">
+              One System for the Work a Household Already Does
+            </h2>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-4xl mx-auto">
+            {builtFeatures.map((feature) => (
+              <div
+                key={feature}
+                className="flex items-start gap-3 rounded-2xl border border-outline-variant/30 bg-surface px-4 py-3.5"
+              >
+                <Icon name="check_circle" className="mt-0.5 text-[18px] text-secondary" />
+                <span className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                  {feature}
+                </span>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -114,10 +149,10 @@ export function AboutPage() {
         <section className="mt-16 rounded-3xl bg-secondary px-6 py-10 text-center text-on-secondary shadow-e3 sm:px-12 sm:py-14">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Your Family’s Trust Is Our Entire Business
+              Your Household’s Data Stays in Your Household
             </h2>
             <p className="mt-2.5 text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto leading-relaxed">
-              We operate under strict European GDPR and California CCPA privacy standards. We will never sell, analyze, or license your household coordinates or shopping habits.
+              Every household table runs behind PostgreSQL row-level security: a query without a valid household session returns zero rows. We charge for the product, and we do not sell or broker household data.
             </p>
             <div className="mt-7 flex justify-center">
               {isAuthenticated ? (

@@ -508,7 +508,7 @@ export const FEATURES: FeatureData[] = [
     faqs: [
       {
         question: 'Can one person belong to multiple households?',
-        answer: 'Yes! Co-parents, grandparents, and caregivers can belong to multiple family workspaces and seamlessly switch between them using the top-bar household selector.',
+        answer: 'Yes! Co-parents, grandparents, and other family members can belong to multiple family workspaces and seamlessly switch between them using the top-bar household selector.',
       },
       {
         question: 'What happens if a child clicks on the Billing or Money tabs?',
@@ -638,67 +638,6 @@ export const SOLUTIONS: SolutionData[] = [
       {
         question: 'Does my ex see my personal finances or work schedule?',
         answer: 'Never. Each ledger and household is strictly isolated. They only see the specific shared family ledgers and errands you explicitly create together.',
-      },
-    ],
-  },
-  {
-    slug: 'elder-care',
-    title: 'Multi-Generational & Elder Care',
-    subtitle: 'Support aging parents with medication reminders, automated phone escalations, and respectful independence.',
-    heroTitle: 'Caring for Aging Loved Ones Without Stripping Away Their Dignity',
-    heroDescription:
-      'Balancing your own career and family while ensuring an elderly parent takes their prescriptions and gets groceries can feel overwhelming. Family Essentials offers quiet, fail-safe coordination with voice escalations when it matters most.',
-    icon: 'volunteer_activism',
-    badge: 'Caregivers & Extended Families',
-    audienceDescription:
-      'Ideal for adult children supporting aging parents, multi-generational households, and professional caregivers managing domestic health logistics.',
-    painPoints: [
-      {
-        problem: 'Medication Non-Adherence',
-        impact: 'Missed or delayed prescription refills that put an aging parent’s health at serious risk.',
-      },
-      {
-        problem: 'Constant Check-in Calls That Feel Invasive',
-        impact: 'Calling an elderly parent 5 times a day to ask "Did you pick up your medicine?" feels disrespectful.',
-      },
-      {
-        problem: 'Caregiver Burnout',
-        impact: 'One sibling ends up carrying 90% of the caregiving workload because tasks are not transparently distributed.',
-      },
-    ],
-    solutionFeatures: [
-      {
-        title: 'Automated Voice Escalation',
-        description: 'If a critical prescription task goes overdue, an automated phone call rings through to ensure it isn’t missed.',
-        icon: 'ring_volume',
-      },
-      {
-        title: 'Sibling Task Distribution',
-        description: 'Share doctor appointment transportation, grocery deliveries, and home maintenance across all brothers and sisters.',
-        icon: 'group',
-      },
-      {
-        title: 'Summary Financial Privacy',
-        description: 'Parents can see overall care budget totals without feeling micro-managed or having their personal accounts exposed.',
-        icon: 'visibility',
-      },
-    ],
-    recommendedFeatureSlugs: ['escalation', 'errands', 'roles'],
-    testimonial: {
-      quote:
-        'When my mother was diagnosed with dementia, my brothers and I were constantly stepping on each other’s toes. Family Essentials gave us a calm, structured way to share the caregiving duties.',
-      author: 'Dr. Michael Chen',
-      role: 'Physician & Caregiver for mother (82)',
-      householdSize: 'Extended Family, Toronto, ON',
-    },
-    faqs: [
-      {
-        question: 'Does my elderly parent need to be tech-savvy to use Family Essentials?',
-        answer: 'No. They can interact via simple automated voice phone calls that read out the task, or use our large-font simplified mobile today view.',
-      },
-      {
-        question: 'Can multiple siblings share the administration of the elder care workspace?',
-        answer: 'Yes! Multiple family members can hold Admin or Adult roles to share caregiving coordination equally.',
       },
     ],
   },

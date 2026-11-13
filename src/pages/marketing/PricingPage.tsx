@@ -68,7 +68,7 @@ export function PricingPage() {
     },
     {
       name: 'Multi-Home Estate',
-      tagline: 'For blended families, estates, and elder caregivers.',
+      tagline: 'For blended families, second homes, and shared estates.',
       priceMonthly: 39,
       priceAnnual: 31,
       seats: 'Unlimited members across 3 homes',

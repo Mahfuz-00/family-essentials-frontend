@@ -353,14 +353,6 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          eyebrow={
-            ledger ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-3 py-1 text-label-xs font-bold uppercase tracking-wider text-secondary shadow-[var(--shadow-clay-sm)]">
-                <Icon name="account_balance_wallet" className="text-[14px]" />
-                {ledger.name}
-              </span>
-            ) : undefined
-          }
           title="Expenses &amp; Money"
           description={
             ledger
@@ -425,7 +417,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 }}
               >
                 <Icon name="receipt_long" className="text-[18px]" />
-                Go to Household Budget
+                Go to Expenses &amp; Money
               </Button>
             }
           />
@@ -1258,13 +1250,13 @@ function SummaryCard({
         </div>
 
         {/* Period Switcher (Monthly vs Weekly vs Yearly Ledger) */}
-        <div className="inline-flex rounded-xl bg-surface-container p-1 border border-outline-variant">
+        <div className="inline-flex gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
           <button
             type="button"
             onClick={() => onPeriodChange('monthly')}
-            className={`rounded-lg px-3 py-1.5 text-label-sm font-semibold transition-all ${
+            className={`rounded-xl px-3.5 py-1.5 text-label-sm font-semibold transition-all ${
               periodType === 'monthly'
-                ? 'bg-surface shadow-e1 text-secondary font-bold'
+                ? 'bg-surface shadow-[var(--shadow-clay-sm)] text-secondary font-bold'
                 : 'text-muted hover:text-on-surface'
             }`}
           >
@@ -1273,9 +1265,9 @@ function SummaryCard({
           <button
             type="button"
             onClick={() => onPeriodChange('weekly')}
-            className={`rounded-lg px-3 py-1.5 text-label-sm font-semibold transition-all ${
+            className={`rounded-xl px-3.5 py-1.5 text-label-sm font-semibold transition-all ${
               periodType === 'weekly'
-                ? 'bg-surface shadow-e1 text-secondary font-bold'
+                ? 'bg-surface shadow-[var(--shadow-clay-sm)] text-secondary font-bold'
                 : 'text-muted hover:text-on-surface'
             }`}
           >
@@ -1284,9 +1276,9 @@ function SummaryCard({
           <button
             type="button"
             onClick={() => onPeriodChange('yearly')}
-            className={`rounded-lg px-3 py-1.5 text-label-sm font-semibold transition-all ${
+            className={`rounded-xl px-3.5 py-1.5 text-label-sm font-semibold transition-all ${
               periodType === 'yearly'
-                ? 'bg-surface shadow-e1 text-secondary font-bold'
+                ? 'bg-surface shadow-[var(--shadow-clay-sm)] text-secondary font-bold'
                 : 'text-muted hover:text-on-surface'
             }`}
           >
@@ -1296,11 +1288,11 @@ function SummaryCard({
       </div>
 
       {/* 3 Metric Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {totals.map((total) => (
-          <div key={total.label} className="flex flex-col gap-1 rounded-2xl bg-canvas p-4 border border-outline-variant/40">
-            <span className="text-label-sm uppercase tracking-wider text-muted font-medium">{total.label}</span>
-            <span className={`text-display-lg font-bold ${total.text}`}>{total.value}</span>
+          <div key={total.label} className="flex flex-col gap-1.5 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]">
+            <span className="text-label-sm uppercase tracking-wider text-muted font-bold">{total.label}</span>
+            <span className={`text-[clamp(1.25rem,1.8vw,1.75rem)] font-extrabold truncate ${total.text}`}>{total.value}</span>
           </div>
         ))}
       </div>

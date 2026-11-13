@@ -95,13 +95,6 @@
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
-  <url>
-    <loc>https://familyessentials.app/solutions/elder-care</loc>
-    <lastmod>2026-11-05</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
   <!-- Auth -->
   <url>
     <loc>https://familyessentials.app/login</loc>
