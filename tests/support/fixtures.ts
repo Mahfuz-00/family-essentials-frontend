@@ -158,7 +158,7 @@ export function roleCatalogue(overrides: Partial<TenantRoleCatalogue> = {}): Ten
   return {
     can_manage_roles: true,
     roles: [
-      { key: 'tenant_admin', label: 'Tenant admin', detail: 'Full control', member_count: 1, can_be_granted: true },
+      { key: 'tenant_admin', label: 'Household admin', detail: 'Full control', member_count: 1, can_be_granted: true },
       { key: 'co_admin', label: 'Co-admin', detail: 'Runs the household', member_count: 0, can_be_granted: true },
       { key: 'member', label: 'Household member', detail: 'Creates and completes', member_count: 1, can_be_granted: true },
       { key: 'junior', label: 'Junior', detail: 'Own requests only', member_count: 0, can_be_granted: true },

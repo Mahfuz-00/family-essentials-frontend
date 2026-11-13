@@ -90,7 +90,7 @@ export function RolesPage() {
 
         {!canManage && data && (
           <Alert tone="info">
-            You can see the household's permissions, but only a tenant admin can change a role.
+            You can see the household's permissions, but only a household admin can change a role.
           </Alert>
         )}
 
@@ -166,7 +166,7 @@ export function RolesPage() {
           <h2 className="text-headline-sm text-on-surface">Role assignment</h2>
           <p className="text-body-sm text-muted">
             {canManage
-              ? 'You cannot change your own role, and a household always keeps at least one tenant admin.'
+              ? 'You cannot change your own role, and a household always keeps at least one household admin.'
               : 'Read-only for your role.'}
           </p>
 

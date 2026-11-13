@@ -46,7 +46,7 @@ describe('roles & permissions module', () => {
     // first card: the region renders before the catalogue query resolves.
     const catalogue = within(await screen.findByRole('region', { name: 'Role catalogue' }));
 
-    expect(await catalogue.findByText('Tenant admin')).toBeInTheDocument();
+    expect(await catalogue.findByText('Household admin')).toBeInTheDocument();
     expect(catalogue.getByText('Household member')).toBeInTheDocument();
     expect(catalogue.getByText('Co-admin')).toBeInTheDocument();
     expect(catalogue.getByText('Junior')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('roles & permissions module', () => {
 
     renderApp('/members/roles');
 
-    expect(await screen.findByText(/only a tenant admin can change a role/i)).toBeInTheDocument();
+    expect(await screen.findByText(/only a household admin can change a role/i)).toBeInTheDocument();
     expect(screen.queryByLabelText('Role for Sarah Rahman')).not.toBeInTheDocument();
   });
 });

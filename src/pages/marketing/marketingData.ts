@@ -469,7 +469,7 @@ export const FEATURES: FeatureData[] = [
     capabilities: [
       {
         title: 'Role-Based Access Control (RBAC)',
-        description: 'Assign Tenant Admin, Adult Member, Teen, or Child permissions to control who can view finances, invite members, or delete tasks.',
+        description: 'Assign Household Admin, Adult Member, Teen, or Child permissions to control who can view finances, invite members, or delete tasks.',
         icon: 'manage_accounts',
       },
       {
@@ -492,7 +492,7 @@ export const FEATURES: FeatureData[] = [
       {
         step: '01',
         title: 'Set Up Your Family Workspace',
-        description: 'Choose your household name and automatically receive Tenant Admin credentials with full governance control.',
+        description: 'Choose your household name and automatically receive Household Admin credentials with full governance control.',
       },
       {
         step: '02',

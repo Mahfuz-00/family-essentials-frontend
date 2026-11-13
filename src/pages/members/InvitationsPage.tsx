@@ -171,7 +171,7 @@ export function InvitationsPage() {
               </div>
               {catalogue.data && !catalogue.data.can_manage_roles && (
                 <p className="text-body-sm text-muted">
-                  Admin roles are granted by the tenant admin only.
+                  Admin roles are granted by the household admin only.
                 </p>
               )}
             </fieldset>
@@ -245,7 +245,7 @@ export function InvitationsPage() {
                         {invitation.email ?? invitation.phone}
                       </span>
                       <span className="text-body-sm text-muted">
-                        {invitation.role === 'tenant_admin' ? 'Tenant admin' : invitation.role} ·
+                        {invitation.role === 'tenant_admin' ? 'Household admin' : invitation.role} ·
                         sent {new Date(invitation.created_at).toLocaleDateString()}
                       </span>
                     </span>

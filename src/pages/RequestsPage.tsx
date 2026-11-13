@@ -1226,19 +1226,46 @@ export function RequestsPage() {
                 {fulfillItems.map((item, idx) => (
                   <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-2.5 border border-outline-variant/60 overflow-hidden">
                     <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-on-surface text-label-md">
-                        <input
-                          type="checkbox"
-                          checked={item.is_picked ?? true}
-                          onChange={(e) => {
-                            const updated = [...fulfillItems];
-                            updated[idx].is_picked = e.target.checked;
-                            setFulfillItems(updated);
-                          }}
-                          className="rounded text-secondary focus:ring-secondary"
-                        />
-                        <span>{item.name}</span>
-                      </label>
+                      {item.quantity_asked !== null && item.quantity_asked !== undefined ? (
+                        <label className="flex items-center gap-2 cursor-pointer font-semibold text-on-surface text-label-md">
+                          <input
+                            type="checkbox"
+                            checked={item.is_picked ?? true}
+                            onChange={(e) => {
+                              const updated = [...fulfillItems];
+                              updated[idx].is_picked = e.target.checked;
+                              setFulfillItems(updated);
+                            }}
+                            className="rounded text-secondary focus:ring-secondary"
+                          />
+                          <span>{item.name}</span>
+                        </label>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-[11px] bg-forest-soft text-secondary px-2 py-0.5 rounded font-bold uppercase tracking-wider">Extra item</span>
+                          <Input
+                            value={item.name}
+                            onChange={(e) => {
+                              const updated = [...fulfillItems];
+                              updated[idx].name = e.target.value;
+                              setFulfillItems(updated);
+                            }}
+                            placeholder="Item name (e.g. Extra Avocado)"
+                            className="h-8 text-sm flex-1 min-w-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = fulfillItems.filter((_, i) => i !== idx);
+                              setFulfillItems(updated);
+                            }}
+                            className="text-muted hover:text-error p-1"
+                            title="Remove extra item"
+                          >
+                            <Icon name="close" className="text-[16px]" />
+                          </button>
+                        </div>
+                      )}
                       {item.quantity_asked && (
                         <span className="text-xs bg-sage-soft text-secondary px-2 py-0.5 rounded-full font-medium">
                           Asked: {item.quantity_asked}
@@ -1260,6 +1287,22 @@ export function RequestsPage() {
                     </div>
                   </div>
                 ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 flex items-center justify-center gap-1.5 text-xs text-secondary border-dashed border-secondary/40 hover:bg-forest-soft/30"
+                  onClick={() => {
+                    setFulfillItems([
+                      ...fulfillItems,
+                      { name: '', quantity_asked: null, quantity_got: '1', is_picked: true },
+                    ]);
+                  }}
+                >
+                  <Icon name="add" className="text-[16px]" />
+                  Add extra grocery / item bought
+                </Button>
               </div>
             </div>
 

@@ -64,7 +64,7 @@ const FAQS: FaqItem[] = [
     category: 'Security & Privacy',
     question: 'Can kids access household billing or financial ledgers?',
     answer:
-      'No. We offer four distinct role tiers: Tenant Admin, Adult, Teen, and Child. Non-admin members are prevented from accessing billing, and Teen/Child roles can be restricted to view task checklists only.',
+      'No. We offer four distinct role tiers: Household Admin, Adult, Teen, and Child. Non-admin members are prevented from accessing billing, and Teen/Child roles can be restricted to view task checklists only.',
   },
 ];
 
