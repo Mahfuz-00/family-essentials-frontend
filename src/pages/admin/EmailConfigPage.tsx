@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonForm } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import type { EmailSettings } from '@/types';
@@ -89,7 +90,12 @@ export function EmailConfigPage() {
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {emailQuery.isLoading && <p className="text-body-md text-muted">Loading settings…</p>}
+        {emailQuery.isLoading && (
+          <div className="flex flex-col gap-6">
+            <SkeletonForm fields={6} />
+            <SkeletonForm fields={4} />
+          </div>
+        )}
 
         {currentSettings && (
           <div className="flex flex-col gap-6">

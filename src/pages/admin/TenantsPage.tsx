@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { plans, planFor } from '@/lib/plans';
@@ -216,17 +217,19 @@ export function TenantsPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
 
         <section className="grid grid-cols-2 gap-3.5 md:grid-cols-3 lg:grid-cols-5">
-          {kpis.map((kpi) => (
-            <Card key={kpi.label} className="flex flex-col gap-2 p-4">
-              <span className="flex items-center justify-between">
-                <span className="text-body-sm text-muted">{kpi.label}</span>
-                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.tone}`}>
-                  <Icon name={kpi.icon} className="text-[18px]" />
-                </span>
-              </span>
-              <span className="text-headline-md font-bold text-on-surface">{kpi.value}</span>
-            </Card>
-          ))}
+          {metrics.isLoading
+            ? Array.from({ length: kpis.length }).map((_, index) => <SkeletonCard key={index} />)
+            : kpis.map((kpi) => (
+                <Card key={kpi.label} className="flex flex-col gap-2 p-4">
+                  <span className="flex items-center justify-between">
+                    <span className="text-body-sm text-muted">{kpi.label}</span>
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.tone}`}>
+                      <Icon name={kpi.icon} className="text-[18px]" />
+                    </span>
+                  </span>
+                  <span className="text-headline-md font-bold text-on-surface">{kpi.value}</span>
+                </Card>
+              ))}
         </section>
 
         {/* Toolbar */}
@@ -319,7 +322,7 @@ export function TenantsPage() {
           </div>
         </Card>
 
-        {tenants.isLoading && <p className="text-body-md text-muted">Loading tenants…</p>}
+        {tenants.isLoading && <SkeletonTable rows={6} columns={7} />}
         {tenants.isError && <Alert>{apiError(tenants.error)}</Alert>}
 
         {tenants.isSuccess && list.length === 0 && (

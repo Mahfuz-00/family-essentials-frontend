@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonForm } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 
@@ -138,6 +139,14 @@ export function AdminProfilePage() {
           description="Manage root administrator account details, security credentials, contact preferences, and access permissions."
         />
 
+        {profileQuery.isLoading ? (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <SkeletonForm fields={6} />
+            </div>
+            <SkeletonForm fields={2} />
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main Credentials Form */}
           <div className="flex flex-col gap-6 lg:col-span-2">
@@ -330,6 +339,7 @@ export function AdminProfilePage() {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </AppLayout>
   );

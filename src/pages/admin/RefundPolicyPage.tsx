@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonTable } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -372,7 +373,7 @@ export function RefundPolicyPage() {
               </Button>
             </Card>
 
-            {refundsQuery.isLoading && <p className="text-body-md text-muted">Loading refunds…</p>}
+            {refundsQuery.isLoading && <SkeletonTable rows={5} columns={6} />}
 
             {list.length === 0 && !refundsQuery.isLoading && (
               <EmptyState

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonPanel, SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { plans, planFor } from '@/lib/plans';
@@ -128,10 +129,11 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
         {error && <Alert tone="error">{error}</Alert>}
 
         {tenantQuery.isLoading && (
-          <Card className="flex flex-col items-center justify-center py-16">
-            <Icon name="sync" className="animate-spin text-[32px] text-secondary" />
-            <p className="mt-3 text-body-md text-muted">Loading household records from server…</p>
-          </Card>
+          <div className="flex flex-col gap-5">
+            <SkeletonPanel className="h-28" />
+            <SkeletonPanel className="h-40" />
+            <SkeletonTable rows={5} columns={4} />
+          </div>
         )}
 
         {tenantQuery.isError && (

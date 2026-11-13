@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { PlatformBillingInvoice } from '@/types';
@@ -329,7 +330,7 @@ export function AdminBillingPage() {
           </div>
 
           {billingQuery.isLoading ? (
-            <p className="text-body-md text-muted py-6 text-center">Loading platform invoices…</p>
+            <SkeletonTable rows={6} columns={7} />
           ) : invoicesList.length === 0 ? (
             <div className="py-12 text-center text-muted">
               <Icon name="receipt_long" className="mx-auto text-[36px] opacity-40 mb-2" />

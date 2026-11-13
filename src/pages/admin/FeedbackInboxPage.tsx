@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import type {
   FeedbackPriority,
@@ -218,7 +218,7 @@ export function PlatformFeedbackPage() {
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
           {/* Queue */}
           <div className="flex flex-col gap-2 xl:col-span-5">
-            {inbox.isLoading && <SkeletonCard />}
+            {inbox.isLoading && <SkeletonList rows={4} />}
 
             {inbox.isSuccess && list.length === 0 && (
               <EmptyState

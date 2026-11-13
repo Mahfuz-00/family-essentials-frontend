@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonForm } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import type { PaymentGatewaySettings } from '@/types';
@@ -159,7 +160,12 @@ export function PaymentGatewayConfigPage() {
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {paymentQuery.isLoading && <p className="text-body-md text-muted">Loading settings…</p>}
+        {paymentQuery.isLoading && (
+          <div className="flex flex-col gap-6">
+            <SkeletonForm fields={4} />
+            <SkeletonForm fields={6} />
+          </div>
+        )}
 
         {currentSettings && (
           <div className="flex flex-col gap-6">
