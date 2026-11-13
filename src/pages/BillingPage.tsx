@@ -249,7 +249,7 @@ export function BillingPage() {
     // invoice stays pending until its signed webhook settles it. When the
     // platform has no provider keys, keep the local simulated flow.
     const activeGateway = paymentMethodsQuery.data?.active_gateway;
-    const hostedGateways = ['stripe', 'paypal', 'razorpay', 'sslcommerz'];
+    const hostedGateways = ['stripe', 'paypal', 'razorpay', 'sslcommerz', 'bkash'];
 
     if (paymentMethod === 'card' && activeGateway && hostedGateways.includes(activeGateway)) {
       try {
