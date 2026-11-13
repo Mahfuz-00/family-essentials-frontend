@@ -6,10 +6,16 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SkeletonCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-[rgba(43,45,66,0.05)] bg-surface p-5 shadow-e1">
-      <Skeleton className="h-3.5 w-28" />
-      <Skeleton className="h-7 w-20" />
-      <Skeleton className="h-3 w-40" />
+    <div className="flex flex-col gap-3 rounded-2xl border border-[rgba(43,45,66,0.08)] bg-surface p-5 shadow-e1">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-32 rounded-lg" />
+        <Skeleton className="h-4 w-12 rounded-full" />
+      </div>
+      <Skeleton className="h-5 w-48 rounded-lg mt-1" />
+      <div className="flex items-center gap-2 mt-2">
+        <Skeleton className="h-6 w-20 rounded-lg" />
+        <Skeleton className="h-6 w-24 rounded-lg" />
+      </div>
     </div>
   );
 }

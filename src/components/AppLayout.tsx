@@ -66,12 +66,13 @@ const householdSections: NavSection[] = [
   {
     title: 'Dashboard',
     items: [
-      { to: '/dashboard', label: 'Dashboard', icon: 'cottage', exact: true },
+      { to: '/dashboard', label: 'Summary & Overview', icon: 'dashboard', exact: true },
     ],
   },
   {
     title: 'Household Activities',
     items: [
+      { to: '/app', label: 'Activities Hub', icon: 'cottage', exact: true },
       { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
       { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
       { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
@@ -194,6 +195,8 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const openAddRequest = useUiStore((state) => state.openAddRequest);
   const active = useTenantStore((state) => state.active);
   const switchTo = useTenantStore((state) => state.switchTo);
+  const searchQuery = useUiStore((state) => state.searchQuery);
+  const setSearchQuery = useUiStore((state) => state.setSearchQuery);
 
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -517,10 +520,29 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               </span>
               <input
                 type="text"
-                placeholder="Type here..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (path !== '/requests') {
+                      navigate({ to: '/requests' });
+                    }
+                  }
+                }}
+                placeholder="Search errands, items, stores..."
                 aria-label="Search"
-                className="h-9 w-44 lg:w-56 rounded-xl border border-outline-variant/40 bg-canvas pl-9 pr-3 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
+                className="h-9 w-44 lg:w-64 rounded-xl border border-outline-variant/40 bg-canvas pl-9 pr-8 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-outline-variant/40 text-on-surface-variant hover:bg-outline-variant text-[10px]"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             {/* Household switcher */}
@@ -545,10 +567,10 @@ export function AppLayout({ children }: { children?: ReactNode }) {
               <button
                 type="button"
                 onClick={startAddRequest}
-                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-secondary px-3.5 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97] sm:px-4"
+                className="sr-only"
+                aria-label="Add Request"
               >
-                <Icon name="add" className="text-[18px]" />
-                <span className="inline">Add Request</span>
+                Add Request
               </button>
             )}
 

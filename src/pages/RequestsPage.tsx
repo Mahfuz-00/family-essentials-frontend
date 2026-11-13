@@ -135,7 +135,14 @@ export function RequestsPage() {
 
   const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
-  const [query, setQuery] = useState('');
+  const globalSearchQuery = useUiStore((state) => state.searchQuery);
+  const setGlobalSearchQuery = useUiStore((state) => state.setSearchQuery);
+  const [query, setQuery] = useState(globalSearchQuery);
+
+  // Sync with global header search query
+  if (globalSearchQuery !== query) {
+    setQuery(globalSearchQuery);
+  }
   const [assignee, setAssignee] = useState('all');
   const [category, setCategory] = useState('all');
   const [store, setStore] = useState('all');
@@ -1573,6 +1580,54 @@ function TaskCard({
             {request.assignee?.name ?? 'Unassigned'}
           </span>
         </span>
+
+        {/* Step Forward / Backward Quick Arrow Controls */}
+        <div className="flex items-center gap-1">
+          {request.status !== 'pending' && request.status !== 'completed' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('accept')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move backward by 1 step"
+            >
+              <Icon name="arrow_back" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'pending' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('accept')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to Accepted"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'accepted' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onAction('start')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to In Progress"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+          {request.status === 'in_progress' && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onFulfill ? onFulfill : () => onAction('complete')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-sage-soft hover:text-secondary disabled:opacity-40"
+              title="Move forward to Completed"
+            >
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </button>
+          )}
+        </div>
 
         {isOpen && (
           <span className="flex items-center gap-1 shrink-0 ml-auto">

@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { AdminLoginPage } from '@/pages/AdminLoginPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { HomeOverviewPage } from '@/pages/HomeOverviewPage';
 import { FeedbackPage } from '@/pages/FeedbackPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -103,7 +104,7 @@ const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
   beforeLoad: requireAuth,
-  component: DashboardPage,
+  component: HomeOverviewPage,
 });
 
 const appRoute = createRoute({
