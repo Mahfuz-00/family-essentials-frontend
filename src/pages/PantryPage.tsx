@@ -77,7 +77,10 @@ export function PantryPage() {
 
   const pantryQuery = useQuery({
     queryKey: ['essentials'],
-    queryFn: async () => (await api.get<{ data: EssentialItem[] }>('/v1/essentials')).data.data,
+    queryFn: async () => {
+      const res = await api.get('/v1/essentials');
+      return res.data;
+    },
   });
 
   const summaryQuery = useQuery({
@@ -99,11 +102,14 @@ export function PantryPage() {
       api.post('/v1/essentials', {
         name: form.name,
         category: form.category,
+        stock_level: Number(form.current_stock),
+        threshold: Number(form.reorder_point),
+        pack_size: form.unit,
+        unit_price_minor: Math.round(parseFloat(form.unit_price || '0') * 100),
         current_stock: Number(form.current_stock),
         reorder_point: Number(form.reorder_point),
         target_stock: Number(form.target_stock),
         unit: form.unit,
-        unit_price_minor: Math.round(parseFloat(form.unit_price || '0') * 100),
       }),
     onSuccess: async () => {
       setForm(emptyForm);
@@ -118,7 +124,9 @@ export function PantryPage() {
   const restockMutation = useMutation({
     mutationFn: async ({ id, quantity, spendMinor }: { id: number; quantity: number; spendMinor: number }) =>
       api.post(`/v1/essentials/${id}/restock`, {
+        quantity,
         quantity_added: quantity,
+        spent_minor: spendMinor,
         spend_amount_minor: spendMinor,
       }),
     onSuccess: async () => {
@@ -140,13 +148,66 @@ export function PantryPage() {
     onError,
   });
 
-  const items = pantryQuery.data ?? [];
-  const summary = summaryQuery.data ?? {
-    low_stock_count: 0,
-    out_of_stock_count: 0,
-    tracked_count: items.length,
-    total_spent_minor: 0,
-    projected_restock_minor: 0,
+  const rawPayload = pantryQuery.data;
+  const rawList: any[] = Array.isArray(rawPayload)
+    ? rawPayload
+    : Array.isArray(rawPayload?.data)
+    ? rawPayload.data
+    : Array.isArray(rawPayload?.data?.data)
+    ? rawPayload.data.data
+    : [];
+
+  const items: EssentialItem[] = useMemo(() => {
+    return rawList.map((raw) => {
+      const current_stock = Number(raw.current_stock ?? raw.stock_level ?? 0);
+      const reorder_point = Number(raw.reorder_point ?? raw.threshold ?? 1);
+      const target_stock = Number(raw.target_stock ?? Math.max(reorder_point * 2, current_stock));
+      const unit = raw.unit ?? raw.pack_size ?? 'items';
+      const is_low_stock = Boolean(raw.is_low_stock ?? raw.is_due ?? (current_stock <= reorder_point));
+
+      return {
+        id: Number(raw.id),
+        tenant_id: Number(raw.tenant_id ?? 1),
+        name: String(raw.name ?? 'Item'),
+        category: String(raw.category ?? 'groceries'),
+        current_stock,
+        reorder_point,
+        target_stock,
+        unit,
+        is_low_stock,
+        unit_price_minor: Number(raw.unit_price_minor ?? 0),
+        last_spent_minor: Number(raw.last_spent_minor ?? 0),
+        total_spent_minor: Number(raw.total_spent_minor ?? 0),
+        projected_restock_minor: Number(raw.projected_restock_minor ?? 0),
+        created_at: String(raw.created_at ?? ''),
+        updated_at: String(raw.updated_at ?? ''),
+      };
+    });
+  }, [rawList]);
+
+  const rawSummary = rawPayload?.summary ?? summaryQuery.data ?? {};
+  const summary: PantrySummary = {
+    low_stock_count:
+      rawSummary.low_stock_count ??
+      rawSummary.due ??
+      rawSummary.safety_stock ??
+      items.filter((item) => item.is_low_stock).length,
+    out_of_stock_count:
+      rawSummary.out_of_stock_count ??
+      items.filter((item) => item.current_stock <= 0).length,
+    tracked_count: rawSummary.tracked_count ?? rawSummary.total ?? items.length,
+    total_spent_minor:
+      rawSummary.total_spent_minor ??
+      items.reduce((acc, item) => acc + (item.total_spent_minor || 0), 0),
+    projected_restock_minor:
+      rawSummary.projected_restock_minor ??
+      items
+        .filter((item) => item.is_low_stock)
+        .reduce(
+          (acc, item) =>
+            acc + Math.max(0, item.target_stock - item.current_stock) * (item.unit_price_minor || 0),
+          0,
+        ),
   };
 
   const visible = useMemo(

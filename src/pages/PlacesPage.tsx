@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -15,7 +14,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
-import type { Place } from '@/types';
+import type { GeofenceEvent, Place } from '@/types';
 
 const categories = ['grocery', 'pharmacy', 'home', 'office', 'school', 'other'];
 
@@ -92,15 +91,66 @@ export function PlacesPage() {
     queryFn: async () => (await api.get<{ data: Place[] }>('/v1/places')).data.data,
   });
 
-  // The boundary-event count lived only in the KPI strip, so the fetch went with
-  // it: the console logs the events, and this page does not.
+  const events = useQuery({
+    queryKey: ['geofence-events'],
+    queryFn: async () => {
+      try {
+        return (await api.get<{ data: GeofenceEvent[] }>('/v1/geofence-events')).data.data;
+      } catch {
+        return [];
+      }
+    },
+  });
+
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['places'] });
+    await queryClient.invalidateQueries({ queryKey: ['geofence-events'] });
   };
 
   const onError = (caught: unknown) => {
     setError(apiError(caught));
     setNotice(null);
+  };
+
+  const report = useMutation({
+    mutationFn: async (coords: { latitude: number; longitude: number }) =>
+      (
+        await api.post<{ transitions: { place_id: number; event: string; distance_meters: number }[] }>(
+          '/v1/geofences/evaluate',
+          coords,
+        )
+      ).data,
+    onSuccess: async (data) => {
+      setError(null);
+      setNotice(
+        data.transitions.length === 0
+          ? 'No boundary changes — position is outside active zones.'
+          : data.transitions
+              .map(
+                (transition) =>
+                  `${transition.event.toUpperCase()} on zone #${transition.place_id} (${transition.distance_meters} m)`,
+              )
+              .join(', '),
+      );
+      await queryClient.invalidateQueries({ queryKey: ['geofence-events'] });
+    },
+    onError,
+  });
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError('This browser does not expose a location API.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        report.mutate({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }),
+      () =>
+        setError('Location permission was denied or unavailable.'),
+    );
   };
 
   const updateRadius = useMutation({
@@ -180,22 +230,33 @@ export function PlacesPage() {
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Saved places"
-          description="The stores and places your family visits, each with the radius that arms its geofence."
+          title="Saved Places & Geofencing"
+          description="The stores, schools, and homes your family visits, each with an automated geofence radius that arms shopping lists on arrival."
           titleSize="headline"
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={useMyLocation}
+                disabled={report.isPending}
+                className="gap-1.5"
+              >
+                <Icon name="gps_fixed" className="text-[18px] text-secondary" />
+                <span>{report.isPending ? 'Locating…' : 'GPS Ping'}</span>
+              </Button>
               <Button
                 variant="ghost"
-                size="lg"
+                size="md"
                 onClick={() => setShowMap(!showMap)}
+                className="gap-1.5"
               >
                 <Icon name={showMap ? 'map' : 'layers'} className="text-[18px]" />
-                {showMap ? 'Hide Map' : 'Show Map'}
+                <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
               </Button>
-              <Button size="lg" onClick={() => setAddOpen(true)}>
+              <Button size="md" onClick={() => setAddOpen(true)} className="gap-1.5">
                 <Icon name="add_location_alt" className="text-[18px]" />
-                Add New Place
+                <span>Add New Place</span>
               </Button>
             </div>
           }
@@ -294,9 +355,21 @@ export function PlacesPage() {
                     >
                       {updateRadius.isPending ? 'Saving...' : 'Save Radius'}
                     </Button>
-                    <Link to="/places/console">
-                      <Button variant="ghost" size="md">Console →</Button>
-                    </Link>
+                    <Button
+                      variant="soft"
+                      size="md"
+                      disabled={report.isPending}
+                      onClick={() =>
+                        report.mutate({
+                          latitude: activePlace.latitude,
+                          longitude: activePlace.longitude,
+                        })
+                      }
+                      title="Simulate entering this geofence zone"
+                    >
+                      <Icon name="directions_walk" className="text-[16px] mr-1" />
+                      Test Arrival
+                    </Button>
                   </div>
                 </div>
               )}
@@ -407,12 +480,6 @@ export function PlacesPage() {
                       <Icon name="location_searching" className="text-[16px] mr-1" />
                       Adjust on Map
                     </Button>
-                    <Link
-                      to="/places/console"
-                      className="text-body-sm font-semibold text-muted hover:text-secondary hover:underline"
-                    >
-                      Console →
-                    </Link>
                   </div>
                   <Button
                     variant="ghost"
@@ -427,6 +494,72 @@ export function PlacesPage() {
               </Card>
             );
           })}
+        </section>
+
+        {/* Live Geofence Boundary Transition Log */}
+        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-5 border border-outline-variant/30 shadow-e1">
+          <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                <Icon name="radar" className="text-[18px]" />
+              </span>
+              <div>
+                <h3 className="text-headline-sm font-bold text-on-surface">Live Geofence Boundary Monitor</h3>
+                <p className="text-body-xs text-muted">Arrivals, departures, and proximity cues logged by household member devices.</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void events.refetch()}
+              disabled={events.isFetching}
+            >
+              <Icon name="refresh" className={`text-[16px] mr-1 ${events.isFetching ? 'animate-spin' : ''}`} />
+              Refresh Events
+            </Button>
+          </div>
+
+          {events.isLoading && <p className="text-body-sm text-muted py-4">Scanning boundary events…</p>}
+
+          {events.isSuccess && (events.data ?? []).length === 0 && (
+            <p className="text-body-sm text-muted py-3">
+              No recent geofence boundary events logged. When family members approach or leave saved zones with mobile geofencing active, transitions will stream here in real time.
+            </p>
+          )}
+
+          {events.isSuccess && (events.data ?? []).length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-outline-variant/20 text-muted">
+                    <th className="pb-2 font-semibold">Event Timestamp</th>
+                    <th className="pb-2 font-semibold">Saved Place / Zone</th>
+                    <th className="pb-2 font-semibold">Transition</th>
+                    <th className="pb-2 font-semibold">Distance Recorded</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10 text-on-surface">
+                  {(events.data ?? []).slice(0, 10).map((evt: any) => {
+                    const placeId = evt.place?.id ?? evt.place_id;
+                    const placeName = list.find((p) => p.id === placeId)?.name ?? evt.place?.name ?? `Zone #${placeId ?? 'unknown'}`;
+                    const isEnter = evt.event?.toLowerCase().includes('enter') || evt.event?.toLowerCase().includes('arrive');
+                    return (
+                      <tr key={evt.id} className="hover:bg-surface-container-low/50">
+                        <td className="py-2.5 font-mono text-muted">{new Date(evt.occurred_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+                        <td className="py-2.5 font-bold text-on-surface">{placeName}</td>
+                        <td className="py-2.5">
+                          <Badge tone={isEnter ? 'success' : 'warning'}>
+                            {evt.event?.toUpperCase() ?? 'TRANSITION'}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 text-muted">{evt.distance_meters !== undefined ? `${evt.distance_meters} m` : 'Near zone'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
 

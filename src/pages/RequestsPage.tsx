@@ -145,7 +145,6 @@ export function RequestsPage() {
   const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
   const globalSearchQuery = useUiStore((state) => state.searchQuery);
-  const setGlobalSearchQuery = useUiStore((state) => state.setSearchQuery);
   const [query, setQuery] = useState(globalSearchQuery);
 
   // Sync with global header search query
@@ -682,9 +681,10 @@ export function RequestsPage() {
         </div>
 
         {/* Filter bar */}
-        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3 shadow-e1 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative min-w-[240px] flex-1">
+        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3.5 shadow-e1 border border-outline-variant/30">
+          {/* Row 1: Search & Assignee Segmented Filter */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="relative w-full lg:max-w-sm shrink-0">
               <Icon
                 name="filter_list"
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
@@ -694,13 +694,23 @@ export function RequestsPage() {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Filter requests, stores, notes…"
                 aria-label="Filter requests"
-                className="h-10 pl-9"
+                className="h-9.5 pl-9 pr-8 text-sm"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface p-1"
+                  aria-label="Clear filter"
+                >
+                  <Icon name="close" className="text-[16px]" />
+                </button>
+              )}
             </div>
 
             {/* Assignee segmented control */}
             <div
-              className="flex flex-wrap items-center gap-1 rounded-xl bg-surface-container-low p-1"
+              className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 overflow-x-auto no-scrollbar"
               role="group"
               aria-label="Filter by assignee"
             >
@@ -729,87 +739,92 @@ export function RequestsPage() {
                 Unassigned
               </Segmented>
             </div>
+          </div>
 
-            <div className="relative">
-              <Icon
-                name="local_grocery_store"
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-primary"
-              />
-              <Select
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                aria-label="Filter by category"
-                className="h-10 w-auto min-w-[170px] pl-9 text-label-md"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {stores.length > 0 && (
+          {/* Row 2: Secondary Dropdown Filters, Columns Scroller & View Switcher */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-outline-variant/15">
+            <div className="flex flex-wrap items-center gap-2.5">
               <div className="relative">
                 <Icon
-                  name="storefront"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-primary"
+                  name="local_grocery_store"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-primary"
                 />
                 <Select
-                  value={store}
-                  onChange={(event) => setStore(event.target.value)}
-                  aria-label="Filter by store"
-                  className="h-10 w-auto min-w-[170px] pl-9 text-label-md"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  aria-label="Filter by category"
+                  className="h-9 w-auto min-w-[155px] pl-8.5 pr-8 text-label-sm"
                 >
-                  <option value="all">All Stores</option>
-                  {stores.map((option) => (
+                  <option value="all">All Categories</option>
+                  {categories.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
                   ))}
                 </Select>
               </div>
-            )}
-          </div>
 
-          {/* View switcher & Column Navigation */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {view === 'board' && (
-              <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 border border-outline-variant/30">
-                <button
-                  type="button"
-                  onClick={() => scrollKanban('prev')}
-                  aria-label="Previous columns"
-                  title="Scroll back to previous column"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
-                >
-                  <Icon name="arrow_back" className="text-[18px]" />
-                </button>
-                <span className="text-[11px] font-bold text-muted px-1.5 uppercase tracking-wider">Columns</span>
-                <button
-                  type="button"
-                  onClick={() => scrollKanban('next')}
-                  aria-label="Next columns"
-                  title="Scroll forward to next column"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
-                >
-                  <Icon name="arrow_forward" className="text-[18px]" />
-                </button>
+              {stores.length > 0 && (
+                <div className="relative">
+                  <Icon
+                    name="storefront"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-primary"
+                  />
+                  <Select
+                    value={store}
+                    onChange={(event) => setStore(event.target.value)}
+                    aria-label="Filter by store"
+                    className="h-9 w-auto min-w-[155px] pl-8.5 pr-8 text-label-sm"
+                  >
+                    <option value="all">All Stores</option>
+                    {stores.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* View switcher & Column Navigation */}
+            <div className="flex items-center gap-2.5 ml-auto">
+              {view === 'board' && (
+                <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 border border-outline-variant/30">
+                  <button
+                    type="button"
+                    onClick={() => scrollKanban('prev')}
+                    aria-label="Previous columns"
+                    title="Scroll back to previous column"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                  >
+                    <Icon name="arrow_back" className="text-[17px]" />
+                  </button>
+                  <span className="text-[11px] font-bold text-muted px-1.5 uppercase tracking-wider">Columns</span>
+                  <button
+                    type="button"
+                    onClick={() => scrollKanban('next')}
+                    aria-label="Next columns"
+                    title="Scroll forward to next column"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                  >
+                    <Icon name="arrow_forward" className="text-[17px]" />
+                  </button>
+                </div>
+              )}
+
+              <div
+                className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
+                role="group"
+                aria-label="View"
+              >
+                <Segmented active={view === 'board'} onClick={() => setView('board')} icon="view_kanban">
+                  Kanban
+                </Segmented>
+                <Segmented active={view === 'list'} onClick={() => setView('list')} icon="view_list">
+                  List
+                </Segmented>
               </div>
-            )}
-
-            <div
-              className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
-              role="group"
-              aria-label="View"
-            >
-              <Segmented active={view === 'board'} onClick={() => setView('board')} icon="view_kanban">
-                Kanban
-              </Segmented>
-              <Segmented active={view === 'list'} onClick={() => setView('list')} icon="view_list">
-                List
-              </Segmented>
             </div>
           </div>
         </section>

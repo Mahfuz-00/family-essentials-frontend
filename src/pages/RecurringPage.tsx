@@ -162,7 +162,7 @@ export function RecurringPage() {
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Recurring"
-          description="The chores and errands that come round again, each with the day it next falls due."
+          description="The household chores and errands that repeat on schedule, each with the day it next falls due."
           titleSize="headline"
           actions={
             <Button size="lg" onClick={() => setAddOpen(true)}>

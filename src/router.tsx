@@ -1,5 +1,4 @@
-import { Outlet, createRootRoute, createRoute, createRouter, useLocation } from '@tanstack/react-router';
-import { AppLayout } from '@/components/AppLayout';
+import { Outlet, createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { AdminLoginPage } from '@/pages/AdminLoginPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -36,7 +35,7 @@ import { GoalsPage } from '@/pages/finances/GoalsPage';
 import { LiabilitiesPage } from '@/pages/finances/LiabilitiesPage';
 import { AssetsPage } from '@/pages/finances/AssetsPage';
 import { TaxesPage } from '@/pages/finances/TaxesPage';
-import { GeofenceConsolePage } from '@/pages/places/GeofenceConsolePage';
+import { RecurringExpensesPage } from '@/pages/finances/RecurringExpensesPage';
 import { EscalationPage } from '@/pages/requests/EscalationPage';
 import { AdminBillingPage } from '@/pages/admin/AdminBillingPage';
 import { AdminOverviewPage } from '@/pages/admin/AdminOverviewPage';
@@ -244,8 +243,10 @@ const placesRoute = createRoute({
 const geofenceConsoleRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/places/console',
-  beforeLoad: requireTenant,
-  component: GeofenceConsolePage,
+  beforeLoad: () => {
+    throw redirect({ to: '/places' });
+  },
+  component: PlacesPage,
 });
 
 const billingRoute = createRoute({
@@ -323,6 +324,13 @@ const financesTaxesRoute = createRoute({
   path: '/finances/taxes',
   beforeLoad: requireTenant,
   component: TaxesPage,
+});
+
+const recurringExpensesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/finances/recurring',
+  beforeLoad: requireTenant,
+  component: RecurringExpensesPage,
 });
 
 const adminLoginRoute = createRoute({
@@ -482,6 +490,7 @@ export const routeTree = rootRoute.addChildren([
   financesLiabilitiesRoute,
   financesAssetsRoute,
   financesTaxesRoute,
+  recurringExpensesRoute,
   adminLoginRoute,
   adminOverviewRoute,
   adminAnalyticsRoute,

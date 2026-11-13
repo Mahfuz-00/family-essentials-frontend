@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/Icon';
 import { api } from '@/lib/api';
-import { useUiStore } from '@/stores/ui';
 
 interface BoardPayload {
   overdue: Array<{ id: number; title: string; assignee?: { name: string } }>;
@@ -34,18 +33,14 @@ interface EssentialItem {
   current_quantity?: number;
 }
 
+import { formatMoney as formatMoneyGlobal } from '@/lib/money';
+
 function formatMoney(minor: number, currency: string = 'BDT'): string {
-  const amount = (minor / 100).toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : `${currency} `;
-  return `${symbol}${amount}`;
+  return formatMoneyGlobal(minor, currency);
 }
 
 export function HomeOverviewPage() {
   const [toast, setToast] = useState<string | null>(null);
-  const addToast = useUiStore((s) => s.addToast);
 
   const boardQuery = useQuery({
     queryKey: ['requests-board-summary'],
@@ -79,6 +74,57 @@ export function HomeOverviewPage() {
       }
     },
   });
+
+  const isLoading = boardQuery.isLoading || financesQuery.isLoading || essentialsQuery.isLoading;
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto animate-pulse">
+          {/* Header Hero Skeleton */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
+            <div className="space-y-2">
+              <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
+              <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-32 rounded-xl bg-forest-soft/50" />
+              <div className="h-10 w-36 rounded-xl bg-forest-soft/50" />
+            </div>
+          </div>
+
+          {/* 4 Pulse Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1"
+              >
+                <div className="space-y-2.5">
+                  <div className="h-3 w-32 rounded bg-forest-soft/40" />
+                  <div className="h-7 w-24 rounded-lg bg-forest-soft/60" />
+                  <div className="h-3 w-40 rounded bg-forest-soft/30" />
+                </div>
+                <div className="h-11 w-11 rounded-xl bg-forest-soft/50" />
+              </div>
+            ))}
+          </div>
+
+          {/* Main Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-72 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+              <div className="h-64 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+            </div>
+            <div className="space-y-6">
+              <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+              <div className="h-56 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const board = boardQuery.data;
   const fin = financesQuery.data;
@@ -310,9 +356,6 @@ export function HomeOverviewPage() {
                     onClick={async () => {
                       await api.post(`/v1/essentials/${lowStock[0].id}/create-errand`);
                       setToast(`Restock errand for ${lowStock[0].name} added to household board!`);
-                      if (addToast) {
-                        addToast(`Restock errand for ${lowStock[0].name} added to household board!`);
-                      }
                       await essentialsQuery.refetch();
                     }}
                     className="rounded-lg bg-secondary px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-primary transition-all"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
+import { getCurrencySign } from '@/lib/money';
 import { useQuota } from '@/hooks/useQuota';
 import { useAuthStore } from '@/stores/auth';
 import { useTenantStore } from '@/stores/tenant';
@@ -37,13 +38,44 @@ export function SettingsPage() {
   });
 
   const tenantSettings = (tenant.data?.settings ?? {}) as Record<string, any>;
-  const [selectedCurrency, setSelectedCurrency] = useState<string>('BDT');
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(() => {
+    try {
+      return localStorage.getItem('family_essentials_currency') || 'BDT';
+    } catch {
+      return 'BDT';
+    }
+  });
   const [selectedDateFormat, setSelectedDateFormat] = useState<string>('YYYY-MM-DD');
   const [selectedTimeFormat, setSelectedTimeFormat] = useState<string>('12h');
   const [defaultDueDays, setDefaultDueDays] = useState<number>(2);
 
+  useEffect(() => {
+    if (tenantSettings.currency) {
+      setSelectedCurrency(String(tenantSettings.currency));
+      try {
+        localStorage.setItem('family_essentials_currency', String(tenantSettings.currency));
+      } catch {
+        // ignore
+      }
+    }
+    if (tenantSettings.date_format) {
+      setSelectedDateFormat(String(tenantSettings.date_format));
+    }
+    if (tenantSettings.time_format) {
+      setSelectedTimeFormat(String(tenantSettings.time_format));
+    }
+    if (typeof tenantSettings.default_due_days === 'number') {
+      setDefaultDueDays(tenantSettings.default_due_days);
+    }
+  }, [tenantSettings.currency, tenantSettings.date_format, tenantSettings.time_format, tenantSettings.default_due_days]);
+
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
+      try {
+        localStorage.setItem('family_essentials_currency', selectedCurrency);
+      } catch {
+        // ignore
+      }
       await api.patch('/v1/tenant', {
         settings: {
           currency: selectedCurrency,
@@ -55,7 +87,8 @@ export function SettingsPage() {
       await tenant.refetch();
     },
     onSuccess: () => {
-      setNotice(`Household preferences saved! Platform currency set to ${selectedCurrency}.`);
+      const sign = getCurrencySign(selectedCurrency);
+      setNotice(`Household preferences saved! Platform currency symbol set to "${sign}" (${selectedCurrency}).`);
       setError(null);
     },
     onError: (e) => setError(apiError(e)),
@@ -354,14 +387,31 @@ export function SettingsPage() {
                     onChange={(e) => setSelectedCurrency(e.target.value)}
                     className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
                   >
-                    <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
-                    <option value="USD">USD ($) — US Dollar</option>
-                    <option value="EUR">EUR (€) — Euro</option>
-                    <option value="GBP">GBP (£) — British Pound</option>
-                    <option value="CAD">CAD ($) — Canadian Dollar</option>
-                    <option value="AUD">AUD ($) — Australian Dollar</option>
-                    <option value="INR">INR (₹) — Indian Rupee</option>
-                    <option value="SAR">SAR (﷼) — Saudi Riyal</option>
+                    <option value="BDT">৳ — BDT (Bangladeshi Taka)</option>
+                    <option value="USD">$ — USD (US Dollar)</option>
+                    <option value="EUR">€ — EUR (Euro)</option>
+                    <option value="GBP">£ — GBP (British Pound)</option>
+                    <option value="INR">₹ — INR (Indian Rupee)</option>
+                    <option value="JPY">¥ — JPY (Japanese Yen)</option>
+                    <option value="CNY">¥ — CNY (Chinese Yuan)</option>
+                    <option value="KRW">₩ — KRW (South Korean Won)</option>
+                    <option value="PHP">₱ — PHP (Philippine Peso)</option>
+                    <option value="THB">฿ — THB (Thai Baht)</option>
+                    <option value="VND">₫ — VND (Vietnamese Dong)</option>
+                    <option value="ILS">₪ — ILS (Israeli Shekel)</option>
+                    <option value="NGN">₦ — NGN (Nigerian Naira)</option>
+                    <option value="TRY">₺ — TRY (Turkish Lira)</option>
+                    <option value="UAH">₴ — UAH (Ukrainian Hryvnia)</option>
+                    <option value="RUB">₽ — RUB (Russian Ruble)</option>
+                    <option value="CAD">$ — CAD (Canadian Dollar)</option>
+                    <option value="AUD">$ — AUD (Australian Dollar)</option>
+                    <option value="SGD">$ — SGD (Singapore Dollar)</option>
+                    <option value="NZD">$ — NZD (New Zealand Dollar)</option>
+                    <option value="CHF">₣ — CHF (Swiss Franc)</option>
+                    <option value="ZAR">R — ZAR (South African Rand)</option>
+                    <option value="SAR">﷼ — SAR (Saudi Riyal)</option>
+                    <option value="PKR">₨ — PKR (Pakistani Rupee)</option>
+                    <option value="BRL">$ — BRL (Brazilian Real)</option>
                   </select>
                 </div>
 

@@ -35,6 +35,7 @@ type RoutePath =
   | '/finances/liabilities'
   | '/finances/assets'
   | '/finances/taxes'
+  | '/finances/recurring'
   | '/billing'
   | '/settings'
   | '/feedback'
@@ -79,7 +80,7 @@ const householdSections: NavSection[] = [
       { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
       { to: '/pantry', label: 'Pantry & Grocery', icon: 'kitchen', exact: true },
       { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
-      { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
+      { to: '/recurring', label: 'Recurring Tasks & Chores', icon: 'autorenew', exact: true },
     ],
   },
   {
@@ -87,7 +88,7 @@ const householdSections: NavSection[] = [
     items: [
       { to: '/money', label: 'Household Expense Overview', icon: 'account_balance_wallet', exact: false },
       { to: '/finances/overview', label: 'Household Financial Overview', icon: 'query_stats', exact: true },
-      { to: '/recurring', label: 'Recurring Expenses & Rules', icon: 'event_repeat', exact: true },
+      { to: '/finances/recurring', label: 'Recurring Expenses & Subscriptions', icon: 'payments', exact: true },
       { to: '/finances/goals', label: 'Financial Goals', icon: 'flag', exact: true },
       { to: '/finances/liabilities', label: 'Loans & Mortgages', icon: 'real_estate_agent', exact: true },
       { to: '/finances/assets', label: 'Savings & Investments', icon: 'trending_up', exact: true },
@@ -105,8 +106,7 @@ const householdSections: NavSection[] = [
   {
     title: 'Household',
     items: [
-      { to: '/places', label: 'Saved Places', icon: 'pin_drop', exact: true },
-      { to: '/places/console', label: 'Geofence Console', icon: 'map', exact: true },
+      { to: '/places', label: 'Saved Places & Geofencing', icon: 'pin_drop', exact: false },
     ],
   },
   {
@@ -201,8 +201,6 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const openAddRequest = useUiStore((state) => state.openAddRequest);
   const active = useTenantStore((state) => state.active);
   const switchTo = useTenantStore((state) => state.switchTo);
-  const searchQuery = useUiStore((state) => state.searchQuery);
-  const setSearchQuery = useUiStore((state) => state.setSearchQuery);
 
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
@@ -235,7 +233,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const activeTenant = useTenantStore((state) => state.active);
   const isSubscriptionLocked =
     !isPlatformAdmin &&
-    (activeTenant?.status === 'cancelled' || activeTenant?.status === 'suspended') &&
+    ((activeTenant?.status as string) === 'cancelled' || activeTenant?.status === 'suspended') &&
     path !== '/billing';
 
   // Keyboard close for mobile drawer and click outside for dropdowns
