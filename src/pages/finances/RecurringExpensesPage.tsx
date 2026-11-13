@@ -200,62 +200,62 @@ export function RecurringExpensesPage() {
 
         {/* 4 Standard Executive Pulse Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Monthly Burn Commitment</span>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Monthly Burn Commitment</span>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-secondary">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-secondary truncate max-w-full">
                   {formatMoney(monthlyBurnMinor, currency)}
                 </span>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Estimated 30-day fixed baseline spend</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Estimated 30-day fixed baseline spend</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
               <Icon name="payments" className="text-[22px]" />
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Active Subscriptions</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Active Subscriptions</span>
+              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {activeRules.length}
                 </span>
                 <Badge tone="success">Active</Badge>
               </div>
-              <span className="mt-1.5 text-xs text-muted">{expenseRules.length} total scheduled rules</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">{expenseRules.length} total scheduled rules</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
               <Icon name="event_repeat" className="text-[22px]" />
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Annual Forecast</span>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Annual Forecast</span>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {formatMoney(monthlyBurnMinor * 12, currency)}
                 </span>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Projected 12-month baseline outflow</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Projected 12-month baseline outflow</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shadow-xs">
               <Icon name="query_stats" className="text-[22px]" />
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Upcoming Renewals</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Upcoming Renewals</span>
+              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {activeRules.filter((r) => r.next_run_on).length}
                 </span>
                 <Badge tone="warning">Due Soon</Badge>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Upcoming automated payments</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Upcoming automated payments</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
               <Icon name="alarm" className="text-[22px]" />

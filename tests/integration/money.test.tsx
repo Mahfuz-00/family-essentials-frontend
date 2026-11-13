@@ -89,8 +89,12 @@ describe('money', () => {
     expect(within(table).getByText('Expense')).toBeInTheDocument();
     expect(within(table).getByText('-$1,245.50')).toBeInTheDocument();
 
-    expect(screen.getByRole('heading', { name: 'Record an entry' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Who can see this ledger' })).toBeInTheDocument();
+    // Submodules load on click rather than all at once:
+    await userEvent.click(screen.getByRole('tab', { name: /record entry/i }));
+    expect(await screen.findByRole('heading', { name: 'Record an entry' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /member access/i }));
+    expect(await screen.findByRole('heading', { name: 'Who can see this ledger' })).toBeInTheDocument();
   });
 
   it('sends the entry amount as integer minor units', async () => {
@@ -104,6 +108,7 @@ describe('money', () => {
 
     renderApp('/money/7');
 
+    await userEvent.click(await screen.findByRole('tab', { name: /record entry/i }));
     await userEvent.type(await screen.findByLabelText('Amount'), '12.50');
     await userEvent.type(screen.getByLabelText('Description'), 'Weekly shop');
     await userEvent.click(screen.getByRole('button', { name: /record entry/i }));
@@ -128,6 +133,7 @@ describe('money', () => {
 
     renderApp('/money/7');
 
+    await userEvent.click(await screen.findByRole('tab', { name: /record entry/i }));
     await userEvent.type(await screen.findByLabelText('Amount'), '12.345');
     await userEvent.click(screen.getByRole('button', { name: /record entry/i }));
 

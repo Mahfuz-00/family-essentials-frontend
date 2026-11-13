@@ -337,41 +337,41 @@ export function PantryPage() {
 
         {/* 4 Standard Executive Pulse Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Total Pantry Spent</span>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Total Pantry Spent</span>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-secondary">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-secondary truncate max-w-full">
                   {formatMoney(summary.total_spent_minor, currency)}
                 </span>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Historical restocking expenses</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Historical restocking expenses</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
               <Icon name="payments" className="text-[22px]" />
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Projected Restock Cost</span>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Projected Restock Cost</span>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {formatMoney(summary.projected_restock_minor, currency)}
                 </span>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Estimated budget to fill targets</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Estimated budget to fill targets</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-error shadow-xs">
               <Icon name="trending_up" className="text-[22px]" />
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Low Stock Alerts</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Low Stock Alerts</span>
+              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {summary.low_stock_count}
                 </span>
                 {summary.low_stock_count > 0 && (
@@ -380,7 +380,7 @@ export function PantryPage() {
                   </Badge>
                 )}
               </div>
-              <span className="mt-1.5 text-xs text-muted">
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
                 {summary.out_of_stock_count} out of stock · {summary.low_stock_count} below threshold
               </span>
             </div>
@@ -389,16 +389,16 @@ export function PantryPage() {
             </div>
           </div>
 
-          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-            <div className="flex flex-col">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Tracked Essentials</span>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
+            <div className="flex flex-col min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Tracked Essentials</span>
+              <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                   {items.length}
                 </span>
                 <Badge tone="neutral">Active Catalog</Badge>
               </div>
-              <span className="mt-1.5 text-xs text-muted">Categorized domestic inventory</span>
+              <span className="mt-1.5 text-xs text-muted truncate block max-w-full">Categorized domestic inventory</span>
             </div>
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
               <Icon name="inventory_2" className="text-[22px]" />

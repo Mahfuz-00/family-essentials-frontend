@@ -103,6 +103,9 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
   const [ocrResult, setOcrResult] = useState<ReceiptScanResponse | null>(null);
   const [ocrError, setOcrError] = useState<string | null>(null);
 
+  type LedgerSubmodule = 'entries' | 'record' | 'breakdown' | 'recurring' | 'access';
+  const [activeSubmodule, setActiveSubmodule] = useState<LedgerSubmodule>('entries');
+
   const range = useMemo(() => getPeriodRange(periodType), [periodType]);
 
   const ledgers = useQuery({
@@ -130,19 +133,19 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     queryKey: ['ledgers', ledgerId, 'entries'],
     queryFn: async () =>
       (await api.get<{ data: LedgerEntry[] }>(`/v1/ledgers/${ledgerId}/entries`)).data.data,
-    enabled: canReadEntries,
+    enabled: canReadEntries && (activeSubmodule === 'entries' || activeSubmodule === 'record'),
   });
 
   const roster = useQuery({
     queryKey: ['tenant', 'members'],
     queryFn: async () => (await api.get<{ data: TenantMember[] }>('/v1/tenant/members')).data.data,
-    enabled: isOwner,
+    enabled: isOwner && activeSubmodule === 'access',
   });
 
   const recurringRules = useQuery({
     queryKey: ['recurring-rules'],
     queryFn: async () => (await api.get<{ data: any[] }>('/v1/recurring-rules')).data.data,
-    enabled: canReadEntries,
+    enabled: canReadEntries && activeSubmodule === 'recurring',
   });
 
   const onError = (caught: unknown) => {
@@ -194,6 +197,7 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
       setForm({ ...form, amount: '', category: '', description: '' });
       setError(null);
       setNotice('Entry recorded.');
+      setActiveSubmodule('entries');
       await refresh();
     },
     onError,
@@ -434,107 +438,119 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           />
         )}
 
-        {/* Weekly Ledger Breakdown (shown when in monthly mode) */}
-        {ledger && periodType === 'monthly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 && (
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-title-md font-bold text-on-surface">Weekly Ledger Breakdown</h3>
-                <p className="text-body-sm text-muted">Weekly tracking within the monthly billing period.</p>
-              </div>
-              <Badge tone="neutral">{summary.data.weekly_breakdown.length} Weeks</Badge>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {summary.data.weekly_breakdown.map((w, idx) => (
-                <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-3.5 border border-outline-variant">
-                  <span className="text-label-sm font-semibold text-on-surface truncate">{w.week_label}</span>
-                  <div className="flex justify-between items-baseline mt-1 text-body-sm">
-                    <span className="text-muted">Spent:</span>
-                    <span className="font-semibold text-tertiary">{formatMoney(w.expense_minor, currency)}</span>
-                  </div>
-                  <div className="flex justify-between items-baseline text-body-sm">
-                    <span className="text-muted">Income:</span>
-                    <span className="font-semibold text-secondary">{formatMoney(w.income_minor, currency)}</span>
-                  </div>
-                  <div className="border-t border-outline-variant/60 my-1 pt-1 flex justify-between items-baseline text-label-sm">
-                    <span className="text-muted">Net:</span>
-                    <span className={`font-bold ${w.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}`}>
-                      {formatMoney(w.net_minor, currency)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+        {/* Submodule Navigation Bar */}
+        {ledger && canReadEntries && (
+          <div
+            className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-3"
+            role="tablist"
+            aria-label="Household budget submodules"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubmodule === 'entries'}
+              onClick={() => setActiveSubmodule('entries')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'entries'
+                  ? 'bg-secondary text-on-secondary shadow-e1'
+                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+              }`}
+            >
+              <Icon name="receipt_long" className="text-[18px]" />
+              <span>Entries &amp; Transactions</span>
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  activeSubmodule === 'entries'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-surface-container text-muted'
+                }`}
+              >
+                {entryList.length}
+              </span>
+            </button>
 
-        {/* Yearly 12-Month Ledger Breakdown (shown when in yearly mode) */}
-        {ledger && periodType === 'yearly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 && (
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-title-md font-bold text-on-surface">Annual 12-Month Ledger Breakdown</h3>
-                <p className="text-body-sm text-muted">Monthly expense & income performance across the entire year.</p>
-              </div>
-              <Badge tone="neutral">12 Months</Badge>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {summary.data.weekly_breakdown.map((m, idx) => (
-                <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-3.5 border border-outline-variant">
-                  <span className="text-label-sm font-semibold text-on-surface truncate">{m.week_label}</span>
-                  <div className="flex justify-between items-baseline mt-1 text-body-sm">
-                    <span className="text-muted">Spent:</span>
-                    <span className="font-semibold text-tertiary">{formatMoney(m.expense_minor, currency)}</span>
-                  </div>
-                  <div className="flex justify-between items-baseline text-body-sm">
-                    <span className="text-muted">Income:</span>
-                    <span className="font-semibold text-secondary">{formatMoney(m.income_minor, currency)}</span>
-                  </div>
-                  <div className="border-t border-outline-variant/60 my-1 pt-1 flex justify-between items-baseline text-label-sm">
-                    <span className="text-muted">Net:</span>
-                    <span className={`font-bold ${m.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}`}>
-                      {formatMoney(m.net_minor, currency)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubmodule === 'record'}
+              onClick={() => setActiveSubmodule('record')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'record'
+                  ? 'bg-secondary text-on-secondary shadow-e1'
+                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+              }`}
+            >
+              <Icon name="add_circle" className="text-[18px]" />
+              <span>Record Entry</span>
+            </button>
 
-        {/* Recurring Household Expenses */}
-        {ledger && canReadEntries && relevantRecurringExpenses.length > 0 && (
-          <Card className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Icon name="update" className="text-secondary text-[22px]" />
-                <h3 className="text-title-md font-bold text-on-surface">Recurring Household Expenses</h3>
-              </div>
-              <Link to="/recurring">
-                <span className="text-label-sm font-semibold text-secondary hover:underline cursor-pointer">
-                  Manage Rules →
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSubmodule === 'breakdown'}
+              onClick={() => setActiveSubmodule('breakdown')}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                activeSubmodule === 'breakdown'
+                  ? 'bg-secondary text-on-secondary shadow-e1'
+                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+              }`}
+            >
+              <Icon name="bar_chart" className="text-[18px]" />
+              <span>Periodic Breakdown</span>
+            </button>
+
+            {relevantRecurringExpenses.length > 0 && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeSubmodule === 'recurring'}
+                onClick={() => setActiveSubmodule('recurring')}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                  activeSubmodule === 'recurring'
+                    ? 'bg-secondary text-on-secondary shadow-e1'
+                    : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                }`}
+              >
+                <Icon name="update" className="text-[18px]" />
+                <span>Recurring Expenses</span>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    activeSubmodule === 'recurring'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-surface-container text-muted'
+                  }`}
+                >
+                  {relevantRecurringExpenses.length}
                 </span>
-              </Link>
-            </div>
-            <p className="text-body-sm text-muted mb-4">
-              Scheduled chores, rent, and utility bills that automatically spawn tasks and expense entries.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {relevantRecurringExpenses.map((rule) => (
-                <div key={rule.id} className="flex items-center justify-between rounded-xl bg-surface p-3 border border-outline-variant">
-                  <div className="truncate">
-                    <p className="font-semibold text-on-surface text-label-md truncate">{rule.title}</p>
-                    <p className="text-body-sm text-muted capitalize">{rule.cadence} · {rule.category ?? 'expense'}</p>
-                  </div>
-                  {rule.amount_minor != null && (
-                    <span className="text-label-md font-bold text-tertiary shrink-0">
-                      {formatMoney(rule.amount_minor, currency)}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
+              </button>
+            )}
+
+            {isOwner && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeSubmodule === 'access'}
+                onClick={() => setActiveSubmodule('access')}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
+                  activeSubmodule === 'access'
+                    ? 'bg-secondary text-on-secondary shadow-e1'
+                    : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                }`}
+              >
+                <Icon name="group" className="text-[18px]" />
+                <span>Member Access</span>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    activeSubmodule === 'access'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-surface-container text-muted'
+                  }`}
+                >
+                  {ledger.member_count}
+                </span>
+              </button>
+            )}
+          </div>
         )}
 
         {ledger && !canReadEntries && (
@@ -544,8 +560,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </Alert>
         )}
 
-        {/* Entries Table & Category Filters */}
-        {ledger && canReadEntries && (
+        {/* SUBMODULE 1: Entries Table & Category Filters */}
+        {ledger && canReadEntries && activeSubmodule === 'entries' && (
           <Card className="overflow-hidden p-0">
             <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-outline-variant/60">
               <div>
@@ -583,6 +599,16 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
 
                 <Button
                   size="sm"
+                  variant="primary"
+                  onClick={() => setActiveSubmodule('record')}
+                  className="flex items-center gap-1.5"
+                >
+                  <Icon name="add" className="text-[18px]" />
+                  <span>Record Entry</span>
+                </Button>
+
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => setShowOcrModal(true)}
                   className="flex items-center gap-1.5"
@@ -598,11 +624,21 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
             {entries.isError && <p className="px-5 py-6 text-body-md text-error">{apiError(entries.error)}</p>}
 
             {entries.isSuccess && entryList.length === 0 && (
-              <p className="px-5 py-6 text-body-md text-muted">
-                {rawEntries.length > 0
-                  ? 'No entries match the selected category filter.'
-                  : 'Nothing recorded in this period yet. Use the form below to record an entry.'}
-              </p>
+              <div className="flex flex-col items-center justify-center py-10 px-5 text-center">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary mb-3">
+                  <Icon name="receipt_long" className="text-[24px]" />
+                </span>
+                <p className="text-body-md font-bold text-on-surface">No entries recorded</p>
+                <p className="text-body-sm text-muted max-w-sm mt-1 mb-4">
+                  {rawEntries.length > 0
+                    ? 'No entries match the selected category filter.'
+                    : 'Nothing recorded in this period yet. Use the record submodule to add your first entry.'}
+                </p>
+                <Button size="sm" variant="primary" onClick={() => setActiveSubmodule('record')}>
+                  <Icon name="add" className="text-[16px]" />
+                  Record Entry
+                </Button>
+              </div>
             )}
 
             {entryList.length > 0 && (
@@ -694,8 +730,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </Card>
         )}
 
-        {/* Record Entry Form */}
-        {ledger && canReadEntries && (
+        {/* SUBMODULE 2: Record Entry Form */}
+        {ledger && canReadEntries && activeSubmodule === 'record' && (
           <Card className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div>
@@ -704,6 +740,15 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                   Record rent, utility bills, groceries, or household income into this ledger.
                 </p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveSubmodule('entries')}
+                className="gap-1.5"
+              >
+                <Icon name="receipt_long" className="text-[16px]" />
+                <span>View Entries</span>
+              </Button>
             </div>
 
             {/* Quick Category Selector */}
@@ -796,8 +841,120 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           </Card>
         )}
 
-        {/* Access List */}
-        {ledger && isOwner && (
+        {/* SUBMODULE 3: Periodic Breakdown */}
+        {ledger && activeSubmodule === 'breakdown' && (
+          <div className="flex flex-col gap-4">
+            {periodType === 'monthly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
+              <Card className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-title-md font-bold text-on-surface">Weekly Ledger Breakdown</h3>
+                    <p className="text-body-sm text-muted">Weekly tracking within the monthly billing period.</p>
+                  </div>
+                  <Badge tone="neutral">{summary.data.weekly_breakdown.length} Weeks</Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {summary.data.weekly_breakdown.map((w, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-3.5 border border-outline-variant">
+                      <span className="text-label-sm font-semibold text-on-surface truncate">{w.week_label}</span>
+                      <div className="flex justify-between items-baseline mt-1 text-body-sm">
+                        <span className="text-muted">Spent:</span>
+                        <span className="font-semibold text-tertiary">{formatMoney(w.expense_minor, currency)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline text-body-sm">
+                        <span className="text-muted">Income:</span>
+                        <span className="font-semibold text-secondary">{formatMoney(w.income_minor, currency)}</span>
+                      </div>
+                      <div className="border-t border-outline-variant/60 my-1 pt-1 flex justify-between items-baseline text-label-sm">
+                        <span className="text-muted">Net:</span>
+                        <span className={`font-bold ${w.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}`}>
+                          {formatMoney(w.net_minor, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : periodType === 'yearly' && summary.data?.weekly_breakdown && summary.data.weekly_breakdown.length > 0 ? (
+              <Card className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-title-md font-bold text-on-surface">Annual 12-Month Ledger Breakdown</h3>
+                    <p className="text-body-sm text-muted">Monthly expense & income performance across the entire year.</p>
+                  </div>
+                  <Badge tone="neutral">12 Months</Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {summary.data.weekly_breakdown.map((m, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 rounded-xl bg-surface p-3.5 border border-outline-variant">
+                      <span className="text-label-sm font-semibold text-on-surface truncate">{m.week_label}</span>
+                      <div className="flex justify-between items-baseline mt-1 text-body-sm">
+                        <span className="text-muted">Spent:</span>
+                        <span className="font-semibold text-tertiary">{formatMoney(m.expense_minor, currency)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline text-body-sm">
+                        <span className="text-muted">Income:</span>
+                        <span className="font-semibold text-secondary">{formatMoney(m.income_minor, currency)}</span>
+                      </div>
+                      <div className="border-t border-outline-variant/60 my-1 pt-1 flex justify-between items-baseline text-label-sm">
+                        <span className="text-muted">Net:</span>
+                        <span className={`font-bold ${m.net_minor < 0 ? 'text-tertiary' : 'text-secondary'}`}>
+                          {formatMoney(m.net_minor, currency)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : (
+              <Card className="p-8 text-center text-body-md text-muted">
+                No breakdown data available for this range yet.
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* SUBMODULE 4: Recurring Household Expenses */}
+        {ledger && canReadEntries && activeSubmodule === 'recurring' && (
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Icon name="update" className="text-secondary text-[22px]" />
+                <h3 className="text-title-md font-bold text-on-surface">Recurring Household Expenses</h3>
+              </div>
+              <Link to="/recurring">
+                <span className="text-label-sm font-semibold text-secondary hover:underline cursor-pointer">
+                  Manage Rules →
+                </span>
+              </Link>
+            </div>
+            <p className="text-body-sm text-muted mb-4">
+              Scheduled chores, rent, and utility bills that automatically spawn tasks and expense entries.
+            </p>
+            {relevantRecurringExpenses.length === 0 ? (
+              <p className="text-body-sm text-muted italic">No recurring rules configured for this ledger.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {relevantRecurringExpenses.map((rule) => (
+                  <div key={rule.id} className="flex items-center justify-between rounded-xl bg-surface p-3 border border-outline-variant">
+                    <div className="truncate">
+                      <p className="font-semibold text-on-surface text-label-md truncate">{rule.title}</p>
+                      <p className="text-body-sm text-muted capitalize">{rule.cadence} · {rule.category ?? 'expense'}</p>
+                    </div>
+                    {rule.amount_minor != null && (
+                      <span className="text-label-md font-bold text-tertiary shrink-0">
+                        {formatMoney(rule.amount_minor, currency)}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* SUBMODULE 5: Access List */}
+        {ledger && isOwner && activeSubmodule === 'access' && (
           <Card className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>

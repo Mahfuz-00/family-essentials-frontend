@@ -192,17 +192,17 @@ export function DashboardPage() {
             <>
               {/* Metric 1: Active Errands & Chores */}
               <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex flex-col min-w-0 flex-1 pr-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                       Active Errands & Tasks
                     </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                         {totalOpenCount}
                       </span>
                       {overdueCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
                           <span className="relative flex h-1.5 w-1.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
@@ -210,12 +210,12 @@ export function DashboardPage() {
                           {overdueCount} Overdue
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                           {dueTodayCount} Due Today
                         </span>
                       )}
                     </div>
-                    <span className="mt-1 text-xs text-muted">
+                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
                       {completedTodayCount} completed today
                     </span>
                   </div>
@@ -227,26 +227,26 @@ export function DashboardPage() {
 
               {/* Metric 2: Pantry & Safety Stock */}
               <Link to="/requests" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex flex-col min-w-0 flex-1 pr-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                       Pantry & Staples
                     </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                         {essentialsSummary.total}
                       </span>
                       {essentialsSummary.due > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
                           {essentialsSummary.due} Low / Due
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                           Well Stocked
                         </span>
                       )}
                     </div>
-                    <span className="mt-1 text-xs text-muted">
+                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
                       {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
                     </span>
                   </div>
@@ -258,20 +258,20 @@ export function DashboardPage() {
 
               {/* Metric 3: Saved Stores & Geofences */}
               <Link to="/places" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex flex-col min-w-0 flex-1 pr-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                       Saved Stores & Geofences
                     </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                         {places.length}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
+                      <span className="inline-flex shrink-0 items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
                         Active Bounds
                       </span>
                     </div>
-                    <span className="mt-1 text-xs text-muted">
+                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
                       Arrival triggers & store routing
                     </span>
                   </div>
@@ -283,20 +283,20 @@ export function DashboardPage() {
 
               {/* Metric 4: Shared Household Ledgers */}
               <Link to="/money" className="group block">
-                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                <div className="relative flex min-h-[110px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+                  <div className="flex flex-col min-w-0 flex-1 pr-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                       Shared Ledgers & Budget
                     </span>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                      <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                         {ledgers.length}
                       </span>
-                      <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
+                      <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
                         Active
                       </span>
                     </div>
-                    <span className="mt-1 text-xs text-muted">
+                    <span className="mt-1 text-xs text-muted truncate block max-w-full">
                       Domestic expenses & shared totals
                     </span>
                   </div>
@@ -369,7 +369,25 @@ export function DashboardPage() {
             </div>
 
             <div className="pt-4">
-              {displayedTasks.length === 0 ? (
+              {board.isLoading ? (
+                <div className="flex flex-col gap-3 animate-pulse">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-xl px-3 py-3 border border-outline-variant/15"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-6 w-6 rounded-full bg-forest-soft/50" />
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-44 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-28 rounded bg-forest-soft/30" />
+                        </div>
+                      </div>
+                      <div className="h-6 w-16 rounded-lg bg-forest-soft/40" />
+                    </div>
+                  ))}
+                </div>
+              ) : displayedTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
                     <Icon name="task_alt" className="text-[28px]" />
@@ -515,7 +533,22 @@ export function DashboardPage() {
               </div>
 
               <div className="mt-3.5 flex flex-col gap-2.5">
-                {lowStockItems.length === 0 ? (
+                {essentialsQuery.isLoading ? (
+                  <div className="flex flex-col gap-2.5 animate-pulse">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface-container-low p-2.5"
+                      >
+                        <div className="space-y-1.5 flex-1 mr-2">
+                          <div className="h-3.5 w-24 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-32 rounded bg-forest-soft/30" />
+                        </div>
+                        <div className="h-7 w-16 rounded bg-forest-soft/40" />
+                      </div>
+                    ))}
+                  </div>
+                ) : lowStockItems.length === 0 ? (
                   <div className="py-4 text-center">
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-forest-soft text-secondary">
                       <Icon name="done_all" className="text-[18px]" />
@@ -573,7 +606,22 @@ export function DashboardPage() {
               </div>
 
               <div className="mt-3.5 flex flex-col gap-2">
-                {recurringRules.length === 0 ? (
+                {recurringQuery.isLoading ? (
+                  <div className="flex flex-col gap-2 animate-pulse">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between rounded-xl bg-surface-container-low p-2.5 text-xs"
+                      >
+                        <div className="space-y-1.5 flex-1 mr-2">
+                          <div className="h-3.5 w-28 rounded bg-forest-soft/50" />
+                          <div className="h-3 w-20 rounded bg-forest-soft/30" />
+                        </div>
+                        <div className="h-3 w-12 rounded bg-forest-soft/40" />
+                      </div>
+                    ))}
+                  </div>
+                ) : recurringRules.length === 0 ? (
                   <div className="py-4 text-center text-xs text-muted">
                     No recurring habits configured yet.
                   </div>
@@ -626,20 +674,30 @@ export function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-on-surface">Family Seats</span>
-                  <span className="text-muted">
-                    {seatsUsed} of {seatCap} used
-                  </span>
+              {quota.isLoading ? (
+                <div className="mt-4 flex flex-col gap-2 animate-pulse">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 rounded bg-forest-soft/50" />
+                    <div className="h-3 w-16 rounded bg-forest-soft/30" />
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-forest-soft/40" />
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
-                  <div
-                    className="h-full rounded-full bg-secondary transition-all duration-300"
-                    style={{ width: `${seatPercent}%` }}
-                  />
+              ) : (
+                <div className="mt-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-on-surface">Family Seats</span>
+                    <span className="text-muted">
+                      {seatsUsed} of {seatCap} used
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
+                    <div
+                      className="h-full rounded-full bg-secondary transition-all duration-300"
+                      style={{ width: `${seatPercent}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="mt-4 flex items-center justify-between border-t border-outline-variant/15 pt-3 text-xs text-muted">
                 <Link to="/members" className="font-semibold text-secondary hover:underline">

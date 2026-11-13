@@ -187,20 +187,20 @@ export function HomeOverviewPage() {
         {/* 1. Household Overview Summary Pulse Cards matching software UI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link to="/finances/overview" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Shared Ledgers &amp; Budget
                 </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                     {formatMoney(fin?.net_worth_minor ?? 0, curr)}
                   </span>
-                  <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                  <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                     Net Worth
                   </span>
                 </div>
-                <span className="mt-1.5 text-xs text-muted">
+                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
                   Assets: {formatMoney(fin?.total_assets_minor ?? 0, curr)} · Debt: {formatMoney(fin?.total_liabilities_minor ?? 0, curr)}
                 </span>
               </div>
@@ -211,17 +211,17 @@ export function HomeOverviewPage() {
           </Link>
 
           <Link to="/requests" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Active Errands &amp; Tasks
                 </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                     {openErrands}
                   </span>
                   {overdue > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
@@ -229,12 +229,12 @@ export function HomeOverviewPage() {
                       {overdue} Overdue
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                    <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                       {dueToday} Due Today
                     </span>
                   )}
                 </div>
-                <span className="mt-1.5 text-xs text-muted">
+                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
                   {overdue > 0 ? `${overdue} tasks need attention` : 'All tasks on track'}
                 </span>
               </div>
@@ -245,20 +245,20 @@ export function HomeOverviewPage() {
           </Link>
 
           <Link to="/places" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Saved Stores &amp; Geofences
                 </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                     {formatMoney(fin?.taxes_pending_minor ?? 0, curr)}
                   </span>
-                  <span className="inline-flex items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
+                  <span className="inline-flex shrink-0 items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
                     Taxes
                   </span>
                 </div>
-                <span className="mt-1.5 text-xs text-muted">
+                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
                   {fin?.taxes_pending_count ?? 0} upcoming tax assessments
                 </span>
               </div>
@@ -269,26 +269,26 @@ export function HomeOverviewPage() {
           </Link>
 
           <Link to="/pantry" className="group block">
-            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
+              <div className="flex flex-col min-w-0 flex-1 pr-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
                   Standing Chores
                 </span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
                     {lowStock.length > 0 ? `${lowStock.length} Low` : `${essentials.length} Items`}
                   </span>
                   {lowStock.length > 0 ? (
-                    <span className="inline-flex items-center rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                    <span className="inline-flex shrink-0 items-center rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
                       Restock
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                    <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
                       Stocked
                     </span>
                   )}
                 </div>
-                <span className="mt-1.5 text-xs text-muted flex items-center gap-2">
+                <span className="mt-1.5 text-xs text-muted flex items-center gap-2 truncate max-w-full">
                   <span>Family Seats</span>
                   <span>·</span>
                   <span>2 of 5 seats used</span>
