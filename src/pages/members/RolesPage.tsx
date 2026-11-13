@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -94,24 +95,34 @@ export function RolesPage() {
           </Alert>
         )}
 
+        {(catalogue.isLoading || members.isLoading) && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
+
         {/* Role catalogue */}
-        <section
-          aria-label="Role catalogue"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          {(data?.roles ?? []).map((role) => (
-            <Card key={role.key} className="flex flex-col gap-2 p-5">
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="text-headline-sm text-on-surface">{role.label}</h2>
-                <Badge tone={role.can_be_granted ? 'primary' : 'neutral'}>
-                  {role.member_count} {role.member_count === 1 ? 'member' : 'members'}
-                </Badge>
-              </div>
-              <p className="text-body-sm text-muted">{role.detail}</p>
-              <span className="mt-auto text-label-sm font-mono text-muted">{role.key}</span>
-            </Card>
-          ))}
-        </section>
+        {data && (
+          <section
+            aria-label="Role catalogue"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          >
+            {(data?.roles ?? []).map((role) => (
+              <Card key={role.key} className="flex flex-col gap-2 p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-headline-sm text-on-surface">{role.label}</h2>
+                  <Badge tone={role.can_be_granted ? 'primary' : 'neutral'}>
+                    {role.member_count} {role.member_count === 1 ? 'member' : 'members'}
+                  </Badge>
+                </div>
+                <p className="text-body-sm text-muted">{role.detail}</p>
+                <span className="mt-auto text-label-sm font-mono text-muted">{role.key}</span>
+              </Card>
+            ))}
+          </section>
+        )}
 
         {/* Capability matrix, served by the API */}
         <Card className="overflow-hidden p-0">

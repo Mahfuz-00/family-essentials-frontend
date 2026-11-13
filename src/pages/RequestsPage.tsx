@@ -664,7 +664,7 @@ export function RequestsPage() {
             }`}
           >
             <Icon name="inventory_2" className="text-[16px]" />
-            Backlog ({filtered?.backlog?.length ?? 0})
+            Backlog {board.isLoading ? '' : `(${filtered?.backlog?.length ?? 0})`}
           </button>
           <button
             type="button"
@@ -676,7 +676,7 @@ export function RequestsPage() {
             }`}
           >
             <Icon name="check_circle" className="text-[16px]" />
-            Completed Archive ({filtered?.completed_today?.length ?? 0})
+            Completed Archive {board.isLoading ? '' : `(${filtered?.completed_today?.length ?? 0})`}
           </button>
         </div>
 

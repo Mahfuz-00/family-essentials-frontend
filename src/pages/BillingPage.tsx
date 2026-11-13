@@ -321,7 +321,7 @@ export function BillingPage() {
             }`}
           >
             <Icon name="receipt_long" className="text-[18px]" />
-            Invoices &amp; Receipts ({invoicesList.length})
+            Invoices &amp; Receipts {invoicesQuery.isLoading ? '' : `(${invoicesList.length})`}
           </button>
           <button
             type="button"
@@ -653,15 +653,24 @@ export function BillingPage() {
 
         {activeTab === 'refund-policy' && (
           <div className="flex flex-col gap-6">
-            <Card className="flex flex-col gap-5 p-6 border-l-4 border-secondary bg-surface">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-headline-sm font-bold text-on-surface">Household Refund &amp; Guarantee Status</h3>
-                  <p className="text-xs text-muted">
-                    Clear terms protecting your household subscription. Submit requests directly to platform billing triage.
-                  </p>
+            {/* Header Card with Warm Sage Banner */}
+            <div className="relative overflow-hidden rounded-2xl border border-secondary/20 bg-forest-soft/40 p-6 shadow-e1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-white shadow-xs">
+                    <Icon name="verified_user" className="text-[26px]" />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-headline-sm font-extrabold text-on-surface">Household Refund &amp; Guarantee Protection</h3>
+                      <Badge tone="success">Guaranteed</Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted max-w-2xl leading-relaxed">
+                      Every subscription comes with our graduated refund guarantee and automated proration protection. Submit claims directly to billing operations or simulate refund eligibility.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                   <Button
                     variant="primary"
                     size="sm"
@@ -673,103 +682,226 @@ export function BillingPage() {
                   <Link to="/refund-policy">
                     <Button variant="outline" size="sm">
                       <Icon name="open_in_new" className="text-[16px]" />
-                      Public Terms Page
+                      Public Terms
                     </Button>
                   </Link>
                 </div>
               </div>
+            </div>
 
-              {/* Household Status Breakdown */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 border-t border-outline-variant/20 pt-4">
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Current Plan Commitment</span>
-                  <div className="text-label-lg font-bold text-on-surface mt-1 capitalize">
-                    {quota.planLabel}
+            {/* 3 Executive Pulse Metric Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Current Commitment</span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-2xl font-extrabold tracking-tight capitalize text-on-surface">
+                      {quota.planLabel}
+                    </span>
+                    <Badge tone="success">Active</Badge>
                   </div>
-                  <span className="text-[11px] text-muted">Active household tier</span>
+                  <span className="mt-1.5 text-xs text-muted">Tier: {quota.plan?.key ?? active?.subscription_tier ?? 'family'}</span>
                 </div>
-
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Latest Invoice</span>
-                  <div className="text-label-lg font-bold text-on-surface mt-1 font-mono">
-                    {invoicesList[0]?.invoice_number ?? 'No invoices yet'}
-                  </div>
-                  <span className="text-[11px] text-muted">
-                    {invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)} · ${invoicesList[0].status.toUpperCase()}` : 'Free trial'}
-                  </span>
-                </div>
-
-                <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low p-4">
-                  <span className="text-xs font-semibold text-muted">Money-Back Window</span>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <Badge tone="success">7-Day Guarantee Active</Badge>
-                  </div>
-                  <span className="text-[11px] text-muted">100% refundable within 7 days of invoice</span>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+                  <Icon name="verified_user" className="text-[22px]" />
                 </div>
               </div>
-            </Card>
 
-            {/* 4 Graduated Policy Pillars (Point 23) */}
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                    <Icon name="verified_user" className="text-[20px]" />
+              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Latest Invoice</span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-2xl font-extrabold tracking-tight font-mono text-on-surface">
+                      {invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)}` : 'Trial'}
+                    </span>
+                    {invoicesList[0] && (
+                      <Badge tone={invoicesList[0].status === 'paid' ? 'success' : 'warning'}>
+                        {invoicesList[0].status.toUpperCase()}
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="mt-1.5 text-xs text-muted">
+                    {invoicesList[0]?.invoice_number ? `Invoice #${invoicesList[0].invoice_number}` : 'No invoices generated yet'}
                   </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Monthly Plans: Graduated Guarantee</h4>
-                    <p className="text-body-xs text-muted">100% (≤7d) · 50% (8–20d) · 0% (&gt;20d)</p>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
+                  <Icon name="receipt_long" className="text-[22px]" />
+                </div>
+              </div>
+
+              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Refund Eligibility</span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-2xl font-extrabold tracking-tight text-secondary">
+                      100% Grace
+                    </span>
+                    <Badge tone="success">Eligible</Badge>
+                  </div>
+                  <span className="mt-1.5 text-xs text-muted">Full money-back window protected</span>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shadow-xs">
+                  <Icon name="security" className="text-[22px]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Graduated Refund Pillars Breakdown */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Monthly Subscriptions Card */}
+              <div className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1">
+                <div className="flex items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                      <Icon name="calendar_month" className="text-[22px]" />
+                    </span>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">Monthly Plan Schedule</h4>
+                      <p className="text-xs text-muted">30-day graduated guarantee milestones</p>
+                    </div>
+                  </div>
+                  <Badge tone="success">Monthly</Badge>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-3 rounded-xl border border-secondary/30 bg-forest-soft/30 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-white text-xs font-bold">1</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Days 1 to 7 (Grace Window)</span>
+                        <Badge tone="success">100% Full Refund</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        Unconditional full refund directly back to your payment card with zero deductions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-xl border border-amber-300/40 bg-amber-50/40 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold">2</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Days 8 to 20 (Buffer Window)</span>
+                        <Badge tone="warning">50% Prorated</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        50% refund returned. Reverting to previous subscription tier is supported.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-3.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-outline text-white text-xs font-bold">3</span>
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-on-surface">Day 21+ (Active Term)</span>
+                        <Badge tone="neutral">Term Active</Badge>
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted leading-relaxed">
+                        Subscription completes term. Data remains safely preserved for 90 days in vault.
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  Monthly subscriptions can be refunded for 100% of the invoice amount within 7 days of payment. Between Day 8 and Day 20, a 50% partial refund applies. After 20 days, no refund is available for that monthly cycle.
-                </p>
-              </Card>
+              </div>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                    <Icon name="workspace_premium" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Annual Plans: Extended Graduated Schedule</h4>
-                    <p className="text-body-xs text-muted">100% (≤15d) · 75% (≤1mo) · 50% (≤3mo) · 25% (≤6mo)</p>
+              {/* Annual Commitments Card */}
+              <div className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1">
+                <div className="flex items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                      <Icon name="workspace_premium" className="text-[22px]" />
+                    </span>
+                    <div>
+                      <h4 className="text-label-lg font-bold text-on-surface">Annual Plan Schedule</h4>
+                      <p className="text-xs text-muted">Yearly subscription graduated tiers</p>
+                    </div>
+                  </div>
+                  <Badge tone="warning">Save 20%</Badge>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Days 1 to 15</span>
+                      <Badge tone="success">100%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">Annual unconditional trial guarantee</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Month 1 (Days 16–30)</span>
+                      <Badge tone="success">75%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">75% refund returned upon early review</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Months 2 to 3</span>
+                      <Badge tone="warning">50%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">50% refund. Plan reverting permitted</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-xl border border-outline-variant/30 bg-surface p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-on-surface">Months 4 to 6</span>
+                      <Badge tone="warning">25%</Badge>
+                    </div>
+                    <span className="text-[11px] text-muted">25% refund through month 6. 0% after</span>
                   </div>
                 </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  Annual commitments offer 100% refund within 15 days, 75% within 1 month, 50% within 3 months, and 25% within 6 months. After 6 months of annual usage, charges are non-refundable.
-                </p>
-              </Card>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
-                    <Icon name="swap_horiz" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Proration &amp; Reverting Policy</h4>
-                    <p className="text-body-xs text-muted">Remaining days adjusted against new plan price</p>
-                  </div>
+                <div className="mt-auto pt-4 border-t border-outline-variant/20 flex items-center gap-2 text-xs text-muted">
+                  <Icon name="info" className="text-[16px] text-secondary" />
+                  <span>Reverting to a previous plan is permitted while within the 50% refund window.</span>
                 </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  When switching plans, unused days on your active plan are calculated and credited towards the new plan price. Reverting back to a previous plan is permitted as long as your refund eligibility is 50% or higher.
-                </p>
-              </Card>
+              </div>
+            </div>
 
-              <Card className="flex flex-col gap-3 p-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                    <Icon name="payments" className="text-[20px]" />
-                  </span>
-                  <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Cash &amp; Online Payment Workflows</h4>
-                    <p className="text-body-xs text-muted">Instant online receipt vs. admin-approved cash invoice</p>
-                  </div>
-                </div>
-                <p className="text-xs text-on-surface leading-relaxed">
-                  Online payments generate an instant paid tax receipt. Cash payment requests are submitted to the Platform Admin dashboard; once physical cash is received and confirmed, your official invoice is marked paid and available for download.
+            {/* Core Household Guarantees 4-Grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                  <Icon name="currency_exchange" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Automated Proration</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Remaining unused days on your active plan are calculated down to the day and credited directly toward any upgrade.
                 </p>
-              </Card>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800">
+                  <Icon name="undo" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Revert Plan Guarantee</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Changed your mind? Revert back to your previous household tier anytime while within the 50% refund eligibility window.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                  <Icon name="payments" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">Cash Settlement Flow</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Cash payment invoices are verified in person by your platform administrator before marking settlement and enabling invoice downloads.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-xs">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-soft text-primary">
+                  <Icon name="lock_reset" className="text-[20px]" />
+                </span>
+                <h4 className="text-label-md font-bold text-on-surface">90-Day Vault Retention</h4>
+                <p className="text-xs text-muted leading-relaxed">
+                  Upon cancellation, all family lists, places, and financial entries are safely encrypted for 90 days. Reactivate anytime with zero data loss.
+                </p>
+              </div>
             </div>
           </div>
         )}

@@ -154,11 +154,37 @@ export function RecurringExpensesPage() {
     return expenseRules.filter((r) => r.category === filter);
   }, [expenseRules, filter]);
 
+  if (rulesQuery.isLoading || ledgersQuery.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6">
+          <PageHeader
+            title="Recurring Bills"
+            description="Manage automated household bills, subscriptions, utility reminders, and monthly burn commitments."
+            titleSize="headline"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="h-14 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 animate-pulse" />
+          <div className="flex flex-col gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Recurring Expenses & Subscriptions"
+          title="Recurring Bills"
           description="Manage automated household bills, subscriptions, utility reminders, and monthly burn commitments."
           titleSize="headline"
           actions={
@@ -172,60 +198,69 @@ export function RecurringExpensesPage() {
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* 4 Financial Pulse Cards */}
+        {/* 4 Standard Executive Pulse Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Monthly Burn Commitment</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                <Icon name="payments" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-secondary">
-              {formatMoney(monthlyBurnMinor, currency)}
-            </span>
-            <span className="text-body-xs text-muted">Estimated 30-day fixed baseline spend</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Monthly Burn Commitment</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-secondary">
+                  {formatMoney(monthlyBurnMinor, currency)}
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Estimated 30-day fixed baseline spend</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="payments" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Active Subscriptions</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sage-soft text-primary">
-                <Icon name="event_repeat" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              {activeRules.length}
-              <span className="text-body-sm font-normal text-muted"> of {expenseRules.length} rules</span>
-            </span>
-            <span className="text-body-xs text-muted">Recurring household commitments</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Active Subscriptions</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {activeRules.length}
+                </span>
+                <Badge tone="success">Active</Badge>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">{expenseRules.length} total scheduled rules</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
+              <Icon name="event_repeat" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Annual Forecast</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
-                <Icon name="query_stats" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              {formatMoney(monthlyBurnMinor * 12, currency)}
-            </span>
-            <span className="text-body-xs text-muted">Projected 12-month baseline outflow</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Annual Forecast</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {formatMoney(monthlyBurnMinor * 12, currency)}
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Projected 12-month baseline outflow</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shadow-xs">
+              <Icon name="query_stats" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Upcoming Within 7 Days</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                <Icon name="alarm" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              {activeRules.filter((r) => r.next_run_on).length}
-            </span>
-            <span className="text-body-xs text-muted">Upcoming renewal cycles</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Upcoming Renewals</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {activeRules.filter((r) => r.next_run_on).length}
+                </span>
+                <Badge tone="warning">Due Soon</Badge>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Upcoming automated payments</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
+              <Icon name="alarm" className="text-[22px]" />
+            </div>
+          </div>
         </div>
 
         {/* Filter Pills */}

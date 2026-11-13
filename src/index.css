@@ -6,8 +6,19 @@
    Palette, type scale, radii and elevation are the Stitch tokens verbatim.
 --------------------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------------------
+   Bengali Currency Symbol (৳ - U+09F3) weight normalization
+   Ensures the Taka sign glyph matches the visual stroke weight of $, €, £.
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'BengaliTakaBold';
+  src: local('Segoe UI Bold'), local('Segoe UI Semibold'), local('Nirmala UI Bold'), local('Noto Sans Bengali Bold'), local('Arial Bold');
+  unicode-range: U+09F3;
+  font-weight: 100 900;
+}
+
 @theme {
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'BengaliTakaBold', 'Nirmala UI', ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces and ink */
   --color-canvas: #fdfcf7;
@@ -138,6 +149,8 @@ body {
   color: var(--color-on-surface);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: weight;
 }
 
 /* Self-hosted-by-Google variable icon font used by the Stitch mockups. */

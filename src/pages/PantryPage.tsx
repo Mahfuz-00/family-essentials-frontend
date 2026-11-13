@@ -13,7 +13,9 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
 import { Select } from '@/components/ui/select';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
+import { formatMoney, getCurrencySign } from '@/lib/money';
 
 interface EssentialItem {
   id: number;
@@ -29,6 +31,7 @@ interface EssentialItem {
   last_spent_minor: number;
   total_spent_minor: number;
   projected_restock_minor: number;
+  currency?: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,21 +44,86 @@ interface PantrySummary {
   projected_restock_minor: number;
 }
 
-const categories = ['groceries', 'cleaning', 'toiletries', 'medication', 'baby', 'pet', 'other'];
+export interface CategoryOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const PANTRY_CATEGORIES: CategoryOption[] = [
+  { id: 'all', label: 'All Items', icon: 'grid_view' },
+  { id: 'produce', label: 'Produce & Fresh', icon: 'nutrition' },
+  { id: 'dairy_eggs', label: 'Dairy & Eggs', icon: 'egg' },
+  { id: 'meat_seafood', label: 'Meat & Seafood', icon: 'set_meal' },
+  { id: 'bakery', label: 'Bakery & Bread', icon: 'bakery_dining' },
+  { id: 'pantry_staples', label: 'Pantry Staples', icon: 'kitchen' },
+  { id: 'beverages', label: 'Beverages', icon: 'local_cafe' },
+  { id: 'snacks', label: 'Snacks', icon: 'cookie' },
+  { id: 'household_cleaning', label: 'Cleaning & Household', icon: 'cleaning_services' },
+  { id: 'personal_care', label: 'Personal Care', icon: 'soap' },
+  { id: 'medicine', label: 'Health & Pharmacy', icon: 'medication' },
+  { id: 'baby_child', label: 'Baby & Child', icon: 'child_care' },
+  { id: 'pet_supplies', label: 'Pet Care', icon: 'pets' },
+  { id: 'other', label: 'Other Essentials', icon: 'category' },
+];
+
+const categoryLabels: Record<string, string> = {
+  produce: 'Produce & Fresh',
+  dairy_eggs: 'Dairy & Eggs',
+  dairy: 'Dairy & Eggs',
+  meat_seafood: 'Meat & Seafood',
+  meat: 'Meat & Seafood',
+  bakery: 'Bakery & Bread',
+  pantry_staples: 'Pantry Staples',
+  pantry: 'Pantry Staples',
+  groceries: 'Produce & Fresh',
+  beverages: 'Beverages',
+  breakfast: 'Pantry Staples',
+  snacks: 'Snacks',
+  household_cleaning: 'Cleaning & Household',
+  home: 'Cleaning & Household',
+  cleaning: 'Cleaning & Household',
+  personal_care: 'Personal Care',
+  toiletries: 'Personal Care',
+  medicine: 'Health & Pharmacy',
+  medication: 'Health & Pharmacy',
+  baby_child: 'Baby & Child',
+  baby: 'Baby & Child',
+  pet_supplies: 'Pet Care',
+  pet: 'Pet Care',
+  other: 'Other Essentials',
+};
 
 const categoryIcons: Record<string, string> = {
+  produce: 'nutrition',
+  dairy_eggs: 'egg',
+  dairy: 'egg',
+  meat_seafood: 'set_meal',
+  meat: 'set_meal',
+  bakery: 'bakery_dining',
+  pantry_staples: 'kitchen',
+  pantry: 'kitchen',
   groceries: 'shopping_basket',
+  beverages: 'local_cafe',
+  breakfast: 'kitchen',
+  snacks: 'cookie',
+  household_cleaning: 'cleaning_services',
+  home: 'cleaning_services',
   cleaning: 'cleaning_services',
+  personal_care: 'soap',
   toiletries: 'soap',
+  medicine: 'medication',
   medication: 'medication',
+  baby_child: 'child_care',
   baby: 'child_care',
+  pet_supplies: 'pets',
   pet: 'pets',
   other: 'inventory_2',
 };
 
 const emptyForm = {
   name: '',
-  category: 'groceries',
+  category: 'produce',
   current_stock: 1,
   reorder_point: 2,
   target_stock: 5,
@@ -221,6 +289,34 @@ export function PantryPage() {
     [items, filter, search],
   );
 
+  const currency = (items[0] as any)?.currency ?? 'BDT';
+
+  if (pantryQuery.isLoading || summaryQuery.isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col gap-6">
+          <PageHeader
+            title="Pantry & Essentials"
+            description="Track household stock levels, projected restock costs, and historic grocery spending."
+            titleSize="headline"
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="h-14 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 animate-pulse" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col gap-6">
@@ -239,64 +335,79 @@ export function PantryPage() {
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* 4 Warm Sage Spending & Stock Metric Cards (Point 9) */}
+        {/* 4 Standard Executive Pulse Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Total Pantry Spent</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                <Icon name="payments" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-secondary">
-              ${(summary.total_spent_minor / 100).toFixed(2)}
-            </span>
-            <span className="text-body-xs text-muted">Historical logged restocking expenses</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Total Pantry Spent</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-secondary">
+                  {formatMoney(summary.total_spent_minor, currency)}
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Historical restocking expenses</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
+              <Icon name="payments" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Projected Restock Cost</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-coral-soft text-error">
-                <Icon name="trending_up" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              ${(summary.projected_restock_minor / 100).toFixed(2)}
-            </span>
-            <span className="text-body-xs text-muted">Estimated budget to fill to targets</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Projected Restock Cost</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {formatMoney(summary.projected_restock_minor, currency)}
+                </span>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Estimated budget to fill targets</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-error shadow-xs">
+              <Icon name="trending_up" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Low Stock Alerts</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                <Icon name="warning" className="text-[18px]" />
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Low Stock Alerts</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {summary.low_stock_count}
+                </span>
+                {summary.low_stock_count > 0 && (
+                  <Badge tone={summary.out_of_stock_count > 0 ? 'danger' : 'warning'}>
+                    {summary.out_of_stock_count > 0 ? `${summary.out_of_stock_count} depleted` : 'Needs reorder'}
+                  </Badge>
+                )}
+              </div>
+              <span className="mt-1.5 text-xs text-muted">
+                {summary.out_of_stock_count} out of stock · {summary.low_stock_count} below threshold
               </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              {summary.low_stock_count}
-              <span className="text-body-sm font-normal text-muted"> items below reorder</span>
-            </span>
-            <span className="text-body-xs text-muted">{summary.out_of_stock_count} completely depleted</span>
-          </Card>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
+              <Icon name="warning" className="text-[22px]" />
+            </div>
+          </div>
 
-          <Card className="flex flex-col gap-2 p-5 border border-outline-variant/30 bg-surface">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-semibold text-muted">Tracked Essentials</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-sage-soft text-primary">
-                <Icon name="inventory_2" className="text-[18px]" />
-              </span>
-            </span>
-            <span className="text-headline-md font-bold text-on-surface">
-              {items.length}
-            </span>
-            <span className="text-body-xs text-muted">Active household items monitored</span>
-          </Card>
+          <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Tracked Essentials</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                  {items.length}
+                </span>
+                <Badge tone="neutral">Active Catalog</Badge>
+              </div>
+              <span className="mt-1.5 text-xs text-muted">Categorized domestic inventory</span>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
+              <Icon name="inventory_2" className="text-[22px]" />
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
-        <Card className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center xl:justify-between">
+        <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full max-w-sm">
             <Icon
               name="search"
@@ -311,35 +422,29 @@ export function PantryPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter pantry">
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md capitalize transition-all ${
-                filter === 'all'
-                  ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                  : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-              }`}
-            >
-              All items ({items.length})
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setFilter(cat)}
-                className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md capitalize transition-all ${
-                  filter === cat
-                    ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                    : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {PANTRY_CATEGORIES.map((cat) => {
+              const count = cat.id === 'all' ? items.length : items.filter((i) => i.category === cat.id).length;
+              if (cat.id !== 'all' && count === 0 && filter !== cat.id) return null;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setFilter(cat.id)}
+                  className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    filter === cat.id
+                      ? 'bg-secondary font-bold text-on-secondary shadow-e1'
+                      : 'bg-canvas text-on-surface-variant hover:bg-sage-soft border border-outline-variant/30'
+                  }`}
+                >
+                  <Icon name={cat.icon} className="text-[14px]" />
+                  <span>{cat.label}</span>
+                  {count > 0 && <span className="text-[10px] opacity-80">({count})</span>}
+                </button>
+              );
+            })}
           </div>
         </Card>
 
-        {pantryQuery.isLoading && <p className="text-body-md text-muted">Loading essentials…</p>}
         {pantryQuery.isError && (
           <QueryError error={pantryQuery.error} what="pantry essentials" onRetry={() => void pantryQuery.refetch()} />
         )}
@@ -378,8 +483,8 @@ export function PantryPage() {
                       </span>
                       <div className="flex flex-col">
                         <h3 className="text-headline-sm font-bold text-on-surface">{item.name}</h3>
-                        <span className="text-body-xs text-muted capitalize">
-                          {item.category} · {item.unit}
+                        <span className="text-body-xs text-muted">
+                          {categoryLabels[item.category] ?? item.category} · {item.unit}
                         </span>
                       </div>
                     </div>
@@ -415,13 +520,13 @@ export function PantryPage() {
                     <div className="rounded-xl border border-outline-variant/20 p-2.5 bg-canvas/60">
                       <span className="text-muted block text-[11px]">Est. Unit Price</span>
                       <span className="font-bold text-on-surface">
-                        ${(item.unit_price_minor / 100).toFixed(2)}
+                        {formatMoney(item.unit_price_minor, currency)}
                       </span>
                     </div>
                     <div className="rounded-xl border border-outline-variant/20 p-2.5 bg-canvas/60">
                       <span className="text-muted block text-[11px]">Total Spent</span>
                       <span className="font-bold text-secondary">
-                        ${(item.total_spent_minor / 100).toFixed(2)}
+                        {formatMoney(item.total_spent_minor, currency)}
                       </span>
                     </div>
                   </div>
@@ -429,7 +534,7 @@ export function PantryPage() {
                   {item.last_spent_minor > 0 && (
                     <div className="flex items-center gap-1.5 text-[11px] text-muted">
                       <Icon name="history" className="text-[14px]" />
-                      <span>Last restock spent: ${(item.last_spent_minor / 100).toFixed(2)}</span>
+                      <span>Last restock spent: {formatMoney(item.last_spent_minor, currency)}</span>
                     </div>
                   )}
                 </div>
@@ -505,9 +610,9 @@ export function PantryPage() {
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {PANTRY_CATEGORIES.filter((c) => c.id !== 'all').map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
                   </option>
                 ))}
               </Select>
@@ -557,7 +662,7 @@ export function PantryPage() {
           </div>
 
           <div>
-            <Label htmlFor="unit-price">Estimated Unit Price ($)</Label>
+            <Label htmlFor="unit-price">Estimated Unit Price ({getCurrencySign(currency)})</Label>
             <Input
               id="unit-price"
               type="number"
@@ -628,7 +733,7 @@ export function PantryPage() {
           </div>
 
           <div>
-            <Label htmlFor="restock-cost">Total Amount Spent ($)</Label>
+            <Label htmlFor="restock-cost">Total Amount Spent ({getCurrencySign(currency)})</Label>
             <Input
               id="restock-cost"
               type="number"

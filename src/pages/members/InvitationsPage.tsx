@@ -181,7 +181,11 @@ export function InvitationsPage() {
           <Card className="flex flex-col gap-3 p-5">
             <h2 className="text-headline-sm text-on-surface">Seats</h2>
             <span className="flex items-baseline gap-1.5">
-              <span className="text-display-lg font-bold text-on-surface">{seatsUsed}</span>
+              {members.isLoading || invitations.isLoading ? (
+                <span className="h-9 w-12 rounded bg-surface-container animate-pulse inline-block" />
+              ) : (
+                <span className="text-display-lg font-bold text-on-surface">{seatsUsed}</span>
+              )}
               <span className="text-body-md text-muted">
                 {seatCap === null ? 'used' : `of ${seatCap} used`}
               </span>
@@ -202,7 +206,7 @@ export function InvitationsPage() {
                   } plan — the API refuses an invitation past this.`}
             </span>
             <span className="text-body-sm text-muted">
-              {memberCount} active {memberCount === 1 ? 'member' : 'members'} · {pending.length} pending
+              {members.isLoading ? '…' : `${memberCount} active ${memberCount === 1 ? 'member' : 'members'}`} · {invitations.isLoading ? '…' : `${pending.length} pending`}
             </span>
           </Card>
         </section>

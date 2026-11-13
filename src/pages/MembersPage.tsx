@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
+import { SkeletonCard } from '@/components/ui/skeleton';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import type { MemberRole, TenantMember, TenantRoleCatalogue } from '@/types';
@@ -118,7 +119,7 @@ export function MembersPage() {
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter members">
           <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
-            All members ({memberList.length})
+            All members {members.isLoading ? '' : `(${memberList.length})`}
           </FilterPill>
           {(catalogue.data?.roles ?? []).map((role) => {
             const total = memberList.filter((member) => member.role === role.key).length;
@@ -129,13 +130,19 @@ export function MembersPage() {
                 active={filter === role.key}
                 onClick={() => setFilter(role.key)}
               >
-                {role.label} ({total})
+                {role.label} {members.isLoading ? '' : `(${total})`}
               </FilterPill>
             );
           })}
         </div>
 
-        {members.isLoading && <p className="text-body-md text-muted">Loading members…</p>}
+        {members.isLoading && (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        )}
         {members.isError && (
           <QueryError error={members.error} what="the household roster" onRetry={() => void members.refetch()} />
         )}
