@@ -81,6 +81,9 @@ export function PlacesPage() {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [addOpen, setAddOpen] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+  const [mapRadius, setMapRadius] = useState<number | null>(null);
+  const [showMap, setShowMap] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -99,6 +102,17 @@ export function PlacesPage() {
     setError(apiError(caught));
     setNotice(null);
   };
+
+  const updateRadius = useMutation({
+    mutationFn: async ({ id, radiusMeters }: { id: number; radiusMeters: number }) =>
+      api.patch(`/v1/places/${id}`, { radius_meters: radiusMeters }),
+    onSuccess: async () => {
+      setError(null);
+      setNotice('Geofence radius successfully adjusted and saved.');
+      await refresh();
+    },
+    onError,
+  });
 
   const create = useMutation({
     mutationFn: async (position: { latitude: number; longitude: number }) =>
@@ -146,6 +160,8 @@ export function PlacesPage() {
   });
 
   const list = places.data ?? [];
+  const activePlace = list.find((p) => p.id === selectedPlaceId) ?? list[0] ?? null;
+  const activeRadius = mapRadius ?? activePlace?.radius_meters ?? 300;
 
   const visible = useMemo(
     () =>
@@ -168,15 +184,125 @@ export function PlacesPage() {
           description="The stores and places your family visits, each with the radius that arms its geofence."
           titleSize="headline"
           actions={
-            <Button size="lg" onClick={() => setAddOpen(true)}>
-              <Icon name="add_location_alt" className="text-[18px]" />
-              Add New Place
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setShowMap(!showMap)}
+              >
+                <Icon name={showMap ? 'map' : 'layers'} className="text-[18px]" />
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </Button>
+              <Button size="lg" onClick={() => setAddOpen(true)}>
+                <Icon name="add_location_alt" className="text-[18px]" />
+                Add New Place
+              </Button>
+            </div>
           }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
+
+        {/* OpenStreetMap Interactive Saved Places View (Point 20) */}
+        {list.length > 0 && showMap && (
+          <Card className="overflow-hidden p-0 border border-outline-variant/30">
+            <div className="flex flex-col xl:flex-row items-stretch">
+              <div className="relative h-[340px] xl:h-[380px] w-full xl:w-2/3 bg-[#EAE8DE] overflow-hidden">
+                {activePlace ? (
+                  <iframe
+                    title={`OpenStreetMap view of ${activePlace.name}`}
+                    className="absolute inset-0 h-full w-full border-0"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${activePlace.longitude - 0.008}%2C${activePlace.latitude - 0.005}%2C${activePlace.longitude + 0.008}%2C${activePlace.latitude + 0.005}&layer=mapnik&marker=${activePlace.latitude}%2C${activePlace.longitude}`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted">
+                    Select a place to view on OpenStreetMap
+                  </div>
+                )}
+                <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-xl bg-surface/90 px-3 py-1.5 text-label-sm font-bold text-on-surface shadow-e1 backdrop-blur-md z-10 border border-outline-variant/30">
+                  <Icon name="map" className="text-[16px] text-secondary" />
+                  <span>OpenStreetMap Live View</span>
+                </span>
+                {activePlace && (
+                  <span className="absolute right-3 top-3 flex items-center gap-1.5 rounded-xl bg-surface/90 px-3 py-1.5 text-label-sm font-semibold text-secondary shadow-e1 backdrop-blur-md z-10 border border-outline-variant/30">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                    </span>
+                    <span>Zone: {activePlace.name} ({activeRadius}m)</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Adjust from Map panel */}
+              {activePlace && (
+                <div className="flex flex-col justify-between p-5 xl:w-1/3 bg-surface border-t xl:border-t-0 xl:border-l border-outline-variant/20">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-label-sm font-semibold uppercase tracking-wider text-muted">Adjust from Map</span>
+                      <Badge tone="primary">{activePlace.category ?? 'grocery'}</Badge>
+                    </div>
+                    <div>
+                      <h3 className="text-headline-sm font-bold text-on-surface">{activePlace.name}</h3>
+                      <p className="text-body-sm text-muted truncate">{activePlace.address ?? `${activePlace.latitude.toFixed(4)}, ${activePlace.longitude.toFixed(4)}`}</p>
+                    </div>
+
+                    <div className="rounded-xl bg-sage-soft/40 p-3 flex flex-col gap-2 border border-secondary/15">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="map-radius" className="text-label-md font-semibold text-secondary">
+                          Geofence Radius
+                        </Label>
+                        <span className="text-label-md font-bold text-secondary">{activeRadius} m</span>
+                      </div>
+                      <input
+                        id="map-radius"
+                        type="range"
+                        min={50}
+                        max={2000}
+                        step={50}
+                        value={activeRadius}
+                        onChange={(e) => setMapRadius(Number(e.target.value))}
+                        className="h-2 w-full cursor-pointer accent-secondary"
+                      />
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMapRadius(Math.max(50, activeRadius - 50))}
+                        >
+                          -50m
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMapRadius(Math.min(2000, activeRadius + 50))}
+                        >
+                          +50m
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-outline-variant/20">
+                    <Button
+                      size="md"
+                      className="flex-1"
+                      disabled={updateRadius.isPending || activeRadius === activePlace.radius_meters}
+                      onClick={() => updateRadius.mutate({ id: activePlace.id, radiusMeters: activeRadius })}
+                    >
+                      {updateRadius.isPending ? 'Saving...' : 'Save Radius'}
+                    </Button>
+                    <Link to="/places/console">
+                      <Button variant="ghost" size="md">Console →</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full max-w-sm">
@@ -266,12 +392,28 @@ export function PlacesPage() {
                 </div>
 
                 <div className="flex items-center justify-between border-t border-canvas pt-3">
-                  <Link
-                    to="/places/console"
-                    className="text-body-md font-semibold text-secondary hover:underline"
-                  >
-                    Open in console →
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-secondary hover:bg-sage-soft font-semibold"
+                      onClick={() => {
+                        setSelectedPlaceId(place.id);
+                        setMapRadius(place.radius_meters);
+                        setShowMap(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      <Icon name="location_searching" className="text-[16px] mr-1" />
+                      Adjust on Map
+                    </Button>
+                    <Link
+                      to="/places/console"
+                      className="text-body-sm font-semibold text-muted hover:text-secondary hover:underline"
+                    >
+                      Console →
+                    </Link>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"

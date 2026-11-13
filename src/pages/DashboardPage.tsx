@@ -139,19 +139,8 @@ export function DashboardPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Page Header as Single Unified Command Hub */}
         <PageHeader
-          eyebrow={
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-secondary" />
-              </span>
-              <span className="text-xs font-semibold text-secondary">
-                {active?.name ?? 'Household'} · Live Operations Gateway
-              </span>
-            </div>
-          }
-          title="Today's Household Overview"
-          description={`Central executive summary for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
+          title="Household Activities Hub"
+          description={`Daily task coordination for ${active?.name ?? 'your family'} · ${seatsUsed} of ${seatCap} family members in sync`}
           actions={
             <div className="flex flex-wrap items-center gap-2.5">
               <Button

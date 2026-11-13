@@ -103,13 +103,13 @@ export function HomeOverviewPage() {
         )}
 
         {/* Header Hero */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/40 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
           <div>
             <h1 className="text-display-sm font-black text-on-surface tracking-tight">
               Today's Household Overview
             </h1>
             <p className="text-body-md text-muted mt-1">
-              Unified control center connecting daily domestic logistics with long-term household wealth.
+              Domestic logistics, shared ledgers, and household wealth in one place.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -130,65 +130,121 @@ export function HomeOverviewPage() {
           </div>
         </div>
 
-        {/* 1. Executive Summary Pulse Cards */}
+        {/* 1. Executive Summary Pulse Cards matching software UI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="flex flex-col gap-2 p-5 border-l-4 border-l-secondary bg-surface shadow-e1">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-bold uppercase tracking-wider text-muted">Shared Ledgers &amp; Budget</span>
-              <Icon name="trending_up" className="text-[20px] text-secondary" />
-            </span>
-            <span className="text-headline-md font-extrabold text-on-surface">
-              {fin ? formatMoney(fin.net_worth_minor, curr) : '$0'}
-            </span>
-            <span className="text-xs text-muted">
-              Assets: {fin ? formatMoney(fin.total_assets_minor, curr) : '$0'} · Debt: {fin ? formatMoney(fin.total_liabilities_minor, curr) : '$0'}
-            </span>
-          </Card>
+          <Link to="/finances/overview" className="group block">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  Shared Ledgers &amp; Budget
+                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {fin ? formatMoney(fin.net_worth_minor, curr) : '$0'}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                    Net Worth
+                  </span>
+                </div>
+                <span className="mt-1.5 text-xs text-muted">
+                  Assets: {fin ? formatMoney(fin.total_assets_minor, curr) : '$0'} · Debt: {fin ? formatMoney(fin.total_liabilities_minor, curr) : '$0'}
+                </span>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                <Icon name="trending_up" className="text-[22px]" />
+              </div>
+            </div>
+          </Link>
 
-          <Card className="flex flex-col gap-2 p-5 border-l-4 border-l-primary bg-surface shadow-e1">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-bold uppercase tracking-wider text-muted">Active Errands &amp; Tasks</span>
-              <Icon name="view_kanban" className="text-[20px] text-primary" />
-            </span>
-            <span className="text-headline-md font-extrabold text-on-surface">
-              {openErrands}
-            </span>
-            <span className="text-xs text-muted">
-              {overdue > 0 ? (
-                <span className="font-bold text-error">{overdue} overdue</span>
-              ) : (
-                <span className="text-secondary font-semibold">All on track</span>
-              )}
-              {` · ${dueToday} due today`}
-            </span>
-          </Card>
+          <Link to="/requests" className="group block">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  Active Errands &amp; Tasks
+                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {openErrands}
+                  </span>
+                  {overdue > 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
+                      </span>
+                      {overdue} Overdue
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                      {dueToday} Due Today
+                    </span>
+                  )}
+                </div>
+                <span className="mt-1.5 text-xs text-muted">
+                  {overdue > 0 ? `${overdue} tasks need attention` : 'All tasks on track'}
+                </span>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                <Icon name="view_kanban" className="text-[22px]" />
+              </div>
+            </div>
+          </Link>
 
-          <Card className="flex flex-col gap-2 p-5 border-l-4 border-l-tertiary bg-surface shadow-e1">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-bold uppercase tracking-wider text-muted">Saved Stores &amp; Geofences</span>
-              <Icon name="receipt_long" className="text-[20px] text-tertiary" />
-            </span>
-            <span className="text-headline-md font-extrabold text-on-surface">
-              {fin ? formatMoney(fin.taxes_pending_minor, curr) : '—'}
-            </span>
-            <span className="text-xs text-muted">
-              {fin?.taxes_pending_count ?? 0} upcoming tax assessments
-            </span>
-          </Card>
+          <Link to="/places" className="group block">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  Saved Stores &amp; Geofences
+                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {fin ? formatMoney(fin.taxes_pending_minor, curr) : '$0'}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
+                    Taxes
+                  </span>
+                </div>
+                <span className="mt-1.5 text-xs text-muted">
+                  {fin?.taxes_pending_count ?? 0} upcoming tax assessments
+                </span>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                <Icon name="receipt_long" className="text-[22px]" />
+              </div>
+            </div>
+          </Link>
 
-          <Card className="flex flex-col gap-2 p-5 border-l-4 border-l-amber-500 bg-surface shadow-e1">
-            <span className="flex items-center justify-between">
-              <span className="text-label-sm font-bold uppercase tracking-wider text-muted">Standing Chores</span>
-              <Icon name="inventory_2" className="text-[20px] text-amber-500" />
-            </span>
-            <span className="text-headline-md font-extrabold text-on-surface">
-              {lowStock.length} Low
-            </span>
-            <span className="text-xs text-muted flex items-center justify-between">
-              <span>Family Seats</span>
-              <span>2 of 5 seats used</span>
-            </span>
-          </Card>
+          <Link to="/pantry" className="group block">
+            <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted">
+                  Standing Chores
+                </span>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-none text-on-surface">
+                    {lowStock.length} Low
+                  </span>
+                  {lowStock.length > 0 ? (
+                    <span className="inline-flex items-center rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
+                      Restock
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
+                      Stocked
+                    </span>
+                  )}
+                </div>
+                <span className="mt-1.5 text-xs text-muted flex items-center gap-2">
+                  <span>Family Seats</span>
+                  <span>·</span>
+                  <span>2 of 5 seats used</span>
+                </span>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
+                <Icon name="inventory_2" className="text-[22px]" />
+              </div>
+            </div>
+          </Link>
         </div>
 
         {/* 2. Side-by-Side Dual Engine: Household Activities & Domestic Finances */}

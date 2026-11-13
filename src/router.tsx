@@ -19,6 +19,7 @@ import { SolutionsHubPage } from '@/pages/marketing/SolutionsHubPage';
 import { PublicRefundPolicyPage } from '@/pages/marketing/PublicRefundPolicyPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { MoneyPage } from '@/pages/MoneyPage';
+import { PantryPage } from '@/pages/PantryPage';
 import { PlacesPage } from '@/pages/PlacesPage';
 import { RecurringPage } from '@/pages/RecurringPage';
 import { RegisterPage } from '@/pages/RegisterPage';
@@ -295,6 +296,13 @@ const recurringRoute = createRoute({
   component: RecurringPage,
 });
 
+const pantryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pantry',
+  beforeLoad: requireTenant,
+  component: PantryPage,
+});
+
 const moneyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/money',
@@ -500,6 +508,7 @@ export const routeTree = rootRoute.addChildren([
   geofenceConsoleRoute,
   billingRoute,
   recurringRoute,
+  pantryRoute,
   moneyRoute,
   ledgerRoute,
   financesOverviewRoute,

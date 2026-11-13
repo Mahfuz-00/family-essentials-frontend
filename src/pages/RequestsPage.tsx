@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
@@ -132,6 +132,15 @@ export function RequestsPage() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const userId = user?.id;
+
+  const kanbanScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollKanban = (direction: 'prev' | 'next') => {
+    if (kanbanScrollRef.current) {
+      const scrollAmount = direction === 'next' ? 340 : -340;
+      kanbanScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const [focusMode, setFocusMode] = useState<'all' | 'today' | 'backlog' | 'completed'>('all');
   const [view, setView] = useState<'board' | 'list'>('board');
@@ -764,8 +773,32 @@ export function RequestsPage() {
             )}
           </div>
 
-          {/* View switcher */}
-          <div className="flex flex-wrap items-center gap-3">
+          {/* View switcher & Column Navigation */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {view === 'board' && (
+              <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 border border-outline-variant/30">
+                <button
+                  type="button"
+                  onClick={() => scrollKanban('prev')}
+                  aria-label="Previous columns"
+                  title="Scroll back to previous column"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                >
+                  <Icon name="arrow_back" className="text-[18px]" />
+                </button>
+                <span className="text-[11px] font-bold text-muted px-1.5 uppercase tracking-wider">Columns</span>
+                <button
+                  type="button"
+                  onClick={() => scrollKanban('next')}
+                  aria-label="Next columns"
+                  title="Scroll forward to next column"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                >
+                  <Icon name="arrow_forward" className="text-[18px]" />
+                </button>
+              </div>
+            )}
+
             <div
               className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
               role="group"
@@ -792,7 +825,7 @@ export function RequestsPage() {
         {board.isError && <Alert>{apiError(board.error)}</Alert>}
 
         {board.data && filtered && view === 'board' && (
-          <div className="w-full overflow-x-auto pb-4 pt-1">
+          <div ref={kanbanScrollRef} className="w-full overflow-x-auto pb-4 pt-1 scroll-smooth">
             <section
               className={`flex items-start gap-4 ${
                 focusMode === 'today'

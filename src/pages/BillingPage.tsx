@@ -38,12 +38,68 @@ interface InvoicesResponse {
   current_page: number;
 }
 
+const planFeaturePoints: Record<string, { price: string; features: string[] }> = {
+  starter: {
+    price: '$9',
+    features: [
+      '2 Family members',
+      '2 Geofenced saved places',
+      '15 Active requests & errands / mo',
+      '10 Receipt OCR scans / mo',
+      '30 Pantry & essentials items',
+      'Shared calendar & expense overview',
+      'Standard community support',
+    ],
+  },
+  pilot: {
+    price: '$19',
+    features: [
+      '4 Family members',
+      '5 Geofenced saved places',
+      '40 Active requests & errands / mo',
+      '5 Urgent voice escalations / mo',
+      '10 Direct member calls / mo',
+      '30 Receipt OCR scans / mo',
+      '100 Pantry & essentials items',
+      'Automated restock reminders',
+      'Standard email support',
+    ],
+  },
+  standard: {
+    price: '$49',
+    features: [
+      '10 Family members',
+      '20 Geofenced saved places',
+      '250 Active requests & errands / mo',
+      '30 Urgent voice escalations / mo',
+      '100 Direct member calls / mo',
+      '150 Receipt OCR scans / mo',
+      '500 Pantry & essentials items',
+      'AI Assistant & NLP parser',
+      'Priority SLA & phone support',
+    ],
+  },
+  enterprise: {
+    price: '$99',
+    features: [
+      'Unlimited family members',
+      'Unlimited geofenced places',
+      'Unlimited monthly requests',
+      'Unlimited voice calls & escalations',
+      'Unlimited receipt scans & pantry',
+      'Dedicated account manager & 24/7 SLA',
+    ],
+  },
+};
+
 export function BillingPage() {
   const queryClient = useQueryClient();
   const active = useTenantStore((state) => state.active);
 
   const [activeTab, setActiveTab] = useState<'plan' | 'invoices' | 'refund-policy'>('plan');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [newInvoiceModal, setNewInvoiceModal] = useState<InvoiceRecord | null>(null);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundInvoiceId, setRefundInvoiceId] = useState<number | null>(null);
   const [refundReason, setRefundReason] = useState('');
@@ -100,12 +156,27 @@ export function BillingPage() {
       );
       setError(null);
       setUpgradeModalOpen(false);
+      if (data.invoice) {
+        setNewInvoiceModal(data.invoice);
+      }
       queryClient.invalidateQueries({ queryKey: ['billing', 'invoices'] });
       queryClient.invalidateQueries({ queryKey: ['tenant', 'quotas'] });
     },
     onError: (err) => {
       setError(apiError(err));
       setNotice(null);
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => (await api.post('/v1/billing/cancel')).data,
+    onSuccess: () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    },
+    onError: (err) => {
+      setError(apiError(err));
     },
   });
 
@@ -317,6 +388,14 @@ export function BillingPage() {
                           Manage seats
                         </Button>
                       </Link>
+                      <Button
+                        variant="outline"
+                        className="text-error border-error/30 hover:bg-coral-soft"
+                        onClick={() => setCancelModalOpen(true)}
+                      >
+                        <Icon name="cancel" className="text-[16px]" />
+                        Cancel Plan
+                      </Button>
                     </div>
                   </div>
 
@@ -361,44 +440,55 @@ export function BillingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                {plans
-                  .filter((tier) => tier.key !== 'enterprise')
-                  .map((tier) => {
-                    const isCurrent = tier.key === active?.subscription_tier;
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {plans.map((tier) => {
+                  const isCurrent = tier.key === active?.subscription_tier;
+                  const details = planFeaturePoints[tier.key] ?? {
+                    price: '$19',
+                    features: ['Multi-member household', 'Standard quotas'],
+                  };
 
-                    return (
-                      <Card
-                        key={tier.key}
-                        className={`flex flex-col gap-4 p-5 ${
-                          isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
-                        }`}
+                  return (
+                    <Card
+                      key={tier.key}
+                      className={`flex flex-col gap-4 p-5 ${
+                        isCurrent ? 'border-2 border-secondary shadow-e3 bg-forest-soft/30' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
+                          <span className="text-body-xs text-muted">{tier.tagline}</span>
+                        </div>
+                        {isCurrent && <Badge tone="primary">Current</Badge>}
+                      </div>
+
+                      <div className="text-2xl font-extrabold text-on-surface">
+                        {details.price} <span className="text-xs font-normal text-muted">/ month</span>
+                      </div>
+
+                      <ul className="flex flex-col gap-2 border-t border-outline-variant/20 pt-3 my-1">
+                        {details.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-on-surface">
+                            <Icon name="check_circle" className="text-[16px] text-secondary shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button
+                        variant={isCurrent ? 'soft' : 'outline'}
+                        onClick={() => {
+                          setSelectedTier(tier.key as any);
+                          setUpgradeModalOpen(true);
+                        }}
+                        className="mt-auto w-full"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex flex-col gap-0.5">
-                            <h3 className="text-headline-sm text-on-surface">{tier.label}</h3>
-                            <span className="text-body-sm text-muted">{tier.tagline}</span>
-                          </div>
-                          {isCurrent && <Badge tone="primary">Current plan</Badge>}
-                        </div>
-
-                        <div className="text-xl font-extrabold text-on-surface">
-                          {tier.key === 'starter' ? '$9' : tier.key === 'pilot' ? '$19' : '$49'} <span className="text-xs font-normal text-muted">/ month</span>
-                        </div>
-
-                        <Button
-                          variant={isCurrent ? 'soft' : 'outline'}
-                          onClick={() => {
-                            setSelectedTier(tier.key as any);
-                            setUpgradeModalOpen(true);
-                          }}
-                          className="mt-auto w-full"
-                        >
-                          {isCurrent ? 'Active Plan' : `Upgrade to ${tier.label}`}
-                        </Button>
-                      </Card>
-                    );
-                  })}
+                        {isCurrent ? 'Active Plan' : `Select ${tier.label}`}
+                      </Button>
+                    </Card>
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -619,7 +709,7 @@ export function BillingPage() {
               </div>
             </Card>
 
-            {/* 4 Policy Pillars */}
+            {/* 4 Graduated Policy Pillars (Point 23) */}
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <Card className="flex flex-col gap-3 p-5">
                 <div className="flex items-center gap-2.5">
@@ -627,12 +717,12 @@ export function BillingPage() {
                     <Icon name="verified_user" className="text-[20px]" />
                   </span>
                   <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Monthly Subscriptions: 7-Day 100% Guarantee</h4>
-                    <p className="text-body-xs text-muted">Full refund within 7 calendar days</p>
+                    <h4 className="text-label-lg font-bold text-on-surface">Monthly Plans: Graduated Guarantee</h4>
+                    <p className="text-body-xs text-muted">100% (≤7d) · 50% (8–20d) · 0% (&gt;20d)</p>
                   </div>
                 </div>
                 <p className="text-xs text-on-surface leading-relaxed">
-                  If you decide Family Essentials does not fit your household within 7 days of your monthly subscription invoice, you are entitled to a full 100% refund. After 7 days, charges for that cycle are non-refundable.
+                  Monthly subscriptions can be refunded for 100% of the invoice amount within 7 days of payment. Between Day 8 and Day 20, a 50% partial refund applies. After 20 days, no refund is available for that monthly cycle.
                 </p>
               </Card>
 
@@ -642,12 +732,12 @@ export function BillingPage() {
                     <Icon name="workspace_premium" className="text-[20px]" />
                   </span>
                   <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Annual Commitments: 30-Day 80% Guarantee</h4>
-                    <p className="text-body-xs text-muted">First-month early cancellation protection</p>
+                    <h4 className="text-label-lg font-bold text-on-surface">Annual Plans: Extended Graduated Schedule</h4>
+                    <p className="text-body-xs text-muted">100% (≤15d) · 75% (≤1mo) · 50% (≤3mo) · 25% (≤6mo)</p>
                   </div>
                 </div>
                 <p className="text-xs text-on-surface leading-relaxed">
-                  Annual subscriptions can be cancelled within the first month (30 days) for an 80% refund (20% retained for early termination and payment gateway costs). After 30 days, annual subscriptions are non-refundable.
+                  Annual commitments offer 100% refund within 15 days, 75% within 1 month, 50% within 3 months, and 25% within 6 months. After 6 months of annual usage, charges are non-refundable.
                 </p>
               </Card>
 
@@ -657,12 +747,12 @@ export function BillingPage() {
                     <Icon name="swap_horiz" className="text-[20px]" />
                   </span>
                   <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Plan Modifications &amp; Prorations</h4>
-                    <p className="text-body-xs text-muted">Clear timing rules for upgrades and downgrades</p>
+                    <h4 className="text-label-lg font-bold text-on-surface">Proration &amp; Reverting Policy</h4>
+                    <p className="text-body-xs text-muted">Remaining days adjusted against new plan price</p>
                   </div>
                 </div>
                 <p className="text-xs text-on-surface leading-relaxed">
-                  Monthly plans can be upgraded or changed between <strong>Day 4 and Day 20</strong> with a 50% adjustment credit. Plan changes are locked on Days 0–3 and after Day 20. Annual plans may be changed within the first 3 months.
+                  When switching plans, unused days on your active plan are calculated and credited towards the new plan price. Reverting back to a previous plan is permitted as long as your refund eligibility is 50% or higher.
                 </p>
               </Card>
 
@@ -672,12 +762,12 @@ export function BillingPage() {
                     <Icon name="payments" className="text-[20px]" />
                   </span>
                   <div>
-                    <h4 className="text-label-lg font-bold text-on-surface">Cash &amp; Offline Payment Refunds</h4>
-                    <p className="text-body-xs text-muted">In-person cash settlement vouchers</p>
+                    <h4 className="text-label-lg font-bold text-on-surface">Cash &amp; Online Payment Workflows</h4>
+                    <p className="text-body-xs text-muted">Instant online receipt vs. admin-approved cash invoice</p>
                   </div>
                 </div>
                 <p className="text-xs text-on-surface leading-relaxed">
-                  For cash-based payments, refunds cannot be processed automatically back to an online bank card. Instead, approved refunds are settled offline in person with your platform administrator via an official printed refund voucher.
+                  Online payments generate an instant paid tax receipt. Cash payment requests are submitted to the Platform Admin dashboard; once physical cash is received and confirmed, your official invoice is marked paid and available for download.
                 </p>
               </Card>
             </div>
@@ -953,6 +1043,109 @@ export function BillingPage() {
                 {refundSubmitting ? 'Submitting…' : 'Submit Refund Request'}
               </Button>
             </div>
+          </div>
+        </Modal>
+
+        {/* Instant Post-Payment Invoice Modal (Point 23) */}
+        <Modal
+          open={newInvoiceModal !== null}
+          onClose={() => setNewInvoiceModal(null)}
+          title="Payment Confirmed & Invoice Issued"
+          description="Your household subscription has been updated and an official tax invoice has been generated."
+          className="max-w-lg"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (newInvoiceModal) {
+                    handleDownloadInvoice(newInvoiceModal.id, newInvoiceModal.invoice_number);
+                  }
+                }}
+              >
+                <Icon name="download" className="text-[16px]" />
+                View / Print Invoice
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setNewInvoiceModal(null)}
+              >
+                Done &amp; Return to Billing
+              </Button>
+            </div>
+          }
+        >
+          {newInvoiceModal && (
+            <div className="flex flex-col gap-4 p-2">
+              <div className="flex items-center gap-3 rounded-2xl bg-forest-soft p-4 border border-secondary/20">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-white">
+                  <Icon name="verified" className="text-[28px]" />
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-secondary uppercase tracking-wider">Transaction Success</span>
+                  <span className="text-headline-sm font-bold text-on-surface">Invoice #{newInvoiceModal.invoice_number}</span>
+                  <span className="text-xs text-muted">
+                    {newInvoiceModal.payment_method === 'cash' ? 'Pending in-person settlement' : 'Paid in full via online payment'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-4 flex flex-col gap-2.5 text-xs">
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Subscription Tier:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.tier.replace('_', ' ')}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Billing Cycle:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.billing_period}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/15">
+                  <span className="text-muted">Amount Billed:</span>
+                  <span className="font-bold text-secondary text-sm">${(newInvoiceModal.amount_cents / 100).toFixed(2)} {newInvoiceModal.currency}</span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-muted">Payment Method:</span>
+                  <span className="font-bold text-on-surface capitalize">{newInvoiceModal.payment_method}</span>
+                </div>
+              </div>
+
+              {newInvoiceModal.payment_method === 'cash' && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-amber-900">
+                  <strong>Cash Notice:</strong> This invoice is pending collection. Once paid in person to your platform administrator, it will be marked as paid and downloadable from your permanent vault.
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
+
+        {/* Cancellation Confirmation Modal (Point 23) */}
+        <Modal
+          open={cancelModalOpen}
+          onClose={() => setCancelModalOpen(false)}
+          title="Cancel FairShare Subscription"
+          description="Are you sure you want to cancel your household subscription?"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button variant="outline" onClick={() => setCancelModalOpen(false)}>
+                Keep My Plan
+              </Button>
+              <Button
+                className="bg-error text-white hover:bg-error/90"
+                disabled={cancelMutation.isPending}
+                onClick={() => cancelMutation.mutate()}
+              >
+                {cancelMutation.isPending ? 'Cancelling...' : 'Confirm Cancellation'}
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex flex-col gap-3 p-1 text-xs text-on-surface">
+            <div className="rounded-xl border border-error/30 bg-coral-soft/50 p-3 text-error">
+              <strong>Notice:</strong> Cancelling your plan immediately ends your current billing cycle, revokes active sessions, and logs you out.
+            </div>
+            <p>
+              Upon logging in again, your account will be in a read-only locked state. All household activities, tasks, pantry, and finances will require an active subscription to access. You will only have access to Billing &amp; Subscriptions to reactivate your plan.
+            </p>
           </div>
         </Modal>
       </div>

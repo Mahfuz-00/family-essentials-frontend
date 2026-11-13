@@ -36,6 +36,31 @@ export function SettingsPage() {
     queryFn: async () => (await api.get<{ data: Tenant }>('/v1/tenant')).data.data,
   });
 
+  const tenantSettings = (tenant.data?.settings ?? {}) as Record<string, any>;
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('BDT');
+  const [selectedDateFormat, setSelectedDateFormat] = useState<string>('YYYY-MM-DD');
+  const [selectedTimeFormat, setSelectedTimeFormat] = useState<string>('12h');
+  const [defaultDueDays, setDefaultDueDays] = useState<number>(2);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      await api.patch('/v1/tenant', {
+        settings: {
+          currency: selectedCurrency,
+          date_format: selectedDateFormat,
+          time_format: selectedTimeFormat,
+          default_due_days: defaultDueDays,
+        },
+      });
+      await tenant.refetch();
+    },
+    onSuccess: () => {
+      setNotice(`Household preferences saved! Platform currency set to ${selectedCurrency}.`);
+      setError(null);
+    },
+    onError: (e) => setError(apiError(e)),
+  });
+
   const voiceConsent = useMutation({
     mutationFn: async (optIn: boolean) => {
       await api.patch('/v1/auth/voice-consent', { voice_opt_in: optIn });
@@ -292,6 +317,101 @@ export function SettingsPage() {
                     Billing &amp; plan
                   </span>
                 </Link>
+              </div>
+            </Card>
+
+            {/* Household Preferences & Global Currency */}
+            <Card className="flex flex-col gap-5 p-6 border-outline-variant/30">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+                    <Icon name="tune" className="text-[20px]" />
+                  </span>
+                  <div>
+                    <h3 className="text-headline-sm font-bold text-on-surface">Household Localization & Currency</h3>
+                    <p className="text-xs text-muted">Controls all currency markers, date formats, and task deadlines across the software.</p>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={saveSettingsMutation.isPending}
+                  onClick={() => saveSettingsMutation.mutate()}
+                >
+                  <Icon name="save" className="text-[16px]" />
+                  {saveSettingsMutation.isPending ? 'Saving...' : 'Save Preferences'}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-currency-select" className="text-label-sm font-bold text-on-surface">
+                    Global Currency
+                  </label>
+                  <select
+                    id="settings-currency-select"
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="BDT">BDT (৳) — Bangladeshi Taka</option>
+                    <option value="USD">USD ($) — US Dollar</option>
+                    <option value="EUR">EUR (€) — Euro</option>
+                    <option value="GBP">GBP (£) — British Pound</option>
+                    <option value="CAD">CAD ($) — Canadian Dollar</option>
+                    <option value="AUD">AUD ($) — Australian Dollar</option>
+                    <option value="INR">INR (₹) — Indian Rupee</option>
+                    <option value="SAR">SAR (﷼) — Saudi Riyal</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-date-format-select" className="text-label-sm font-bold text-on-surface">
+                    Date Format
+                  </label>
+                  <select
+                    id="settings-date-format-select"
+                    value={selectedDateFormat}
+                    onChange={(e) => setSelectedDateFormat(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="YYYY-MM-DD">YYYY-MM-DD (2026-11-13)</option>
+                    <option value="DD/MM/YYYY">DD/MM/YYYY (13/11/2026)</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY (11/13/2026)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-time-format-select" className="text-label-sm font-bold text-on-surface">
+                    Time Format
+                  </label>
+                  <select
+                    id="settings-time-format-select"
+                    value={selectedTimeFormat}
+                    onChange={(e) => setSelectedTimeFormat(e.target.value)}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value="12h">12-hour (06:30 PM)</option>
+                    <option value="24h">24-hour (18:30)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="settings-default-due-days-select" className="text-label-sm font-bold text-on-surface">
+                    Default Task Due
+                  </label>
+                  <select
+                    id="settings-default-due-days-select"
+                    value={defaultDueDays}
+                    onChange={(e) => setDefaultDueDays(Number(e.target.value))}
+                    className="h-10 rounded-xl border border-outline-variant/40 bg-canvas px-3 text-sm text-on-surface focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
+                  >
+                    <option value={1}>1 Day (Tomorrow)</option>
+                    <option value={2}>2 Days</option>
+                    <option value={3}>3 Days</option>
+                    <option value={7}>7 Days (1 Week)</option>
+                  </select>
+                </div>
               </div>
             </Card>
 

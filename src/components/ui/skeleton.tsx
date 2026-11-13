@@ -1,20 +1,35 @@
 import { cn } from '@/lib/utils';
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-md bg-forest-soft/70', className)} />;
+  return <div className={cn('animate-pulse rounded-lg bg-forest-soft/50', className)} />;
 }
 
-export function SkeletonCard() {
+export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-[rgba(43,45,66,0.08)] bg-surface p-5 shadow-e1">
+    <div
+      className={cn(
+        'flex flex-col gap-3 rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 animate-pulse',
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-32 rounded-lg" />
-        <Skeleton className="h-4 w-12 rounded-full" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-6 rounded-full" />
+          <Skeleton className="h-4 w-28 rounded-md" />
+        </div>
+        <Skeleton className="h-5 w-16 rounded-full" />
       </div>
-      <Skeleton className="h-5 w-48 rounded-lg mt-1" />
-      <div className="flex items-center gap-2 mt-2">
-        <Skeleton className="h-6 w-20 rounded-lg" />
-        <Skeleton className="h-6 w-24 rounded-lg" />
+      <Skeleton className="h-5 w-3/4 rounded-md mt-1" />
+      <Skeleton className="h-3 w-1/2 rounded-md" />
+      <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20 mt-2">
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-5 w-14 rounded-md" />
+          <Skeleton className="h-5 w-16 rounded-md" />
+        </div>
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-7 w-7 rounded-lg" />
+          <Skeleton className="h-7 w-7 rounded-lg" />
+        </div>
       </div>
     </div>
   );

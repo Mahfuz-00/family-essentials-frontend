@@ -7,6 +7,8 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { Icon } from '@/components/Icon';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { api } from '@/lib/api';
 import { resetSession } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth';
@@ -21,6 +23,7 @@ type RoutePath =
   | '/requests'
   | '/requests/escalation'
   | '/recurring'
+  | '/pantry'
   | '/places'
   | '/places/console'
   | '/members'
@@ -74,6 +77,7 @@ const householdSections: NavSection[] = [
     items: [
       { to: '/app', label: 'Activities Hub', icon: 'cottage', exact: true },
       { to: '/requests', label: 'Requests & Errands', icon: 'view_kanban', exact: true },
+      { to: '/pantry', label: 'Pantry & Grocery', icon: 'kitchen', exact: true },
       { to: '/requests/escalation', label: 'Escalation & Voice', icon: 'ring_volume', exact: true },
       { to: '/recurring', label: 'Recurring', icon: 'event_repeat', exact: true },
     ],
@@ -83,6 +87,7 @@ const householdSections: NavSection[] = [
     items: [
       { to: '/money', label: 'Household Expense Overview', icon: 'account_balance_wallet', exact: false },
       { to: '/finances/overview', label: 'Household Financial Overview', icon: 'query_stats', exact: true },
+      { to: '/recurring', label: 'Recurring Expenses & Rules', icon: 'event_repeat', exact: true },
       { to: '/finances/goals', label: 'Financial Goals', icon: 'flag', exact: true },
       { to: '/finances/liabilities', label: 'Loans & Mortgages', icon: 'real_estate_agent', exact: true },
       { to: '/finances/assets', label: 'Savings & Investments', icon: 'trending_up', exact: true },
@@ -151,6 +156,7 @@ const routeLabels: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/app': 'Dashboard',
   '/requests': 'Requests & Errands',
+  '/pantry': 'Pantry & Grocery',
   '/requests/escalation': 'Escalation & Voice',
   '/recurring': 'Recurring',
   '/places': 'Saved Places',
@@ -225,6 +231,12 @@ export function AppLayout({ children }: { children?: ReactNode }) {
     routeLabels[path] ??
     routeLabels[`/${path.split('/')[1] ?? ''}`] ??
     (path.startsWith('/admin') ? 'Platform Admin' : 'Household');
+
+  const activeTenant = useTenantStore((state) => state.active);
+  const isSubscriptionLocked =
+    !isPlatformAdmin &&
+    (activeTenant?.status === 'cancelled' || activeTenant?.status === 'suspended') &&
+    path !== '/billing';
 
   // Keyboard close for mobile drawer and click outside for dropdowns
   useEffect(() => {
@@ -513,38 +525,6 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-            {/* Search Bar */}
-            <div className="relative hidden md:flex items-center">
-              <span className="pointer-events-none absolute left-3 flex items-center text-muted">
-                <Icon name="search" className="text-[18px]" />
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    if (path !== '/requests') {
-                      navigate({ to: '/requests' });
-                    }
-                  }
-                }}
-                placeholder="Search errands, items, stores..."
-                aria-label="Search"
-                className="h-9 w-44 lg:w-64 rounded-xl border border-outline-variant/40 bg-canvas pl-9 pr-8 text-xs sm:text-sm text-on-surface placeholder:text-muted focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-outline-variant/40 text-on-surface-variant hover:bg-outline-variant text-[10px]"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
             {/* Household switcher */}
             {!isPlatformAdmin && memberships.length > 1 && (
               <label className="flex items-center">
@@ -798,6 +778,36 @@ export function AppLayout({ children }: { children?: ReactNode }) {
 
         <main className="w-full px-4 py-6 sm:px-6">{children ?? <Outlet />}</main>
       </div>
+
+      {/* Subscription Lockout Modal (Point 23) */}
+      <Modal
+        open={isSubscriptionLocked}
+        onClose={() => {}}
+        title="Active Subscription Required"
+        description="Your household subscription has expired or was cancelled."
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button variant="outline" onClick={signOut}>
+              Sign Out
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void navigate({ to: '/billing' })}
+            >
+              Go to Billing &amp; Subscriptions
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-3 p-1 text-xs">
+          <p className="text-on-surface">
+            All household features, activity tracking, budget tools, and members access are locked until an active subscription plan is chosen.
+          </p>
+          <div className="rounded-xl bg-forest-soft p-3 text-secondary font-semibold border border-secondary/20">
+            Please reactivate or select a plan on the Billing page to restore full household access.
+          </div>
+        </div>
+      </Modal>
     </div>
     </AppLayoutContext.Provider>
   );
