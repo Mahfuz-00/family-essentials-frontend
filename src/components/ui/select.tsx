@@ -6,7 +6,7 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
     <div className="relative min-w-0 max-w-full">
       <select
         className={cn(
-          'h-12 w-full min-w-0 max-w-full box-border cursor-pointer appearance-none rounded-xl bg-canvas px-3.5 pr-9 text-[15px] text-on-surface shadow-inner border border-outline-variant/50',
+          'h-12 w-full min-w-0 max-w-full box-border cursor-pointer appearance-none rounded-xl bg-canvas px-3.5 pr-9 text-[15px] text-on-surface shadow-[var(--shadow-inset)] border border-transparent',
           'outline-none transition-colors',
           'focus:border-primary focus:ring-2 focus:ring-primary/40',
           'disabled:cursor-not-allowed disabled:opacity-60',

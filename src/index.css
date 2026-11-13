@@ -21,7 +21,7 @@
   --font-sans: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', 'Noto Sans Bengali', 'BengaliTakaBold', ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces and ink */
-  --color-canvas: #fdfcf7;
+  --color-canvas: #f6f5ef;
   --color-surface: #ffffff;
   --color-surface-bright: #fbf8ff;
   --color-surface-container-lowest: #ffffff;
@@ -130,9 +130,14 @@
      so `rounded-xl` here means the same 12px it means in the design exports.
      Overriding these earlier made every pill and input render at 24px. */
 
-  /* Elevation — slate-tinted ambient shadows, never black */
-  --shadow-e1: 0 2px 8px -1px rgba(43, 45, 66, 0.04), 0 1px 3px 0 rgba(43, 45, 66, 0.02);
-  --shadow-e2: 0 6px 16px -2px rgba(43, 45, 66, 0.06), 0 2px 6px -1px rgba(43, 45, 66, 0.04);
+  /* Elevation — "Soft Sage Clay": dual light/shadow depth tinted with the
+     primary sage, never black. e1/e2 are the clay resting/hover levels so every
+     surface that already uses them picks up the soft UI treatment. */
+  --shadow-e1: 6px 6px 16px -2px rgba(77, 96, 84, 0.10), -5px -5px 14px -2px rgba(255, 255, 255, 0.95);
+  --shadow-e2: 10px 10px 24px -4px rgba(77, 96, 84, 0.14), -7px -7px 18px -3px rgba(255, 255, 255, 1);
+  --shadow-clay-sm: 3px 3px 8px rgba(77, 96, 84, 0.09), -3px -3px 8px rgba(255, 255, 255, 0.95);
+  --shadow-inset: inset 3px 3px 7px rgba(77, 96, 84, 0.12), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+  --shadow-inset-sm: inset 2px 2px 4px rgba(77, 96, 84, 0.10), inset -2px -2px 4px rgba(255, 255, 255, 0.9);
   --shadow-e3: 0 12px 28px -4px rgba(74, 124, 89, 0.18), 0 4px 10px -2px rgba(43, 45, 66, 0.06);
   --shadow-e4: 0 -10px 30px 0 rgba(43, 45, 66, 0.08);
 }
@@ -166,6 +171,55 @@ body {
   word-wrap: normal;
   direction: ltr;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ---------------------------------------------------------------------------
+   Soft UI (clay) utilities
+--------------------------------------------------------------------------- */
+.clay {
+  background-color: var(--color-surface);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-e1);
+}
+
+.clay-sm {
+  box-shadow: var(--shadow-clay-sm);
+}
+
+.clay-inset {
+  background-color: var(--color-canvas);
+  box-shadow: var(--shadow-inset);
+}
+
+.clay-inset-sm {
+  box-shadow: var(--shadow-inset-sm);
+}
+
+.clay-press:active {
+  box-shadow: var(--shadow-inset-sm);
+  transform: translateY(1px);
+}
+
+.clay-btn-primary {
+  background-image: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+}
+
+/* Body swap transition inside the persistent shell. */
+@keyframes bodyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* `backwards` (not `both`) so no transform lingers after the animation —
+   a persistent transform would trap position:fixed modals inside the body. */
+.animate-body-in {
+  animation: bodyFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 /* Focus is architecture: visible, offset, consistent. */

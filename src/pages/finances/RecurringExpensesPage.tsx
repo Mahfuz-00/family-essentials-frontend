@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api, apiError } from '@/lib/api';
 import { AMOUNT_INPUT_ERROR, formatMoney, parseMoneyToMinor } from '@/lib/money';
 import { CADENCES, formatDateOnly, ruleCadence } from '@/lib/recurring';
@@ -163,13 +164,8 @@ export function RecurringExpensesPage() {
             description="Manage automated household bills, subscriptions, utility reminders, and monthly burn commitments."
             titleSize="headline"
           />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-          <div className="h-14 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-e1 animate-pulse" />
+          <StatGridSkeleton count={4} />
+          <div className="h-14 rounded-[1.25rem] border border-white/70 bg-surface p-4 shadow-e1 animate-pulse" />
           <div className="flex flex-col gap-3">
             {[1, 2, 3, 4].map((i) => (
               <SkeletonCard key={i} />
@@ -198,132 +194,94 @@ export function RecurringExpensesPage() {
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* 4 Standard Executive Pulse Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
-          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Monthly Burn Commitment</span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-secondary truncate max-w-full">
-                    {formatMoney(monthlyBurnMinor, currency)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-                <Icon name="payments" className="text-[22px]" />
-              </div>
-            </div>
-            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Estimated 30-day fixed baseline spend</span>
-          </div>
+        {/* 4 Unified StatCards */}
+        <StatGrid count={4}>
+          <StatCard
+            title="Monthly Burn Commitment"
+            value={formatMoney(monthlyBurnMinor, currency)}
+            icon="payments"
+            tone="forest"
+            valueClassName="text-secondary"
+            highlight={<StatHighlight tone="success">30-Day Fixed</StatHighlight>}
+          />
+          <StatCard
+            title="Active Subscriptions"
+            value={activeRules.length}
+            icon="event_repeat"
+            tone="sage"
+            highlight={<StatHighlight tone="success">Active</StatHighlight>}
+          />
+          <StatCard
+            title="Annual Forecast"
+            value={formatMoney(monthlyBurnMinor * 12, currency)}
+            icon="query_stats"
+            tone="blue"
+            highlight={<StatHighlight tone="primary">12-Month Outflow</StatHighlight>}
+          />
+          <StatCard
+            title="Upcoming Renewals"
+            value={activeRules.filter((r) => r.next_run_on).length}
+            icon="alarm"
+            tone="amber"
+            highlight={<StatHighlight tone="warning">Due Soon</StatHighlight>}
+          />
+        </StatGrid>
 
-          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Active Subscriptions</span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {activeRules.length}
-                  </span>
-                  <Badge tone="success">Active</Badge>
-                </div>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
-                <Icon name="event_repeat" className="text-[22px]" />
-              </div>
-            </div>
-            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">{expenseRules.length} total scheduled rules</span>
+        {/* Filter Pills in a Sunken Clay Track */}
+        <Card className="p-3">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-label-md capitalize transition-all ${
+                filter === 'all'
+                  ? 'bg-secondary font-semibold text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              All Expenses ({expenseRules.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter('active')}
+              className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-label-md capitalize transition-all ${
+                filter === 'active'
+                  ? 'bg-secondary font-semibold text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              Active ({activeRules.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter('paused')}
+              className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-label-md capitalize transition-all ${
+                filter === 'paused'
+                  ? 'bg-secondary font-semibold text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
+              }`}
+            >
+              Paused ({expenseRules.length - activeRules.length})
+            </button>
+            {expenseCategories.map((cat) => {
+              const count = expenseRules.filter((r) => r.category === cat).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilter(cat)}
+                  className={`cursor-pointer rounded-xl px-3.5 py-1.5 text-label-md transition-all ${
+                    filter === cat
+                      ? 'bg-secondary font-semibold text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                      : 'text-on-surface-variant hover:bg-surface/70'
+                  }`}
+                >
+                  {cat} ({count})
+                </button>
+              );
+            })}
           </div>
-
-          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Annual Forecast</span>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {formatMoney(monthlyBurnMinor * 12, currency)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800 shadow-xs">
-                <Icon name="query_stats" className="text-[22px]" />
-              </div>
-            </div>
-            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Projected 12-month baseline outflow</span>
-          </div>
-
-          <div className="relative flex flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 overflow-hidden">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">Upcoming Renewals</span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {activeRules.filter((r) => r.next_run_on).length}
-                  </span>
-                  <Badge tone="warning">Due Soon</Badge>
-                </div>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs">
-                <Icon name="alarm" className="text-[22px]" />
-              </div>
-            </div>
-            <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">Upcoming automated payments</span>
-          </div>
-        </div>
-
-        {/* Filter Pills */}
-        <Card className="flex flex-wrap items-center gap-2 p-3">
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md capitalize transition-all ${
-              filter === 'all'
-                ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-            }`}
-          >
-            All Expenses ({expenseRules.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('active')}
-            className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md capitalize transition-all ${
-              filter === 'active'
-                ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-            }`}
-          >
-            Active ({activeRules.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('paused')}
-            className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md capitalize transition-all ${
-              filter === 'paused'
-                ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-            }`}
-          >
-            Paused ({expenseRules.length - activeRules.length})
-          </button>
-          {expenseCategories.map((cat) => {
-            const count = expenseRules.filter((r) => r.category === cat).length;
-            if (count === 0) return null;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setFilter(cat)}
-                className={`cursor-pointer rounded-full px-3 py-1.5 text-label-md transition-all ${
-                  filter === cat
-                    ? 'bg-secondary font-semibold text-on-secondary shadow-e1'
-                    : 'bg-canvas text-on-surface-variant hover:bg-sage-soft'
-                }`}
-              >
-                {cat} ({count})
-              </button>
-            );
-          })}
         </Card>
 
         {rulesQuery.isLoading && (

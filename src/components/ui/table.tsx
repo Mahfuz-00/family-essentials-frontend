@@ -11,7 +11,7 @@ export function Table({ className, children }: { className?: string; children: R
 
 export function THead({ children }: { children: ReactNode }) {
   return (
-    <thead className="bg-canvas/70">
+    <thead className="bg-canvas/80">
       <tr className="text-label-sm uppercase tracking-wider text-muted">{children}</tr>
     </thead>
   );
@@ -22,7 +22,7 @@ export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
 }
 
 export function TR({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('border-t border-canvas', className)} {...props} />;
+  return <tr className={cn('border-t border-canvas transition-colors hover:bg-sage-soft/40', className)} {...props} />;
 }
 
 export function TD({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {

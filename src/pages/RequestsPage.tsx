@@ -628,15 +628,15 @@ export function RequestsPage() {
           </section>
         )}
 
-        {/* Focus Mode Navigation */}
-        <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
+        {/* Focus Mode Navigation (Sunken Clay Track) */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
           <button
             type="button"
             onClick={() => setFocusMode('all')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'all'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="view_kanban" className="text-[16px]" />
@@ -645,10 +645,10 @@ export function RequestsPage() {
           <button
             type="button"
             onClick={() => setFocusMode('today')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'today'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="bolt" className="text-[16px]" />
@@ -657,10 +657,10 @@ export function RequestsPage() {
           <button
             type="button"
             onClick={() => setFocusMode('backlog')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'backlog'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="inventory_2" className="text-[16px]" />
@@ -669,10 +669,10 @@ export function RequestsPage() {
           <button
             type="button"
             onClick={() => setFocusMode('completed')}
-            className={`flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-xs sm:text-sm font-bold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               focusMode === 'completed'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
+                : 'text-muted hover:text-on-surface'
             }`}
           >
             <Icon name="check_circle" className="text-[16px]" />
@@ -681,7 +681,7 @@ export function RequestsPage() {
         </div>
 
         {/* Filter bar */}
-        <section className="flex flex-col gap-3 rounded-2xl bg-surface p-3.5 shadow-e1 border border-outline-variant/30">
+        <section className="flex flex-col gap-3 rounded-[1.25rem] bg-surface p-4 shadow-e1 border border-white/70">
           {/* Row 1: Search & Assignee Segmented Filter */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="relative w-full lg:max-w-sm shrink-0">
@@ -710,7 +710,7 @@ export function RequestsPage() {
 
             {/* Assignee segmented control */}
             <div
-              className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 overflow-x-auto no-scrollbar"
+              className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)] overflow-x-auto no-scrollbar"
               role="group"
               aria-label="Filter by assignee"
             >
@@ -790,13 +790,13 @@ export function RequestsPage() {
             {/* View switcher & Column Navigation */}
             <div className="flex items-center gap-2.5 ml-auto">
               {view === 'board' && (
-                <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 border border-outline-variant/30">
+                <div className="flex items-center gap-1 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]">
                   <button
                     type="button"
                     onClick={() => scrollKanban('prev')}
                     aria-label="Previous columns"
                     title="Scroll back to previous column"
-                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors shadow-[var(--shadow-clay-sm)]"
                   >
                     <Icon name="arrow_back" className="text-[17px]" />
                   </button>
@@ -806,7 +806,7 @@ export function RequestsPage() {
                     onClick={() => scrollKanban('next')}
                     aria-label="Next columns"
                     title="Scroll forward to next column"
-                    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors"
+                    className="flex h-7.5 w-7.5 items-center justify-center rounded-xl text-on-surface-variant hover:bg-surface hover:text-on-surface transition-colors shadow-[var(--shadow-clay-sm)]"
                   >
                     <Icon name="arrow_forward" className="text-[17px]" />
                   </button>
@@ -814,7 +814,7 @@ export function RequestsPage() {
               )}
 
               <div
-                className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1"
+                className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
                 role="group"
                 aria-label="View"
               >
@@ -1489,8 +1489,8 @@ function Segmented({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-label-md transition-all ${
-        active ? 'bg-surface font-semibold text-on-surface shadow-sm' : 'text-muted hover:text-on-surface'
+      className={`flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-label-md transition-all ${
+        active ? 'bg-surface font-semibold text-secondary shadow-[var(--shadow-clay-sm)]' : 'text-muted hover:text-on-surface'
       }`}
     >
       {dot && <span className={`h-2 w-2 rounded-full ${dot}`} />}
@@ -1534,7 +1534,7 @@ function TaskCard({
 
   return (
     <article
-      className={`group relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-[rgba(43,45,66,0.05)] bg-surface p-4 shadow-e1 transition-shadow hover:shadow-e2 ${
+      className={`group relative flex flex-col gap-2.5 overflow-hidden rounded-[1.25rem] border border-white/70 bg-surface p-4 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2 ${
         isDone ? 'opacity-80' : ''
       }`}
     >

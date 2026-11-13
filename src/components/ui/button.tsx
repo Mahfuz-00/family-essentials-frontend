@@ -5,14 +5,16 @@ type Variant = 'primary' | 'soft' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg' | 'xl';
 
 const variants: Record<Variant, string> = {
-  // Deep forest teal is the single call-to-action colour.
-  primary: 'bg-secondary text-on-secondary shadow-e1 hover:bg-primary active:scale-[0.97]',
-  // Soft sage secondary, zero shadow.
-  soft: 'bg-sage-soft text-secondary hover:bg-forest-soft active:scale-[0.97]',
+  // Deep forest teal is the single call-to-action colour, rendered as a clay pill.
+  primary:
+    'bg-secondary clay-btn-primary text-on-secondary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] hover:brightness-110 active:translate-y-px active:shadow-[var(--shadow-inset-sm)]',
+  // Soft sage secondary: raised clay chip.
+  soft: 'bg-sage-soft text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft active:shadow-[var(--shadow-inset-sm)]',
   outline:
-    'border border-[rgba(43,45,66,0.06)] bg-surface text-ink shadow-e1 hover:bg-sage-soft active:scale-[0.97]',
-  ghost: 'text-ink hover:bg-sage-soft',
-  danger: 'bg-error text-on-error hover:bg-tertiary active:scale-[0.97]',
+    'border border-white/70 bg-surface text-ink shadow-[var(--shadow-clay-sm)] hover:bg-sage-soft active:shadow-[var(--shadow-inset-sm)]',
+  ghost: 'text-ink hover:bg-sage-soft active:shadow-[var(--shadow-inset-sm)]',
+  danger:
+    'bg-error text-on-error shadow-[0_6px_14px_-4px_rgba(231,111,81,0.45)] hover:bg-tertiary active:translate-y-px active:shadow-[var(--shadow-inset-sm)]',
 };
 
 // Design: default control radius is rounded-xl (12px); the auth CTA is larger type.

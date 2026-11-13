@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
-import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { useQuota } from '@/hooks/useQuota';
 import { api, apiError } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
@@ -178,151 +178,67 @@ export function DashboardPage() {
         )}
 
         {/* -------------------------------------------------------------------
-            ROW 1: Top Operational Pulse Strip (Summary of Software Metrics)
+            ROW 1: Top Operational Pulse Strip (Unified StatCards)
         -------------------------------------------------------------------- */}
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 items-stretch">
-          {board.isLoading || essentialsQuery.isLoading || placesQuery.isLoading || ledgersQuery.isLoading ? (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          ) : (
-            <>
-              {/* Metric 1: Active Errands & Chores */}
-              <Link to="/requests" className="group flex flex-col h-full w-full">
-                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col min-w-0 flex-1 pr-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                        Active Errands & Tasks
-                      </span>
-                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                          {totalOpenCount}
-                        </span>
-                        {overdueCount > 0 ? (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                            <span className="relative flex h-1.5 w-1.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
-                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
-                            </span>
-                            {overdueCount} Overdue
-                          </span>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                            {dueTodayCount} Due Today
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                      <Icon name="view_kanban" className="text-[22px]" />
-                    </div>
-                  </div>
-                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
-                    {completedTodayCount} completed today
-                  </span>
-                </div>
-              </Link>
-
-              {/* Metric 2: Pantry & Safety Stock */}
-              <Link to="/requests" className="group flex flex-col h-full w-full">
-                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col min-w-0 flex-1 pr-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                        Pantry & Staples
-                      </span>
-                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                          {essentialsSummary.total}
-                        </span>
-                        {essentialsSummary.due > 0 ? (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                            {essentialsSummary.due} Low / Due
-                          </span>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                            Well Stocked
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                      <Icon name="inventory_2" className="text-[22px]" />
-                    </div>
-                  </div>
-                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
-                    {essentialsSummary.due > 0 ? 'Restock errands needed' : 'All safety levels green'}
-                  </span>
-                </div>
-              </Link>
-
-              {/* Metric 3: Saved Stores & Geofences */}
-              <Link to="/places" className="group flex flex-col h-full w-full">
-                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col min-w-0 flex-1 pr-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                        Saved Stores & Geofences
-                      </span>
-                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                          {places.length}
-                        </span>
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-surface-container-low px-2 py-0.5 text-xs font-semibold leading-none text-muted">
-                          Active Bounds
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                      <Icon name="pin_drop" className="text-[22px]" />
-                    </div>
-                  </div>
-                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
-                    Arrival triggers & store routing
-                  </span>
-                </div>
-              </Link>
-
-              {/* Metric 4: Shared Household Ledgers */}
-              <Link to="/money" className="group flex flex-col h-full w-full">
-                <div className="relative flex flex-1 flex-col justify-between h-full w-full min-h-[120px] rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col min-w-0 flex-1 pr-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                        Shared Ledgers & Budget
-                      </span>
-                      <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                        <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                          {ledgers.length}
-                        </span>
-                        <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-secondary">
-                          Active
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                      <Icon name="account_balance_wallet" className="text-[22px]" />
-                    </div>
-                  </div>
-                  <span className="mt-2 text-xs text-muted truncate block max-w-full border-t border-outline-variant/20 pt-2">
-                    Domestic expenses & shared totals
-                  </span>
-                </div>
-              </Link>
-            </>
-          )}
-        </section>
+        {board.isLoading || essentialsQuery.isLoading || placesQuery.isLoading || ledgersQuery.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              to="/requests"
+              title="Active Errands & Tasks"
+              value={totalOpenCount}
+              icon="view_kanban"
+              tone="forest"
+              highlight={
+                overdueCount > 0 ? (
+                  <StatHighlight tone="danger" pulse>
+                    {overdueCount} Overdue
+                  </StatHighlight>
+                ) : (
+                  <StatHighlight tone="success">{dueTodayCount} Due Today</StatHighlight>
+                )
+              }
+            />
+            <StatCard
+              to="/pantry"
+              title="Pantry & Staples"
+              value={essentialsSummary.total}
+              icon="inventory_2"
+              tone={essentialsSummary.due > 0 ? 'coral' : 'sage'}
+              highlight={
+                essentialsSummary.due > 0 ? (
+                  <StatHighlight tone="danger">{essentialsSummary.due} Low / Due</StatHighlight>
+                ) : (
+                  <StatHighlight tone="success">Well Stocked</StatHighlight>
+                )
+              }
+            />
+            <StatCard
+              to="/places"
+              title="Saved Stores & Geofences"
+              value={places.length}
+              icon="pin_drop"
+              tone="forest"
+              highlight={<StatHighlight tone="neutral">Active Bounds</StatHighlight>}
+            />
+            <StatCard
+              to="/money"
+              title="Shared Ledgers & Budget"
+              value={ledgers.length}
+              icon="account_balance_wallet"
+              tone="sage"
+              highlight={<StatHighlight tone="success">Active</StatHighlight>}
+            />
+          </StatGrid>
+        )}
 
         {/* -------------------------------------------------------------------
             ROW 2: Active Operations Hub (Tasks List + Operational Widgets)
         -------------------------------------------------------------------- */}
         <section className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Left (8 Cols): Today's Active Errands & Chores Hub */}
-          <div className="rounded-3xl border border-outline-variant/30 bg-surface p-6 shadow-e1 lg:col-span-8">
+          <div className="rounded-[1.25rem] border border-white/70 bg-surface p-6 shadow-e1 lg:col-span-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -338,14 +254,14 @@ export function DashboardPage() {
                 </p>
               </div>
 
-              {/* Segmented Filter Pills */}
-              <div className="flex items-center gap-1 rounded-xl bg-surface-container-low p-1 text-xs">
+              {/* Segmented Filter Pills (Sunken Clay Track) */}
+              <div className="flex items-center gap-1.5 rounded-2xl bg-canvas p-1.5 text-xs shadow-[var(--shadow-inset)]">
                 <button
                   type="button"
                   onClick={() => setTaskFilter('focus')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'focus'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -354,9 +270,9 @@ export function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setTaskFilter('my')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'my'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -365,9 +281,9 @@ export function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setTaskFilter('completed')}
-                  className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                  className={`rounded-xl px-3 py-1.5 font-semibold transition-all ${
                     taskFilter === 'completed'
-                      ? 'bg-surface text-secondary shadow-xs'
+                      ? 'bg-surface text-secondary shadow-[var(--shadow-clay-sm)]'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >

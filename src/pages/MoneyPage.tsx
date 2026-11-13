@@ -101,7 +101,7 @@ export function MoneyPage() {
       <AppLayout>
         <div className="flex flex-col gap-6 max-w-6xl">
           <PageHeader
-            title="Household Budget &amp; Ledger"
+            title="Expenses &amp; Money"
             description="Opening your household ledger..."
             titleSize="headline"
           />

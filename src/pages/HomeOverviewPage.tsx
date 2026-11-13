@@ -5,6 +5,8 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/Icon';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api } from '@/lib/api';
 
 interface BoardPayload {
@@ -101,22 +103,8 @@ export function HomeOverviewPage() {
             </div>
           </div>
 
-          {/* 4 Pulse Cards Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1"
-              >
-                <div className="space-y-2.5">
-                  <div className="h-3 w-32 rounded bg-forest-soft/40" />
-                  <div className="h-7 w-24 rounded-lg bg-forest-soft/60" />
-                  <div className="h-3 w-40 rounded bg-forest-soft/30" />
-                </div>
-                <div className="h-11 w-11 rounded-xl bg-forest-soft/50" />
-              </div>
-            ))}
-          </div>
+          {/* 4 Pulse Cards Skeleton — same anatomy as StatCard */}
+          <StatGridSkeleton count={4} />
 
           {/* Main Grid Skeleton */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -156,166 +144,94 @@ export function HomeOverviewPage() {
           </div>
         )}
 
-        {/* Header Hero */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
-          <div>
-            <h1 className="text-display-sm font-black text-on-surface tracking-tight">
-              Household Overview
-            </h1>
-            <p className="text-body-md text-muted mt-1">
-              Domestic logistics, shared ledgers, and household wealth in one place.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/app"
-              className="inline-flex items-center gap-2 rounded-xl bg-forest-soft px-4 py-2.5 text-label-md font-bold text-secondary hover:bg-forest-soft/80 transition-all border border-secondary/20"
-            >
-              <Icon name="view_kanban" className="text-[18px]" />
-              Activities Hub
-            </Link>
-            <Link
-              to="/money"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-label-md font-bold text-on-primary hover:bg-primary-dark transition-all shadow-e1"
-            >
-              <Icon name="account_balance_wallet" className="text-[18px]" />
-              Expense Tracker
-            </Link>
-          </div>
-        </div>
-
-        {/* 1. Household Overview Summary Pulse Cards matching software UI */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-          <Link to="/finances/overview" className="group flex flex-col h-full w-full">
-            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                  Shared Ledgers &amp; Budget
-                </span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {formatMoney(fin?.net_worth_minor ?? 0, curr)}
-                  </span>
-                  <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                    Net Worth
-                  </span>
-                </div>
-                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
-                  Assets: {formatMoney(fin?.total_assets_minor ?? 0, curr)} · Debt: {formatMoney(fin?.total_liabilities_minor ?? 0, curr)}
-                </span>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                <Icon name="trending_up" className="text-[22px]" />
-              </div>
+        {/* Header — title matches the sidebar label 1:1 */}
+        <PageHeader
+          title="Household Overview"
+          description="Domestic logistics, shared ledgers, and household wealth in one place."
+          titleSize="headline"
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all hover:bg-forest-soft active:shadow-[var(--shadow-inset-sm)]"
+              >
+                <Icon name="view_kanban" className="text-[18px]" />
+                Activities Hub
+              </Link>
+              <Link
+                to="/money"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all hover:brightness-110"
+              >
+                <Icon name="account_balance_wallet" className="text-[18px]" />
+                Expense Tracker
+              </Link>
             </div>
-          </Link>
+          }
+        />
 
-          <Link to="/requests" className="group flex flex-col h-full w-full">
-            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                  Active Errands &amp; Tasks
-                </span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {openErrands}
-                  </span>
-                  {overdue > 0 ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-error" />
-                      </span>
-                      {overdue} Overdue
-                    </span>
-                  ) : (
-                    <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                      {dueToday} Due Today
-                    </span>
-                  )}
-                </div>
-                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
-                  {overdue > 0 ? `${overdue} tasks need attention` : 'All tasks on track'}
-                </span>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                <Icon name="view_kanban" className="text-[22px]" />
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/places" className="group flex flex-col h-full w-full">
-            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                  Saved Stores &amp; Geofences
-                </span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {formatMoney(fin?.taxes_pending_minor ?? 0, curr)}
-                  </span>
-                  <span className="inline-flex shrink-0 items-center rounded-md bg-sage-soft px-2 py-0.5 text-xs font-semibold leading-none text-primary">
-                    Taxes
-                  </span>
-                </div>
-                <span className="mt-1.5 text-xs text-muted truncate block max-w-full">
-                  {fin?.taxes_pending_count ?? 0} upcoming tax assessments
-                </span>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                <Icon name="receipt_long" className="text-[22px]" />
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/pantry" className="group flex flex-col h-full w-full">
-            <div className="relative flex flex-1 h-full w-full min-h-[120px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-1 hover:shadow-e2 overflow-hidden">
-              <div className="flex flex-col min-w-0 flex-1 pr-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted truncate">
-                  Standing Chores
-                </span>
-                <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-extrabold tracking-tight leading-tight text-on-surface truncate max-w-full">
-                    {lowStock.length > 0 ? `${lowStock.length} Low` : `${essentials.length} Items`}
-                  </span>
-                  {lowStock.length > 0 ? (
-                    <span className="inline-flex shrink-0 items-center rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold leading-none text-error">
-                      Restock
-                    </span>
-                  ) : (
-                    <span className="inline-flex shrink-0 items-center rounded-md bg-forest-soft px-2 py-0.5 text-xs font-semibold leading-none text-success">
-                      Stocked
-                    </span>
-                  )}
-                </div>
-                <span className="mt-1.5 text-xs text-muted flex items-center gap-2 truncate max-w-full">
-                  <span>Family Seats</span>
-                  <span>·</span>
-                  <span>2 of 5 seats used</span>
-                </span>
-              </div>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs transition-transform duration-300 group-hover:scale-110">
-                <Icon name="kitchen" className="text-[22px]" />
-              </div>
-            </div>
-          </Link>
-        </div>
+        {/* 1. Household Overview summary — unified StatCards */}
+        <StatGrid count={4}>
+          <StatCard
+            to="/finances/overview"
+            title="Shared Ledgers & Budget"
+            value={formatMoney(fin?.net_worth_minor ?? 0, curr)}
+            icon="trending_up"
+            tone="forest"
+            highlight={<StatHighlight tone="success">Net Worth</StatHighlight>}
+          />
+          <StatCard
+            to="/requests"
+            title="Active Errands & Tasks"
+            value={openErrands}
+            icon="view_kanban"
+            tone="forest"
+            highlight={
+              overdue > 0 ? (
+                <StatHighlight tone="danger" pulse>{overdue} Overdue</StatHighlight>
+              ) : (
+                <StatHighlight tone="success">{dueToday} Due Today</StatHighlight>
+              )
+            }
+          />
+          <StatCard
+            to="/finances/taxes"
+            title="Upcoming Taxes"
+            value={formatMoney(fin?.taxes_pending_minor ?? 0, curr)}
+            icon="receipt_long"
+            tone="sage"
+            highlight={<StatHighlight tone="primary">{fin?.taxes_pending_count ?? 0} Pending</StatHighlight>}
+          />
+          <StatCard
+            to="/pantry"
+            title="Pantry Stock"
+            value={lowStock.length > 0 ? `${lowStock.length} Low` : `${essentials.length} Items`}
+            icon="kitchen"
+            tone={lowStock.length > 0 ? 'coral' : 'forest'}
+            highlight={
+              lowStock.length > 0 ? (
+                <StatHighlight tone="danger">Restock</StatHighlight>
+              ) : (
+                <StatHighlight tone="success">Stocked</StatHighlight>
+              )
+            }
+          />
+        </StatGrid>
 
         {/* 2. Side-by-Side Dual Engine: Household Activities & Domestic Finances */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* Engine A: Household Domestic Logistics */}
-          <Card className="p-6 flex flex-col gap-5 border border-outline-variant/60 shadow-e1 bg-surface">
-            <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+          <Card className="p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
                   <Icon name="task_alt" className="text-[20px]" />
                 </span>
                 <div>
-                  <h2 className="text-title-md font-bold text-on-surface">Domestic Logistics & Errands</h2>
+                  <h2 className="text-title-md font-bold text-on-surface">Domestic Logistics &amp; Errands</h2>
                   <p className="text-xs text-muted">What requires household attention right now</p>
                 </div>
               </div>
-              <Link to="/requests" className="text-xs font-semibold text-secondary hover:underline">
+              <Link to="/requests" className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all">
                 View Kanban &rarr;
               </Link>
             </div>
@@ -326,7 +242,7 @@ export function HomeOverviewPage() {
                   <Icon name="warning" className="text-[16px]" /> Overdue Errands
                 </span>
                 {board.overdue.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-coral-soft/50 border border-error/20">
+                  <div key={item.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-coral-soft/60 shadow-[var(--shadow-inset-sm)]">
                     <div>
                       <span className="text-sm font-semibold text-on-surface block">{item.title}</span>
                       <span className="text-xs text-muted">Assigned: {item.assignee?.name ?? 'Anyone'}</span>
@@ -338,10 +254,10 @@ export function HomeOverviewPage() {
             ) : null}
 
             <div className="flex flex-col gap-2.5">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Today's Errands</span>
+              <span className="text-xs font-bold text-muted uppercase tracking-wider">Today&apos;s Errands</span>
               {board?.due_today && board.due_today.length > 0 ? (
                 board.due_today.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-canvas border border-outline-variant/40">
+                  <div key={item.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)]">
                     <div>
                       <span className="text-sm font-semibold text-on-surface block">{item.title}</span>
                       <span className="text-xs text-muted">{item.store_name ? `At ${item.store_name} · ` : ''}Assigned: {item.assignee?.name ?? 'Anyone'}</span>
@@ -350,14 +266,14 @@ export function HomeOverviewPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted italic py-3 text-center bg-canvas rounded-xl">No errands due today. Good job!</p>
+                <p className="text-sm text-muted italic py-4 text-center bg-canvas rounded-2xl shadow-[var(--shadow-inset-sm)]">No errands due today. Good job!</p>
               )}
             </div>
 
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-bold text-muted uppercase tracking-wider">Pantry Replenishment</span>
               {lowStock.length > 0 ? (
-                <div className="flex items-center justify-between w-full mt-1 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-center justify-between w-full mt-1 p-3 rounded-2xl bg-amber-500/10 shadow-[var(--shadow-inset-sm)]">
                   <span className="text-xs font-semibold text-on-surface">{lowStock[0].name}</span>
                   <button
                     type="button"
@@ -366,17 +282,17 @@ export function HomeOverviewPage() {
                       setToast(`Restock errand for ${lowStock[0].name} added to household board!`);
                       await essentialsQuery.refetch();
                     }}
-                    className="rounded-lg bg-secondary px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-primary transition-all"
+                    className="rounded-xl bg-secondary px-3 py-1.5 text-xs font-bold text-white shadow-[var(--shadow-clay-sm)] hover:bg-primary transition-all"
                   >
                     + Errand
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-muted italic">Pantry fully stocked.</p>
+                <p className="text-xs text-muted italic p-3 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)]">Pantry fully stocked.</p>
               )}
             </div>
 
-            <div className="mt-auto pt-2 flex items-center justify-between">
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
               <Link to="/app" className="text-xs font-medium text-muted hover:text-on-surface">
                 Go to Detailed Activities Dashboard &rarr;
               </Link>
@@ -387,24 +303,24 @@ export function HomeOverviewPage() {
           </Card>
 
           {/* Engine B: Household Budget & Wealth */}
-          <Card className="p-6 flex flex-col gap-5 border border-outline-variant/60 shadow-e1 bg-surface">
-            <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
+          <Card className="p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
                   <Icon name="account_balance_wallet" className="text-[20px]" />
                 </span>
                 <div>
-                  <h2 className="text-title-md font-bold text-on-surface">Finances & Budget Snapshot</h2>
+                  <h2 className="text-title-md font-bold text-on-surface">Finances &amp; Budget Snapshot</h2>
                   <p className="text-xs text-muted">Assets, debt, savings goals, and cash flow</p>
                 </div>
               </div>
-              <Link to="/finances/overview" className="text-xs font-semibold text-secondary hover:underline">
+              <Link to="/finances/overview" className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all">
                 Open Ledgers &rarr;
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl bg-canvas border border-outline-variant/40 flex flex-col gap-1">
+            <div className="grid grid-cols-2 gap-3.5">
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
                 <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Emergency Fund / Goals</span>
                 <span className="text-base font-extrabold text-on-surface">
                   {fin?.active_goals_count ?? 0} active goals
@@ -414,12 +330,12 @@ export function HomeOverviewPage() {
                 </Link>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-canvas border border-outline-variant/40 flex flex-col gap-1">
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
                 <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Recurring Expenses</span>
                 <span className="text-base font-extrabold text-on-surface">
                   Rent &amp; Utilities
                 </span>
-                <Link to="/recurring" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
+                <Link to="/finances/recurring" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
                   Manage Rules &rarr;
                 </Link>
               </div>
@@ -427,7 +343,7 @@ export function HomeOverviewPage() {
 
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-bold text-muted uppercase tracking-wider">Budget Health &amp; Variance</span>
-              <div className="p-3 rounded-xl bg-canvas border border-outline-variant/40 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex items-center justify-between">
                 <div>
                   <span className="text-sm font-semibold text-on-surface block">Monthly Household Cap</span>
                   <span className="text-xs text-muted">
@@ -438,7 +354,7 @@ export function HomeOverviewPage() {
               </div>
             </div>
 
-            <div className="mt-auto pt-2 flex items-center justify-between">
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
               <Link to="/money" className="text-xs font-medium text-muted hover:text-on-surface">
                 Open Expense Tracker &rarr;
               </Link>

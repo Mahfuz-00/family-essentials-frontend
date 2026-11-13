@@ -13,7 +13,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        'h-12 w-full min-w-0 max-w-full box-border rounded-xl bg-canvas px-3.5 text-[15px] text-on-surface shadow-inner border border-outline-variant/50',
+        'h-12 w-full min-w-0 max-w-full box-border rounded-xl bg-canvas px-3.5 text-[15px] text-on-surface shadow-[var(--shadow-inset)] border border-transparent',
         'outline-none transition-colors placeholder:text-muted',
         'focus:border-primary focus:ring-2 focus:ring-primary/40',
         'disabled:cursor-not-allowed disabled:opacity-60',

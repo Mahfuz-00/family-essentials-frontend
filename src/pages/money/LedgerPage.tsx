@@ -353,7 +353,15 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
     <AppLayout>
       <div className="flex flex-col gap-6 max-w-6xl">
         <PageHeader
-          title={ledger?.name ?? 'Household Expense Tracker'}
+          eyebrow={
+            ledger ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-soft px-3 py-1 text-label-xs font-bold uppercase tracking-wider text-secondary shadow-[var(--shadow-clay-sm)]">
+                <Icon name="account_balance_wallet" className="text-[14px]" />
+                {ledger.name}
+              </span>
+            ) : undefined
+          }
+          title="Expenses &amp; Money"
           description={
             ledger
               ? `${periodType === 'weekly' ? 'Weekly' : periodType === 'yearly' ? 'Yearly' : 'Monthly'} ledger for ${range.from} to ${range.to}, in ${ledger.currency}.`
@@ -438,10 +446,10 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
           />
         )}
 
-        {/* Submodule Navigation Bar */}
+        {/* Submodule Navigation Bar (Sunken Clay Segmented Control) */}
         {ledger && canReadEntries && (
           <div
-            className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-3"
+            className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-canvas p-1.5 shadow-[var(--shadow-inset)]"
             role="tablist"
             aria-label="Household budget submodules"
           >
@@ -452,8 +460,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               onClick={() => setActiveSubmodule('entries')}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
                 activeSubmodule === 'entries'
-                  ? 'bg-secondary text-on-secondary shadow-e1'
-                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
               }`}
             >
               <Icon name="receipt_long" className="text-[18px]" />
@@ -476,8 +484,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               onClick={() => setActiveSubmodule('record')}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
                 activeSubmodule === 'record'
-                  ? 'bg-secondary text-on-secondary shadow-e1'
-                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
               }`}
             >
               <Icon name="add_circle" className="text-[18px]" />
@@ -491,8 +499,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
               onClick={() => setActiveSubmodule('breakdown')}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
                 activeSubmodule === 'breakdown'
-                  ? 'bg-secondary text-on-secondary shadow-e1'
-                  : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                  ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                  : 'text-on-surface-variant hover:bg-surface/70'
               }`}
             >
               <Icon name="bar_chart" className="text-[18px]" />
@@ -507,8 +515,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 onClick={() => setActiveSubmodule('recurring')}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
                   activeSubmodule === 'recurring'
-                    ? 'bg-secondary text-on-secondary shadow-e1'
-                    : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                    ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                    : 'text-on-surface-variant hover:bg-surface/70'
                 }`}
               >
                 <Icon name="update" className="text-[18px]" />
@@ -533,8 +541,8 @@ export function LedgerPage({ ledgerId }: { ledgerId: number }) {
                 onClick={() => setActiveSubmodule('access')}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-label-md font-bold transition-all ${
                   activeSubmodule === 'access'
-                    ? 'bg-secondary text-on-secondary shadow-e1'
-                    : 'bg-surface text-on-surface hover:bg-forest-soft/70 border border-outline-variant/40'
+                    ? 'bg-secondary text-on-secondary shadow-[var(--shadow-clay-sm)]'
+                    : 'text-on-surface-variant hover:bg-surface/70'
                 }`}
               >
                 <Icon name="group" className="text-[18px]" />

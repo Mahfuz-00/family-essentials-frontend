@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { useQuota } from '@/hooks/useQuota';
@@ -689,62 +690,41 @@ export function BillingPage() {
               </div>
             </div>
 
-            {/* 3 Executive Pulse Metric Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Current Commitment</span>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-2xl font-extrabold tracking-tight capitalize text-on-surface">
-                      {quota.planLabel}
-                    </span>
-                    <Badge tone="success">Active</Badge>
-                  </div>
-                  <span className="mt-1.5 text-xs text-muted">Tier: {quota.plan?.key ?? active?.subscription_tier ?? 'family'}</span>
-                </div>
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-soft text-secondary shadow-xs">
-                  <Icon name="verified_user" className="text-[22px]" />
-                </div>
-              </div>
-
-              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Latest Invoice</span>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-2xl font-extrabold tracking-tight font-mono text-on-surface">
-                      {invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)}` : 'Trial'}
-                    </span>
-                    {invoicesList[0] && (
-                      <Badge tone={invoicesList[0].status === 'paid' ? 'success' : 'warning'}>
-                        {invoicesList[0].status.toUpperCase()}
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="mt-1.5 text-xs text-muted">
-                    {invoicesList[0]?.invoice_number ? `Invoice #${invoicesList[0].invoice_number}` : 'No invoices generated yet'}
-                  </span>
-                </div>
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-soft text-primary shadow-xs">
-                  <Icon name="receipt_long" className="text-[22px]" />
-                </div>
-              </div>
-
-              <div className="relative flex min-h-[115px] items-center justify-between rounded-2xl border border-outline-variant/30 bg-surface p-5 shadow-e1 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-e2">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Refund Eligibility</span>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-2xl font-extrabold tracking-tight text-secondary">
-                      100% Grace
-                    </span>
-                    <Badge tone="success">Eligible</Badge>
-                  </div>
-                  <span className="mt-1.5 text-xs text-muted">Full money-back window protected</span>
-                </div>
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shadow-xs">
-                  <Icon name="security" className="text-[22px]" />
-                </div>
-              </div>
-            </div>
+            {/* 3 Unified StatCards */}
+            <StatGrid count={3}>
+              <StatCard
+                title="Current Commitment"
+                value={quota.planLabel}
+                icon="verified_user"
+                tone="forest"
+                valueClassName="capitalize"
+                highlight={<StatHighlight tone="success">Active</StatHighlight>}
+              />
+              <StatCard
+                title="Latest Invoice"
+                value={invoicesList[0] ? `$${(invoicesList[0].amount_cents / 100).toFixed(2)}` : 'Trial'}
+                icon="receipt_long"
+                tone="sage"
+                valueClassName="font-mono"
+                highlight={
+                  invoicesList[0] ? (
+                    <StatHighlight tone={invoicesList[0].status === 'paid' ? 'success' : 'warning'}>
+                      {invoicesList[0].status.toUpperCase()}
+                    </StatHighlight>
+                  ) : (
+                    <StatHighlight tone="neutral">No Invoices</StatHighlight>
+                  )
+                }
+              />
+              <StatCard
+                title="Refund Eligibility"
+                value="100% Grace"
+                icon="security"
+                tone="forest"
+                valueClassName="text-secondary"
+                highlight={<StatHighlight tone="success">Eligible</StatHighlight>}
+              />
+            </StatGrid>
 
             {/* Graduated Refund Pillars Breakdown */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
