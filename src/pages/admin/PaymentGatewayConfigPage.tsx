@@ -245,6 +245,15 @@ const legacyCredentialFields: Record<string, string[]> = {
   mollie: ['api_key', 'webhook_url'],
 };
 
+/**
+ * Flat (non-credential) fields for the cards rendered by hand: cash and the
+ * mock simulator have no sandbox/live credential sets.
+ */
+const offlineFlatFields: Record<string, string[]> = {
+  cash: ['instructions', 'auto_mark_paid'],
+  mock: ['simulate_failure', 'latency_ms'],
+};
+
 /** Reads a flat legacy field without widening the credential type. */
 function flatFieldValue(config: PaymentGatewayCredentials, name: string): string | number | boolean | undefined {
   const record: Record<string, unknown> = { ...config };
@@ -462,16 +471,20 @@ export function PaymentGatewayConfigPage() {
     const meta = gatewayMeta.find((entry) => entry.key === gateway);
     const payload: Record<string, unknown> = { enabled: config.enabled ?? false };
 
-    if (typeof config.sandbox === 'boolean') payload.sandbox = config.sandbox;
+    const flatFields =
+      meta?.kind === 'flat' ? meta.fields.map((field) => field.name) : offlineFlatFields[gateway];
 
-    if (meta?.kind === 'flat') {
-      for (const field of meta.fields) {
-        const value = flatFieldValue(config, field.name);
-        if (value !== undefined) payload[field.name] = value;
+    if (flatFields) {
+      // Offline cards keep their flat legacy fields; they own no credential sets.
+      if (typeof config.sandbox === 'boolean') payload.sandbox = config.sandbox;
+      for (const name of flatFields) {
+        const value = flatFieldValue(config, name);
+        if (value !== undefined) payload[name] = value;
       }
       return payload;
     }
 
+    payload.sandbox = clientModeOf(config) === 'sandbox';
     payload.credentials = {
       sandbox: config.credentials?.sandbox ?? {},
       live: config.credentials?.live ?? {},

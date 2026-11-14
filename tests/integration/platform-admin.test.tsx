@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { installGetRoutes, jsonResponse } from '../support/api';
@@ -347,6 +347,88 @@ describe('platform admin console enhancements', () => {
 
     expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/test', { gateway: 'cash' });
     expect(await screen.findByText('Cash payment and offline collection workflow is active and ready.')).toBeInTheDocument();
+  });
+
+  it('saves one gateway through its own endpoint with the edited credential set', async () => {
+    apiMock.post.mockResolvedValueOnce(
+      jsonResponse({ message: 'Payment gateway saved.', data: { enabled: true, sandbox: true } }),
+    );
+
+    renderApp('/admin/payment-gateways');
+
+    // The legacy flat fixture must still render inside the sandbox editor.
+    const publishableKey = await screen.findByDisplayValue('pk_test_sample');
+
+    await userEvent.clear(publishableKey);
+    await userEvent.type(publishableKey, 'pk_test_updated');
+    await userEvent.click(screen.getByRole('button', { name: /Save Stripe/i }));
+
+    await waitFor(() =>
+      expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/stripe', {
+        enabled: true,
+        sandbox: true,
+        credentials: {
+          sandbox: expect.objectContaining({
+            publishable_key: 'pk_test_updated',
+            secret_key: 'sk_test_sample',
+          }),
+          live: {},
+        },
+      }),
+    );
+
+    expect(await screen.findByText('Stripe credentials saved.')).toBeInTheDocument();
+  });
+
+  it('saves an offline gateway through the same per-card endpoint', async () => {
+    apiMock.post.mockResolvedValueOnce(jsonResponse({ message: 'Payment gateway saved.', data: { enabled: true } }));
+
+    renderApp('/admin/payment-gateways');
+
+    expect(await screen.findByText('Cash Payment & Offline Settlement')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Save Cash/i }));
+
+    await waitFor(() =>
+      expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/cash', {
+        enabled: true,
+        instructions: 'Cash payment upon in-person settlement or physical collection.',
+        auto_mark_paid: true,
+      }),
+    );
+  });
+
+  it('pings the credential environment selected in the editor tabs', async () => {
+    apiMock.post.mockResolvedValueOnce(
+      jsonResponse({
+        status: 'connected',
+        gateway: 'stripe',
+        mode: 'live',
+        latency_ms: 88,
+        message: 'Stripe API reachable with the configured live secret key.',
+      }),
+    );
+
+    renderApp('/admin/payment-gateways');
+
+    expect(await screen.findByDisplayValue('pk_test_sample')).toBeInTheDocument();
+
+    const liveTab = screen.getByRole('button', { name: /Edit Stripe live credentials/i });
+    expect(liveTab).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(liveTab);
+    expect(liveTab).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(screen.getByRole('button', { name: /Ping Stripe API/i }));
+
+    expect(apiMock.post).toHaveBeenCalledWith('/v1/platform/settings/payment/test', {
+      gateway: 'stripe',
+      mode: 'live',
+    });
+    expect(
+      await screen.findByText('Stripe API reachable with the configured live secret key.'),
+    ).toBeInTheDocument();
+    // The persisted last_test badge follows the pinged environment, not colour alone.
+    expect(screen.getByText(/Live test: Connected · 88 ms/)).toBeInTheDocument();
   });
 
   it('displays platform admin notification bell and allows approving pending cash payments at /admin/billing', async () => {
