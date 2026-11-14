@@ -249,10 +249,10 @@ export function TenantsPage() {
           </StatGrid>
         )}
 
-        {/* Toolbar */}
-        <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
-            <div className="relative w-full max-w-md">
+        {/* Single-Line Unified Toolbar */}
+        <Card className="flex flex-col gap-3 p-3.5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 lg:flex-nowrap">
+            <div className="relative min-w-[180px] flex-1 max-w-xs">
               <Icon
                 name="search"
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
@@ -265,12 +265,12 @@ export function TenantsPage() {
                 }}
                 placeholder="Filter by household name…"
                 aria-label="Filter tenants"
-                className="h-10 pl-9"
+                className="h-10 pl-9 text-sm"
               />
             </div>
 
             <div
-              className="flex flex-wrap items-center gap-1 rounded-xl bg-canvas p-1"
+              className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-canvas p-1 shadow-[var(--shadow-inset)] whitespace-nowrap"
               role="group"
               aria-label="Filter by status"
             >
@@ -283,9 +283,9 @@ export function TenantsPage() {
                     setPage(1);
                   }}
                   aria-pressed={status === option}
-                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-label-md capitalize transition-all ${
+                  className={`inline-flex h-8 shrink-0 cursor-pointer items-center rounded-lg px-2.5 text-xs font-semibold capitalize whitespace-nowrap transition-all ${
                     status === option
-                      ? 'bg-surface font-bold text-secondary shadow-sm'
+                      ? 'bg-surface font-bold text-secondary shadow-xs'
                       : 'text-muted hover:text-on-surface'
                   }`}
                 >
@@ -294,47 +294,63 @@ export function TenantsPage() {
               ))}
             </div>
 
-            <Select
-              value={tier}
-              onChange={(event) => {
-                setTier(event.target.value);
-                setPage(1);
-              }}
-              aria-label="Filter by tier"
-              className="h-10 w-auto min-w-[170px] text-label-md"
-            >
-              <option value="all">All tiers</option>
-              {plans.map((plan) => (
-                <option key={plan.key} value={plan.key}>
-                  {plan.label}
-                </option>
-              ))}
-            </Select>
+            <div className="w-36 shrink-0">
+              <Select
+                value={tier}
+                onChange={(event) => {
+                  setTier(event.target.value);
+                  setPage(1);
+                }}
+                aria-label="Filter by tier"
+                className="h-10 w-full text-xs font-semibold"
+              >
+                <option value="all">All tiers</option>
+                {plans.map((plan) => (
+                  <option key={plan.key} value={plan.key}>
+                    {plan.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-nowrap items-center gap-2 whitespace-nowrap">
             {selected.length > 0 && (
               <>
                 <Badge tone="primary">{selected.length} selected</Badge>
                 <Button
                   variant="outline"
+                  className="h-10 shrink-0 whitespace-nowrap"
                   disabled={busy}
                   onClick={() => bulk.mutate('suspend')}
                 >
                   Bulk suspend
                 </Button>
-                <Button variant="outline" disabled={busy} onClick={() => bulk.mutate('activate')}>
+                <Button
+                  variant="outline"
+                  className="h-10 shrink-0 whitespace-nowrap"
+                  disabled={busy}
+                  onClick={() => bulk.mutate('activate')}
+                >
                   Bulk activate
                 </Button>
               </>
             )}
-            <Button variant="outline" onClick={exportCsv} disabled={exporting}>
+            <Button
+              variant="outline"
+              className="h-10 shrink-0 whitespace-nowrap"
+              onClick={exportCsv}
+              disabled={exporting}
+            >
               <Icon name="download" className="text-[16px]" />
-              {exporting ? 'Preparing…' : 'Export CSV'}
+              <span>{exporting ? 'Preparing…' : 'Export CSV'}</span>
             </Button>
-            <Button onClick={() => setProvisionOpen(true)}>
+            <Button
+              className="h-10 shrink-0 whitespace-nowrap"
+              onClick={() => setProvisionOpen(true)}
+            >
               <Icon name="add_circle" className="text-[18px]" />
-              Provision New Tenant
+              <span>Provision New Tenant</span>
             </Button>
           </div>
         </Card>

@@ -348,10 +348,10 @@ export function RefundPolicyPage() {
               )}
             </Card>
 
-            {/* Toolbar */}
-            <Card className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-1 flex-wrap items-center gap-3">
-                <div className="relative w-full max-w-sm">
+            {/* Single-Line Unified Toolbar */}
+            <Card className="flex flex-col gap-3 p-3.5 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 md:flex-nowrap">
+                <div className="relative min-w-[200px] flex-1 max-w-sm">
                   <Icon
                     name="search"
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
@@ -363,28 +363,33 @@ export function RefundPolicyPage() {
                       setPage(1);
                     }}
                     placeholder="Search household, email or reason…"
-                    className="h-10 pl-9"
+                    className="h-10 pl-9 text-sm"
                   />
                 </div>
 
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value as typeof statusFilter);
-                    setPage(1);
-                  }}
-                  className="w-44"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending Review</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </Select>
+                <div className="w-44 shrink-0">
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value as typeof statusFilter);
+                      setPage(1);
+                    }}
+                    className="h-10 w-full text-xs font-semibold"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </Select>
+                </div>
               </div>
 
-              <Button onClick={() => setManualRefundOpen(true)}>
+              <Button
+                className="h-10 shrink-0 whitespace-nowrap"
+                onClick={() => setManualRefundOpen(true)}
+              >
                 <Icon name="add_circle" className="text-[18px]" />
-                Issue Manual Refund
+                <span>Issue Manual Refund</span>
               </Button>
             </Card>
 

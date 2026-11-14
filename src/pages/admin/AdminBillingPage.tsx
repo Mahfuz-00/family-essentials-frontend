@@ -296,25 +296,30 @@ export function AdminBillingPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-headline-sm font-bold text-on-surface">All Platform Invoices</h3>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="w-56">
+            <div className="flex flex-wrap items-center gap-2.5 lg:flex-nowrap">
+              <div className="relative w-60 shrink-0">
+                <Icon
+                  name="search"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted"
+                />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search invoice or household…"
+                  className="h-10 pl-9 text-sm"
                 />
               </div>
 
               {/* Status Filter */}
-              <div className="flex rounded-xl border border-outline-variant/40 bg-surface p-0.5 text-xs">
+              <div className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-canvas p-1 text-xs shadow-[var(--shadow-inset)] whitespace-nowrap">
                 {(['all', 'pending', 'paid', 'failed'] as const).map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => setStatusFilter(s)}
-                    className={`rounded-lg px-2.5 py-1 font-semibold capitalize transition-colors ${
+                    className={`inline-flex h-8 cursor-pointer items-center rounded-lg px-2.5 font-semibold capitalize transition-all ${
                       statusFilter === s
-                        ? 'bg-secondary text-on-secondary'
+                        ? 'bg-secondary text-on-secondary shadow-xs'
                         : 'text-muted hover:text-on-surface'
                     }`}
                   >
@@ -324,15 +329,15 @@ export function AdminBillingPage() {
               </div>
 
               {/* Payment Method Filter */}
-              <div className="flex rounded-xl border border-outline-variant/40 bg-surface p-0.5 text-xs">
+              <div className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-canvas p-1 text-xs shadow-[var(--shadow-inset)] whitespace-nowrap">
                 {(['all', 'cash', 'card'] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setMethodFilter(m)}
-                    className={`rounded-lg px-2.5 py-1 font-semibold capitalize transition-colors ${
+                    className={`inline-flex h-8 cursor-pointer items-center rounded-lg px-2.5 font-semibold capitalize transition-all ${
                       methodFilter === m
-                        ? 'bg-forest-soft text-secondary'
+                        ? 'bg-surface font-bold text-secondary shadow-xs'
                         : 'text-muted hover:text-on-surface'
                     }`}
                   >
