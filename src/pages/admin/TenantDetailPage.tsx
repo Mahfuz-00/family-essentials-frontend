@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPanel, SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { plans, planFor } from '@/lib/plans';
@@ -113,7 +114,7 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         {/* Navigation Action */}
         <div>
           <Link
@@ -130,8 +131,8 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
 
         {tenantQuery.isLoading && (
           <div className="flex flex-col gap-5">
-            <SkeletonPanel className="h-28" />
-            <SkeletonPanel className="h-40" />
+            <SkeletonPanel className="h-24" />
+            <StatGridSkeleton count={4} />
             <SkeletonTable rows={5} columns={4} />
           </div>
         )}
@@ -145,6 +146,7 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
             {/* Page Header */}
             <PageHeader
               title={`Household: ${tenant.name}`}
+              titleSize="headline"
               description={`Tenant #${tenant.id} · slug: ${tenant.slug} · Created ${relativeDate(
                 tenant.created_at,
               )} (${new Date(tenant.created_at).toLocaleDateString()})`}
@@ -182,59 +184,31 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
               }
             />
 
-            {/* De-cluttered Segmented Tab Bar */}
-            <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-                  activeTab === 'overview'
-                    ? 'border-secondary text-secondary'
-                    : 'border-transparent text-muted hover:text-on-surface'
-                }`}
-              >
-                <Icon name="dashboard" className="text-[18px]" />
-                Overview &amp; Health
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('members')}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-                  activeTab === 'members'
-                    ? 'border-secondary text-secondary'
-                    : 'border-transparent text-muted hover:text-on-surface'
-                }`}
-              >
-                <Icon name="group" className="text-[18px]" />
-                Members &amp; Seats ({data.members.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('quotas')}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-                  activeTab === 'quotas'
-                    ? 'border-secondary text-secondary'
-                    : 'border-transparent text-muted hover:text-on-surface'
-                }`}
-              >
-                <Icon name="tune" className="text-[18px]" />
-                Quotas &amp; Telemetry
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('billing')}
-                className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-                  activeTab === 'billing'
-                    ? 'border-secondary text-secondary'
-                    : 'border-transparent text-muted hover:text-on-surface'
-                }`}
-              >
-                <Icon name="receipt_long" className="text-[18px]" />
-                Subscription &amp; Tier Controls
-              </button>
+            {/* Soft Tactile Submodule Pill Bar */}
+            <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
+              {[
+                { key: 'overview', label: 'Overview & Health', icon: 'dashboard' },
+                { key: 'members', label: `Members & Seats (${data.members.length})`, icon: 'group' },
+                { key: 'quotas', label: 'Quotas & Telemetry', icon: 'tune' },
+                { key: 'billing', label: 'Subscription & Tier Controls', icon: 'receipt_long' },
+              ].map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key as TabKey)}
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
+                      isActive
+                        ? 'bg-secondary text-on-secondary shadow-xs'
+                        : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
+                    }`}
+                  >
+                    <Icon name={tab.icon} className="text-[18px]" />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* TAB 1: OVERVIEW */}
@@ -275,56 +249,65 @@ export function TenantDetailPage({ tenantId: propTenantId }: TenantDetailPagePro
                   </div>
                 </Card>
 
-                {/* Top Metrics Cards */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                  <Card className="flex flex-col gap-1 p-4">
-                    <span className="text-label-sm font-medium text-muted">Family Members</span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {data.counts.members_count}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      Seat Cap: {data.quotas?.plan?.seat_cap ?? '—'}
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-4">
-                    <span className="text-label-sm font-medium text-muted">Saved Places</span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {data.counts.places_count}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      Place Cap: {data.quotas?.plan?.place_cap ?? '—'}
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-4">
-                    <span className="text-label-sm font-medium text-muted">Total Errands</span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {data.counts.requests_count}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {data.counts.requests_completed} completed · {data.counts.requests_pending} pending
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-4">
-                    <span className="text-label-sm font-medium text-muted">Shared Ledgers</span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {data.counts.ledgers_count}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      ${(data.counts.total_expenses_cents / 100).toFixed(2)} logged
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-4">
-                    <span className="text-label-sm font-medium text-muted">Pantry Essentials</span>
-                    <span className="text-headline-md font-bold text-on-surface">
-                      {data.counts.essentials_count}
-                    </span>
-                    <span className="text-body-xs text-muted">Active items</span>
-                  </Card>
-                </div>
+                {/* Unified Top Metrics Cards */}
+                <StatGrid count={4}>
+                  <StatCard
+                    title="Family Members"
+                    value={data.counts.members_count}
+                    subtitle={`Seat Cap: ${data.quotas?.plan?.seat_cap ?? '—'}`}
+                    icon="group"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="people"
+                        label={`${data.members.length} active seats`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Saved Places"
+                    value={data.counts.places_count}
+                    subtitle={`Place Cap: ${data.quotas?.plan?.place_cap ?? '—'}`}
+                    icon="location_on"
+                    tone="sage"
+                    highlight={
+                      <StatHighlight
+                        tone="sage"
+                        icon="pin_drop"
+                        label="Geofenced locations"
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Total Errands"
+                    value={data.counts.requests_count}
+                    subtitle={`${data.counts.requests_completed} completed · ${data.counts.requests_pending} pending`}
+                    icon="checklist"
+                    tone="amber"
+                    highlight={
+                      <StatHighlight
+                        tone="amber"
+                        icon="inventory_2"
+                        label={`${data.counts.essentials_count} pantry essentials`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Shared Ledgers"
+                    value={data.counts.ledgers_count}
+                    subtitle={`$${(data.counts.total_expenses_cents / 100).toFixed(2)} logged`}
+                    icon="account_balance_wallet"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="payments"
+                        label="Household finance ledger"
+                      />
+                    }
+                  />
+                </StatGrid>
 
                 {/* Primary Household Contact */}
                 {data.members.length > 0 && (

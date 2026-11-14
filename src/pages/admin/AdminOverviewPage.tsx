@@ -5,10 +5,11 @@ import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
-import { StatGridSkeleton } from '@/components/ui/stat-card';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api } from '@/lib/api';
 import type { Paginated, PlatformMetrics, Tenant } from '@/types';
 
@@ -120,61 +121,15 @@ export function AdminOverviewPage() {
             10,
         ) / 10;
 
-  const cards: {
-    label: string;
-    value: string | number;
-    icon: string;
-    tone: string;
-    footer: { label: string; value: number }[] | null;
-  }[] = [
-    {
-      label: 'Total Active Tenants',
-      value: metrics.isError ? '—' : (data?.total_tenants ?? 0),
-      icon: 'apartment',
-      tone: 'bg-forest-soft text-secondary',
-      footer: [
-        { label: 'Active', value: data?.by_status?.active ?? 0 },
-        { label: 'Trial', value: data?.by_status?.trial ?? 0 },
-        { label: 'Suspended', value: data?.by_status?.suspended ?? 0 },
-      ],
-    },
-    {
-      label: 'Active Members',
-      value: metrics.isError ? '—' : (data?.active_members ?? 0),
-      icon: 'group',
-      tone: 'bg-sage-soft text-primary',
-      footer: null,
-    },
-    {
-      label: 'Onboarded This Month',
-      value: tenants.isError ? '—' : onboardedThisMonth,
-      icon: 'trending_up',
-      tone: 'bg-sage-soft text-secondary',
-      footer: null,
-    },
-    {
-      label: 'Avg Members / Tenant',
-      value: tenants.isError ? '—' : avgMembers,
-      icon: 'diversity_3',
-      tone: 'bg-coral-soft text-tertiary',
-      footer: null,
-    },
-  ];
-
   const isLoading = metrics.isLoading || tenants.isLoading;
 
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col gap-6 animate-pulse">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-pulse">
           <PageHeader
-            eyebrow={
-              <>
-                <span className="h-2 w-2 rounded-full bg-success" />
-                Platform Admin · All tenants
-              </>
-            }
-            title="Overview & MRR"
+            title="Overview"
+            titleSize="headline"
             description="Cross-tenant telemetry and lifecycle health across every provisioned household."
           />
 
@@ -193,23 +148,26 @@ export function AdminOverviewPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          eyebrow={
-            <>
-              <span className="h-2 w-2 rounded-full bg-success" />
-              Platform Admin · All tenants
-            </>
-          }
-          title="Overview & MRR"
+          title="Overview"
+          titleSize="headline"
           description="Cross-tenant telemetry and lifecycle health across every provisioned household."
           actions={
-            <Link to="/admin/tenants" className="inline-flex">
-              <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-secondary px-4 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97]">
-                <Icon name="apartment" className="text-[18px]" />
-                Tenant console
-              </span>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Link to="/admin/analytics">
+                <Button variant="outline">
+                  <Icon name="analytics" className="text-[18px]" />
+                  Platform Analytics
+                </Button>
+              </Link>
+              <Link to="/admin/tenants">
+                <Button variant="primary">
+                  <Icon name="apartment" className="text-[18px]" />
+                  Tenant Console
+                </Button>
+              </Link>
+            </div>
           }
         />
 
@@ -228,29 +186,64 @@ export function AdminOverviewPage() {
           />
         )}
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => (
-            <Card key={card.label} className="flex flex-col gap-3 p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-label-sm uppercase tracking-wider text-muted">{card.label}</span>
-                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.tone}`}>
-                  <Icon name={card.icon} className="text-[20px]" />
-                </span>
-              </div>
-              <span className="text-display-lg font-bold text-on-surface">{card.value}</span>
-              {card.footer && (
-                <span className="flex items-center justify-between border-t border-canvas pt-3">
-                  {card.footer.map((item) => (
-                    <span key={item.label} className="flex flex-col">
-                      <span className="text-body-sm text-muted">{item.label}</span>
-                      <span className="text-label-lg text-on-surface">{item.value}</span>
-                    </span>
-                  ))}
-                </span>
-              )}
-            </Card>
-          ))}
-        </section>
+        <StatGrid count={4}>
+          <StatCard
+            title="Total Active Tenants"
+            value={metrics.isError ? '—' : (data?.total_tenants ?? 0)}
+            subtitle="Provisioned household workspaces"
+            icon="apartment"
+            tone="forest"
+            highlight={
+              <StatHighlight
+                tone="forest"
+                icon="verified"
+                label={`${data?.by_status?.active ?? 0} active · ${data?.by_status?.trial ?? 0} trial`}
+              />
+            }
+          />
+          <StatCard
+            title="Active Members"
+            value={metrics.isError ? '—' : (data?.active_members ?? 0)}
+            subtitle="Total household seats in use"
+            icon="group"
+            tone="sage"
+            highlight={
+              <StatHighlight
+                tone="sage"
+                icon="people"
+                label="Across all active workspaces"
+              />
+            }
+          />
+          <StatCard
+            title="Onboarded This Month"
+            value={tenants.isError ? '—' : onboardedThisMonth}
+            subtitle="New workspaces created this month"
+            icon="trending_up"
+            tone="forest"
+            highlight={
+              <StatHighlight
+                tone="forest"
+                icon="calendar_month"
+                label="Current monthly cohort"
+              />
+            }
+          />
+          <StatCard
+            title="Avg Members / Tenant"
+            value={tenants.isError ? '—' : avgMembers}
+            subtitle="Average family size per workspace"
+            icon="diversity_3"
+            tone="amber"
+            highlight={
+              <StatHighlight
+                tone="amber"
+                icon="home"
+                label={`${data?.by_status?.suspended ?? 0} suspended`}
+              />
+            }
+          />
+        </StatGrid>
 
         <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
           {/* Monthly provisioning */}

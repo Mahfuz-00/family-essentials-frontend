@@ -13,7 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
-import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
+import { SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import { plans, planFor } from '@/lib/plans';
@@ -166,38 +167,6 @@ export function TenantsPage() {
   const allSelected = list.length > 0 && list.every((tenant) => selected.includes(tenant.id));
 
   const byStatus = metrics.data?.by_status ?? {};
-  const kpis = [
-    {
-      label: 'Total Tenants',
-      value: String(metrics.data?.total_tenants ?? meta?.total ?? 0),
-      icon: 'apartment',
-      tone: 'bg-sage-soft text-primary',
-    },
-    {
-      label: 'Active Families',
-      value: String(byStatus.active ?? 0),
-      icon: 'verified',
-      tone: 'bg-forest-soft text-secondary',
-    },
-    {
-      label: 'In Free Trial',
-      value: String(byStatus.trial ?? 0),
-      icon: 'hourglass_top',
-      tone: 'bg-surface-container text-primary',
-    },
-    {
-      label: 'Suspended',
-      value: String(byStatus.suspended ?? 0),
-      icon: 'pause_circle',
-      tone: 'bg-coral-soft text-error',
-    },
-    {
-      label: 'Active Members',
-      value: String(metrics.data?.active_members ?? 0),
-      icon: 'group',
-      tone: 'bg-sage-soft text-secondary',
-    },
-  ];
 
   const toggle = (id: number) => {
     setSelected((current) =>
@@ -207,30 +176,90 @@ export function TenantsPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          title="Workspaces"
+          title="Tenants"
+          titleSize="headline"
           description="Provision, suspend and inspect every client household workspace. Each tenant is isolated at the database row level."
+          actions={
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button variant="outline" disabled={exporting} onClick={() => void exportCsv()}>
+                <Icon name="download" className="text-[18px]" />
+                {exporting ? 'Exporting…' : 'Export CSV'}
+              </Button>
+              <Button variant="primary" onClick={() => setProvisionOpen(true)}>
+                <Icon name="add_circle" className="text-[18px]" />
+                Provision Tenant
+              </Button>
+            </div>
+          }
         />
 
         {error && <Alert>{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        <section className="grid grid-cols-2 gap-3.5 md:grid-cols-3 lg:grid-cols-5">
-          {metrics.isLoading
-            ? Array.from({ length: kpis.length }).map((_, index) => <SkeletonCard key={index} />)
-            : kpis.map((kpi) => (
-                <Card key={kpi.label} className="flex flex-col gap-2 p-4">
-                  <span className="flex items-center justify-between">
-                    <span className="text-body-sm text-muted">{kpi.label}</span>
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.tone}`}>
-                      <Icon name={kpi.icon} className="text-[18px]" />
-                    </span>
-                  </span>
-                  <span className="text-headline-md font-bold text-on-surface">{kpi.value}</span>
-                </Card>
-              ))}
-        </section>
+        {metrics.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              title="Total Tenants"
+              value={metrics.data?.total_tenants ?? meta?.total ?? 0}
+              subtitle="Provisioned household workspaces"
+              icon="apartment"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="dns"
+                  label="Row-level isolated"
+                />
+              }
+            />
+            <StatCard
+              title="Active Families"
+              value={byStatus.active ?? 0}
+              subtitle="Live active subscriptions"
+              icon="verified"
+              tone="sage"
+              highlight={
+                <StatHighlight
+                  tone="sage"
+                  icon="check_circle"
+                  label={`${byStatus.trial ?? 0} in free trial`}
+                />
+              }
+            />
+            <StatCard
+              title="Active Members"
+              value={metrics.data?.active_members ?? 0}
+              subtitle="Total household seats in use"
+              icon="group"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="people"
+                  label="Across all workspaces"
+                />
+              }
+            />
+            <StatCard
+              title="Suspended"
+              value={byStatus.suspended ?? 0}
+              subtitle="Workspaces paused by admin"
+              icon="pause_circle"
+              tone={byStatus.suspended ? 'coral' : 'amber'}
+              highlight={
+                <StatHighlight
+                  tone={byStatus.suspended ? 'coral' : 'amber'}
+                  icon="shield"
+                  label={byStatus.suspended ? 'Requires review' : '0 suspended'}
+                />
+              }
+            />
+          </StatGrid>
+        )}
 
         {/* Toolbar */}
         <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">

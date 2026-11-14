@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api, apiError } from '@/lib/api';
 import type {
   FeedbackPriority,
@@ -107,29 +108,12 @@ export function PlatformFeedbackPage() {
   const active: PlatformFeedbackReport | undefined =
     list.find((report) => report.id === selected) ?? list[0];
 
-  const tiles = [
-    { label: 'Open', value: data?.summary.open ?? 0, icon: 'inbox', tone: 'bg-sage-soft text-primary' },
-    {
-      label: 'Critical open',
-      value: data?.summary.critical_open ?? 0,
-      icon: 'priority_high',
-      tone: 'bg-coral-soft text-error',
-    },
-    { label: 'Unseen', value: data?.summary.unseen ?? 0, icon: 'fiber_new', tone: 'bg-forest-soft text-secondary' },
-    { label: 'Ever received', value: data?.summary.total ?? 0, icon: 'forum', tone: 'bg-surface-container text-primary' },
-  ];
-
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          eyebrow={
-            <>
-              <Icon name="forum" className="text-[16px]" />
-              Platform Admin · Operations
-            </>
-          }
           title="User Feedback"
+          titleSize="headline"
           description="What households are telling us, and what has been done about it."
         />
 
@@ -137,19 +121,68 @@ export function PlatformFeedbackPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
         {inbox.isError && <Alert>{apiError(inbox.error)}</Alert>}
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {tiles.map((tile) => (
-            <Card key={tile.label} className="flex items-center justify-between p-4">
-              <span className="flex flex-col">
-                <span className="text-display-lg font-bold text-on-surface">{tile.value}</span>
-                <span className="text-body-sm text-muted">{tile.label}</span>
-              </span>
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tile.tone}`}>
-                <Icon name={tile.icon} className="text-[20px]" />
-              </span>
-            </Card>
-          ))}
-        </section>
+        {inbox.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              title="Open Reports"
+              value={data?.summary.open ?? 0}
+              subtitle="Awaiting triage or resolution"
+              icon="inbox"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="pending_actions"
+                  label="Active support queue"
+                />
+              }
+            />
+            <StatCard
+              title="Critical Open"
+              value={data?.summary.critical_open ?? 0}
+              subtitle="High-priority blockers"
+              icon="priority_high"
+              tone={data?.summary.critical_open ? 'coral' : 'sage'}
+              highlight={
+                <StatHighlight
+                  tone={data?.summary.critical_open ? 'coral' : 'sage'}
+                  icon="report"
+                  label={data?.summary.critical_open ? 'Needs immediate triage' : 'No critical blockers'}
+                />
+              }
+            />
+            <StatCard
+              title="Unseen"
+              value={data?.summary.unseen ?? 0}
+              subtitle="New unread submissions"
+              icon="fiber_new"
+              tone="amber"
+              highlight={
+                <StatHighlight
+                  tone="amber"
+                  icon="mark_email_unread"
+                  label="Freshly submitted"
+                />
+              }
+            />
+            <StatCard
+              title="Ever Received"
+              value={data?.summary.total ?? 0}
+              subtitle="Lifetime feedback items"
+              icon="forum"
+              tone="sage"
+              highlight={
+                <StatHighlight
+                  tone="sage"
+                  icon="history"
+                  label="Complete feedback log"
+                />
+              }
+            />
+          </StatGrid>
+        )}
 
         {/* Filters */}
         <Card className="flex flex-wrap items-end gap-3 p-4">

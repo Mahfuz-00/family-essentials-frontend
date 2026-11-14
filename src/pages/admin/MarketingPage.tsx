@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPanel } from '@/components/ui/skeleton';
-import { StatGridSkeleton } from '@/components/ui/stat-card';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -213,42 +213,46 @@ export function MarketingPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Marketing"
+          titleSize="headline"
           description="Manage promotional coupons, broadcast announcement banners, inbound waitlist leads, and the household referral reward program."
         />
 
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* Tab navigation */}
-        <div className="flex flex-wrap border-b border-surface-container">
+        {/* Soft Tactile Submodule Pill Bar */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
           {[
             { key: 'overview', label: 'Growth KPIs', icon: 'trending_up' },
             { key: 'promotions', label: 'Promo Codes & Vouchers', icon: 'local_offer' },
             { key: 'announcements', label: 'Announcements & Banners', icon: 'campaign' },
             { key: 'leads', label: 'Leads & Waitlist', icon: 'contacts' },
             { key: 'referrals', label: 'Referral Program', icon: 'loyalty' },
-          ].map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => {
-                setActiveTab(t.key as TabKey);
-                setError(null);
-                setNotice(null);
-              }}
-              className={`flex items-center gap-2 border-b-2 px-5 py-3 text-label-md font-bold transition-colors ${
-                activeTab === t.key
-                  ? 'border-secondary text-secondary'
-                  : 'border-transparent text-muted hover:text-on-surface'
-              }`}
-            >
-              <Icon name={t.icon} className="text-[18px]" />
-              {t.label}
-            </button>
-          ))}
+          ].map((t) => {
+            const isActive = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setActiveTab(t.key as TabKey);
+                  setError(null);
+                  setNotice(null);
+                }}
+                className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
+                  isActive
+                    ? 'bg-secondary text-on-secondary shadow-xs'
+                    : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
+                }`}
+              >
+                <Icon name={t.icon} className="text-[18px]" />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB 1: OVERVIEW */}
@@ -263,45 +267,64 @@ export function MarketingPage() {
             )}
             {overview && (
               <>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Total Inbound Leads</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.total_leads.toLocaleString()}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.new_leads} new · {overview.converted_leads} converted ({overview.lead_conversion_rate}%)
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Active Promo Codes</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.active_promotions}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.total_redemptions.toLocaleString()} total redemptions
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Active Announcements</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.active_announcements}
-                    </span>
-                    <span className="text-body-xs text-muted">Live across dashboards</span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Banner Click-Through Rate</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.banner_ctr_percent}%
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.total_clicks} clicks / {overview.total_impressions.toLocaleString()} views
-                    </span>
-                  </Card>
-                </div>
+                <StatGrid count={4}>
+                  <StatCard
+                    title="Total Inbound Leads"
+                    value={overview.total_leads.toLocaleString()}
+                    subtitle={`${overview.new_leads} new · ${overview.converted_leads} converted`}
+                    icon="contacts"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="trending_up"
+                        label={`${overview.lead_conversion_rate}% conversion rate`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Active Promo Codes"
+                    value={overview.active_promotions}
+                    subtitle="Live discount vouchers"
+                    icon="local_offer"
+                    tone="sage"
+                    highlight={
+                      <StatHighlight
+                        tone="sage"
+                        icon="redeem"
+                        label={`${overview.total_redemptions.toLocaleString()} total redemptions`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Active Announcements"
+                    value={overview.active_announcements}
+                    subtitle="Broadcast banners running"
+                    icon="campaign"
+                    tone="amber"
+                    highlight={
+                      <StatHighlight
+                        tone="amber"
+                        icon="visibility"
+                        label="Live across dashboards"
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Banner Click-Through Rate"
+                    value={`${overview.banner_ctr_percent}%`}
+                    subtitle={`${overview.total_clicks} clicks / ${overview.total_impressions.toLocaleString()} views`}
+                    icon="ads_click"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="insights"
+                        label="Client engagement"
+                      />
+                    }
+                  />
+                </StatGrid>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <Card className="flex flex-col gap-4 p-6">

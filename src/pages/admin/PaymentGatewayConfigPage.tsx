@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonForm } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Select } from '@/components/ui/select';
 import { api, apiError } from '@/lib/api';
 import type { PaymentGatewaySettings } from '@/types';
@@ -151,9 +152,10 @@ export function PaymentGatewayConfigPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 max-w-7xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Gateways"
+          titleSize="headline"
           description="Manage global and regional merchant gateways, test sandbox environments, currency, and offline collection workflows."
         />
 
@@ -162,6 +164,7 @@ export function PaymentGatewayConfigPage() {
 
         {paymentQuery.isLoading && (
           <div className="flex flex-col gap-6">
+            <StatGridSkeleton count={4} />
             <SkeletonForm fields={4} />
             <SkeletonForm fields={6} />
           </div>
@@ -169,8 +172,68 @@ export function PaymentGatewayConfigPage() {
 
         {currentSettings && (
           <div className="flex flex-col gap-6">
+            {/* Unified Gateway KPI Strip */}
+            <StatGrid count={4}>
+              <StatCard
+                title="Primary Default Gateway"
+                value={currentSettings.active_gateway.toUpperCase()}
+                subtitle="Default checkout processor"
+                icon="credit_card"
+                tone="forest"
+                highlight={
+                  <StatHighlight
+                    tone="forest"
+                    icon="verified"
+                    label={currentSettings.auto_billing_enabled ? 'Auto-renewals enabled' : 'Manual renewals'}
+                  />
+                }
+              />
+              <StatCard
+                title="Live Providers"
+                value={liveCount}
+                subtitle="Production merchant gateways"
+                icon="verified_user"
+                tone="sage"
+                highlight={
+                  <StatHighlight
+                    tone="sage"
+                    icon="check_circle"
+                    label="Real customer checkout"
+                  />
+                }
+              />
+              <StatCard
+                title="Sandbox Providers"
+                value={sandboxCount}
+                subtitle="Test-mode merchant gateways"
+                icon="science"
+                tone="amber"
+                highlight={
+                  <StatHighlight
+                    tone="amber"
+                    icon="bug_report"
+                    label="Safe simulator active"
+                  />
+                }
+              />
+              <StatCard
+                title="Operating Currency"
+                value={currentSettings.currency}
+                subtitle="Settlement & invoice currency"
+                icon="currency_exchange"
+                tone="forest"
+                highlight={
+                  <StatHighlight
+                    tone="forest"
+                    icon="public"
+                    label="Global & regional MFS"
+                  />
+                }
+              />
+            </StatGrid>
+
             {/* Global Environment & Mode Card */}
-            <Card className="flex flex-col gap-5 p-6 border-l-4 border-secondary bg-surface">
+            <Card className="flex flex-col gap-5 p-6 bg-surface">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-headline-sm font-bold text-on-surface">Payment Gateways &amp; Environment Controls</h3>
@@ -386,32 +449,35 @@ export function PaymentGatewayConfigPage() {
               </Card>
             )}
 
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant/30 pb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted mr-1">Filter Gateways:</span>
+            {/* Soft Tactile Category Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
               {(
                 [
-                  { id: 'all', label: 'All Providers (11)' },
-                  { id: 'global', label: 'Cards & Global (Stripe, PayPal, Mollie)' },
-                  { id: 'south-asia', label: 'South Asia & Bangladesh (bKash, Nagad, SSLCommerz, Razorpay)' },
-                  { id: 'africa', label: 'Africa (Paystack)' },
-                  { id: 'offline', label: 'Direct & Offline (Cash, Bank Wire)' },
-                  { id: 'sandbox', label: 'Internal Sandbox Simulator' },
+                  { id: 'all', label: 'All Providers (11)', icon: 'apps' },
+                  { id: 'global', label: 'Cards & Global', icon: 'public' },
+                  { id: 'south-asia', label: 'South Asia & Bangladesh', icon: 'Qr_code_2' },
+                  { id: 'africa', label: 'Africa (Paystack)', icon: 'payments' },
+                  { id: 'offline', label: 'Direct & Offline', icon: 'account_balance' },
+                  { id: 'sandbox', label: 'Internal Simulator', icon: 'science' },
                 ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setCategoryFilter(tab.id)}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
-                    categoryFilter === tab.id
-                      ? 'bg-secondary text-white shadow-sm'
-                      : 'border border-outline-variant/40 bg-surface text-muted hover:bg-sage-soft hover:text-on-surface'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              ).map((tab) => {
+                const isActive = categoryFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCategoryFilter(tab.id)}
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 text-label-md font-bold transition-all ${
+                      isActive
+                        ? 'bg-secondary text-on-secondary shadow-xs'
+                        : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
+                    }`}
+                  >
+                    <Icon name={tab.icon.toLowerCase()} className="text-[16px]" />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Provider Cards Grid */}

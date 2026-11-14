@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
-import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
+import { SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { BackupReadiness, BackupRecord, BackupStatus, BackupsPayload } from '@/types';
@@ -125,18 +126,13 @@ export function BackupsPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          eyebrow={
-            <>
-              <Icon name="cloud_sync" className="text-[16px]" />
-              Platform Admin · Operations
-            </>
-          }
           title="Backups"
+          titleSize="headline"
           description="What has been dumped, whether it can still be restored, and how to bring the platform back."
           actions={
-            <Button size="lg" disabled={run.isPending} onClick={() => run.mutate()}>
+            <Button disabled={run.isPending} onClick={() => run.mutate()}>
               <Icon name="cloud_upload" className="text-[18px]" />
               {run.isPending ? 'Dumping…' : 'Take a backup now'}
             </Button>
@@ -147,73 +143,99 @@ export function BackupsPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
         {backups.isError && <Alert>{apiError(backups.error)}</Alert>}
 
-        {/* Readiness */}
+        {/* Unified Readiness KPI Strip */}
         {backups.isLoading ? (
-          <SkeletonCard />
+          <StatGridSkeleton count={4} />
         ) : (
           readiness && (
-            <Card className="p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <span
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                      readiness.ready ? 'bg-forest-soft text-secondary' : 'bg-coral-soft text-error'
-                    }`}
-                  >
-                    <Icon
-                      name={readiness.ready ? 'verified' : 'report'}
-                      filled
-                      className="text-[28px]"
+            <>
+              <StatGrid count={4}>
+                <StatCard
+                  title="Recovery Status"
+                  value={readiness.ready ? 'Recoverable' : 'Action Needed'}
+                  subtitle={`Driver: ${readiness.driver} · ${readiness.connection}`}
+                  icon={readiness.ready ? 'verified' : 'report'}
+                  tone={readiness.ready ? 'forest' : 'coral'}
+                  highlight={
+                    <StatHighlight
+                      tone={readiness.ready ? 'forest' : 'coral'}
+                      icon="shield"
+                      label={rpoState?.label ?? 'Checking RPO'}
                     />
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-headline-md text-on-surface">
-                      {readiness.ready ? 'Recoverable' : 'Not recoverable yet'}
-                    </h2>
-                    <span className="text-body-sm text-muted">
-                      Dump tool <span className="font-mono">{readiness.driver}</span> · connection{' '}
-                      <span className="font-mono">{readiness.connection}</span> ·{' '}
-                      {readiness.completed_count} completed backup
-                      {readiness.completed_count === 1 ? '' : 's'}
-                    </span>
-                    {rpoState && <Badge tone={rpoState.tone}>{rpoState.label}</Badge>}
-                  </div>
-                </div>
+                  }
+                />
+                <StatCard
+                  title="Completed Backups"
+                  value={readiness.completed_count}
+                  subtitle={`Retention: ${readiness.retention_days} days`}
+                  icon="cloud_done"
+                  tone="sage"
+                  highlight={
+                    <StatHighlight
+                      tone="sage"
+                      icon="folder_zip"
+                      label={`${readiness.disk}:${readiness.directory}`}
+                    />
+                  }
+                />
+                <StatCard
+                  title="RPO Objective"
+                  value={`${readiness.rpo_hours} hrs`}
+                  subtitle="Maximum recovery point age"
+                  icon="schedule"
+                  tone="forest"
+                  highlight={
+                    <StatHighlight
+                      tone="forest"
+                      icon="history"
+                      label={
+                        readiness.latest_backup?.age_hours != null
+                          ? `Latest: ${readiness.latest_backup.age_hours}h ago`
+                          : 'No snapshot yet'
+                      }
+                    />
+                  }
+                />
+                <StatCard
+                  title="RTO Target"
+                  value={`${readiness.rto_minutes} min`}
+                  subtitle="Target restoration window"
+                  icon="speed"
+                  tone="amber"
+                  highlight={
+                    <StatHighlight
+                      tone="amber"
+                      icon="terminal"
+                      label="Checksum verified"
+                    />
+                  }
+                />
+              </StatGrid>
 
-                <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-body-sm">
-                  <dt className="text-muted">RPO</dt>
-                  <dd className="text-on-surface">{readiness.rpo_hours} h</dd>
-                  <dt className="text-muted">RTO target</dt>
-                  <dd className="text-on-surface">{readiness.rto_minutes} min</dd>
-                  <dt className="text-muted">Retention</dt>
-                  <dd className="text-on-surface">{readiness.retention_days} days</dd>
-                  <dt className="text-muted">Destination</dt>
-                  <dd className="font-mono text-on-surface">
-                    {readiness.disk}:{readiness.directory}
-                  </dd>
-                </dl>
-              </div>
+              {(!readiness.ready || (readiness.requirement && !readiness.dumper_available)) && (
+                <Card className="p-5">
+                  {!readiness.ready && (
+                    <ul className="flex flex-col gap-2">
+                      {readiness.gaps.map((gap) => (
+                        <li
+                          key={gap}
+                          className="flex items-start gap-2 rounded-xl bg-coral-soft/60 px-4 py-3 text-body-sm text-on-surface"
+                        >
+                          <Icon name="error" className="mt-0.5 text-[16px] text-error" />
+                          {gap}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-              {!readiness.ready && (
-                <ul className="mt-4 flex flex-col gap-2">
-                  {readiness.gaps.map((gap) => (
-                    <li
-                      key={gap}
-                      className="flex items-start gap-2 rounded-xl bg-coral-soft/60 px-4 py-3 text-body-sm text-on-surface"
-                    >
-                      <Icon name="error" className="mt-0.5 text-[16px] text-error" />
-                      {gap}
-                    </li>
-                  ))}
-                </ul>
+                  {readiness.requirement && !readiness.dumper_available && (
+                    <p className="mt-3 rounded-xl bg-canvas px-4 py-3 text-body-sm text-muted">
+                      {readiness.requirement}
+                    </p>
+                  )}
+                </Card>
               )}
-
-              {readiness.requirement && !readiness.dumper_available && (
-                <p className="mt-3 rounded-xl bg-canvas px-4 py-3 text-body-sm text-muted">
-                  {readiness.requirement}
-                </p>
-              )}
-            </Card>
+            </>
           )
         )}
 

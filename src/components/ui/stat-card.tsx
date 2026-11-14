@@ -13,23 +13,32 @@ const chipTones: Record<StatTone, string> = {
   blue: 'bg-blue-50 text-blue-700',
 };
 
-type HighlightTone = 'success' | 'danger' | 'warning' | 'neutral' | 'primary';
+type HighlightTone = 'success' | 'danger' | 'warning' | 'neutral' | 'primary' | StatTone;
 
 const highlightTones: Record<HighlightTone, { base: string; dot: string }> = {
   success: { base: 'bg-forest-soft text-secondary', dot: 'bg-success' },
+  forest: { base: 'bg-forest-soft text-secondary', dot: 'bg-success' },
   primary: { base: 'bg-sage-soft text-primary', dot: 'bg-primary' },
+  sage: { base: 'bg-sage-soft text-primary', dot: 'bg-primary' },
   danger: { base: 'bg-coral-soft text-error', dot: 'bg-error' },
+  coral: { base: 'bg-coral-soft text-error', dot: 'bg-error' },
   warning: { base: 'bg-amber-50 text-amber-700', dot: 'bg-warning' },
+  amber: { base: 'bg-amber-50 text-amber-700', dot: 'bg-warning' },
   neutral: { base: 'bg-surface-container-low text-on-surface-variant', dot: 'bg-outline' },
+  blue: { base: 'bg-blue-50 text-blue-700', dot: 'bg-blue-500' },
 };
 
 /** Small status pill shown on the bottom line of a StatCard. */
 export function StatHighlight({
   children,
+  label,
+  icon,
   tone = 'success',
   pulse = false,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
+  label?: ReactNode;
+  icon?: string;
   tone?: HighlightTone;
   pulse?: boolean;
 }) {
@@ -41,11 +50,15 @@ export function StatHighlight({
         t.base,
       )}
     >
-      <span className="relative flex h-1.5 w-1.5 shrink-0">
-        {pulse && <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', t.dot)} />}
-        <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', t.dot)} />
-      </span>
-      <span className="truncate">{children}</span>
+      {icon ? (
+        <Icon name={icon} className="text-[13px] shrink-0" />
+      ) : (
+        <span className="relative flex h-1.5 w-1.5 shrink-0">
+          {pulse && <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', t.dot)} />}
+          <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', t.dot)} />
+        </span>
+      )}
+      <span className="truncate">{children ?? label}</span>
     </span>
   );
 }
@@ -63,6 +76,7 @@ const shell =
 export function StatCard({
   title,
   value,
+  subtitle,
   icon,
   tone = 'forest',
   highlight,
@@ -71,6 +85,7 @@ export function StatCard({
 }: {
   title: string;
   value: ReactNode;
+  subtitle?: ReactNode;
   icon: string;
   tone?: StatTone;
   highlight?: ReactNode;
@@ -84,16 +99,21 @@ export function StatCard({
       </span>
 
       <div className="my-3 flex items-center justify-between gap-3">
-        <span
-          className={cn(
-            'min-w-0 truncate font-extrabold leading-tight tracking-tight text-on-surface',
-            'text-[clamp(1.125rem,1.6vw,1.5rem)]',
-            valueClassName,
+        <div className="min-w-0 flex flex-col gap-0.5">
+          <span
+            className={cn(
+              'min-w-0 truncate font-extrabold leading-tight tracking-tight text-on-surface',
+              'text-[clamp(1.125rem,1.6vw,1.5rem)]',
+              valueClassName,
+            )}
+            title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
+          >
+            {value}
+          </span>
+          {subtitle && (
+            <span className="truncate text-[11px] text-muted">{subtitle}</span>
           )}
-          title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
-        >
-          {value}
-        </span>
+        </div>
         <span
           className={cn(
             'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-[var(--shadow-inset-sm)] transition-transform duration-300 group-hover:scale-105',

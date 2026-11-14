@@ -10,7 +10,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
-import { Skeleton, SkeletonTable } from '@/components/ui/skeleton';
+import { SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { AuditLevel, Paginated, PlatformAuditEvent, PlatformMetrics } from '@/types';
@@ -123,84 +124,96 @@ export function AuditLogPage() {
   const rows = events.data?.data ?? [];
   const meta = events.data?.meta;
 
-  const kpis = [
-    {
-      label: 'Security events (24h)',
-      value: audit?.events_24h ?? 0,
-      icon: 'receipt_long',
-      tone: 'bg-sage-soft text-primary',
-    },
-    {
-      label: 'Critical (24h)',
-      value: audit?.critical_24h ?? 0,
-      icon: 'report',
-      tone: 'bg-coral-soft text-error',
-    },
-    {
-      label: 'Warnings (24h)',
-      value: audit?.warning_24h ?? 0,
-      icon: 'warning',
-      tone: 'bg-surface-container text-tertiary',
-    },
-    {
-      label: 'Denied platform access (24h)',
-      value: audit?.denied_platform_access_24h ?? 0,
-      icon: 'gpp_bad',
-      tone: 'bg-coral-soft text-tertiary',
-    },
-  ];
-
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Audit Logs"
+          titleSize="headline"
           description="Every privileged and security-relevant action, written to an append-only platform ledger."
           actions={
-            <>
+            <div className="flex flex-wrap items-center gap-2.5">
               <Button
                 variant={live ? 'primary' : 'outline'}
-                size="lg"
                 onClick={() => setLive((current) => !current)}
                 aria-pressed={live}
               >
                 <Icon name={live ? 'pause' : 'play_arrow'} className="text-[16px]" />
                 {live ? 'Live tail on (5s)' : 'Live tail off'}
               </Button>
-              <Button variant="outline" size="lg" onClick={exportCsv} disabled={exporting}>
+              <Button variant="outline" onClick={exportCsv} disabled={exporting}>
                 <Icon name="download" className="text-[16px]" />
                 {exporting ? 'Preparing…' : 'Export CSV'}
               </Button>
-            </>
+            </div>
           }
         />
 
         {error && <Alert>{error}</Alert>}
         {events.isError && <Alert>{apiError(events.error)}</Alert>}
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.isLoading
-            ? kpis.map((kpi) => (
-                <Card key={kpi.label} className="flex items-center justify-between p-5 animate-pulse">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-3 w-28" />
-                    <Skeleton className="h-7 w-16" />
-                  </div>
-                  <Skeleton className="h-11 w-11 rounded-xl" />
-                </Card>
-              ))
-            : kpis.map((kpi) => (
-                <Card key={kpi.label} className="flex items-center justify-between p-5">
-                  <span className="flex flex-col">
-                    <span className="text-body-sm text-muted">{kpi.label}</span>
-                    <span className="text-display-lg font-bold text-on-surface">{kpi.value}</span>
-                  </span>
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${kpi.tone}`}>
-                    <Icon name={kpi.icon} className="text-[20px]" />
-                  </span>
-                </Card>
-              ))}
-        </section>
+        {metrics.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              title="Security Events (24h)"
+              value={audit?.events_24h ?? 0}
+              subtitle="Logged in the last 24 hours"
+              icon="receipt_long"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="verified_user"
+                  label="Append-only ledger"
+                />
+              }
+            />
+            <StatCard
+              title="Critical (24h)"
+              value={audit?.critical_24h ?? 0}
+              subtitle="High-severity events"
+              icon="report"
+              tone={audit?.critical_24h ? 'coral' : 'sage'}
+              highlight={
+                <StatHighlight
+                  tone={audit?.critical_24h ? 'coral' : 'sage'}
+                  icon="security"
+                  label={audit?.critical_24h ? 'Requires review' : 'Zero critical alerts'}
+                />
+              }
+            />
+            <StatCard
+              title="Warnings (24h)"
+              value={audit?.warning_24h ?? 0}
+              subtitle="Auth & policy warnings"
+              icon="warning"
+              tone="amber"
+              highlight={
+                <StatHighlight
+                  tone="amber"
+                  icon="policy"
+                  label="Monitored anomalies"
+                />
+              }
+            />
+            <StatCard
+              title="Denied Platform Access"
+              value={audit?.denied_platform_access_24h ?? 0}
+              subtitle="Blocked unauthorized attempts"
+              icon="gpp_bad"
+              tone={audit?.denied_platform_access_24h ? 'coral' : 'forest'}
+              highlight={
+                <StatHighlight
+                  tone={audit?.denied_platform_access_24h ? 'coral' : 'forest'}
+                  icon="shield_lock"
+                  label="Zero-trust guard active"
+                />
+              }
+            />
+          </StatGrid>
+        )}
 
         {/* Filters */}
         <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:justify-between">

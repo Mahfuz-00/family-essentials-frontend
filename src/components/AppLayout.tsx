@@ -214,7 +214,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <div className="sticky bottom-0 z-20 flex shrink-0 flex-col border-t border-outline-variant/20 bg-surface p-3">
           {sidebarCollapsed ? (
             <div className="flex flex-col items-center gap-2">
-              <Avatar name={user?.name ?? 'User'} />
+              <Avatar name={user?.name ?? 'User'} src={user?.avatar_url} />
               <button
                 type="button"
                 onClick={signOut}
@@ -227,9 +227,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
           ) : (
             <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-2.5">
               <span className="flex min-w-0 items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-xs">
-                  <Icon name="person" className="text-[18px]" />
-                </span>
+                <Avatar name={user?.name ?? 'User'} src={user?.avatar_url} />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-label-lg font-semibold leading-snug text-on-surface">
                     {user?.name}
@@ -309,9 +307,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
             <div className="sticky bottom-0 z-20 flex flex-col border-t border-outline-variant/30 bg-surface p-4">
               <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-2.5">
                 <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-                    <Icon name="person" className="text-[18px]" />
-                  </span>
+                  <Avatar name={user?.name ?? 'User'} src={user?.avatar_url} />
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-semibold leading-snug text-on-surface">
                       {user?.name}
@@ -521,7 +517,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
                 aria-haspopup="true"
                 className="flex items-center gap-2 rounded-xl p-1 transition-colors hover:bg-sage-soft active:scale-95"
               >
-                <Avatar name={user?.name ?? 'User'} />
+                <Avatar name={user?.name ?? 'User'} src={user?.avatar_url} />
                 <span className="hidden text-body-sm font-medium text-on-surface xl:inline max-w-[120px] truncate">
                   {user?.name}
                 </span>
@@ -627,7 +623,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
         <main className="w-full px-4 py-6 sm:px-6">
           <div key={path} className="animate-body-in">
             {isRoutePending ? (
-              <div className="flex flex-col gap-6 animate-pulse" aria-busy="true">
+              <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-pulse" aria-busy="true">
                 <div className="space-y-2">
                   <div className="h-7 w-56 rounded-xl bg-forest-soft/70" />
                   <div className="h-4 w-80 max-w-full rounded-lg bg-forest-soft/50" />

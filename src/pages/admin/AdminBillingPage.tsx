@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type { PlatformBillingInvoice } from '@/types';
@@ -118,9 +119,10 @@ export function AdminBillingPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 max-w-7xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Invoices"
+          titleSize="headline"
           description="Approve in-person cash payments, track subscription revenue, and manage household billing transactions across the platform."
           actions={
             <Link to="/admin/payment-gateways">
@@ -135,57 +137,69 @@ export function AdminBillingPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
         {error && <Alert tone="error">{error}</Alert>}
 
-        {/* Top Summary Metrics */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="flex flex-col gap-1.5 p-4 border-l-4 border-amber-500 bg-surface">
-            <div className="flex items-center justify-between text-muted">
-              <span className="text-body-xs font-semibold uppercase tracking-wider">Pending Cash</span>
-              <Icon name="payments" className="text-[20px] text-amber-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-headline-md font-bold text-on-surface">
-                {stats?.pending_cash_count ?? pendingCashList.length}
-              </span>
-              <span className="text-body-xs font-semibold text-amber-600">
-                ${(((stats?.pending_cash_cents ?? 0) / 100).toFixed(2))} due
-              </span>
-            </div>
-            <p className="text-[11px] text-muted">Awaiting in-person cash collection</p>
-          </Card>
-
-          <Card className="flex flex-col gap-1.5 p-4 border-l-4 border-secondary bg-surface">
-            <div className="flex items-center justify-between text-muted">
-              <span className="text-body-xs font-semibold uppercase tracking-wider">Paid Invoices</span>
-              <Icon name="verified" className="text-[20px] text-secondary" />
-            </div>
-            <span className="text-headline-md font-bold text-on-surface">
-              {stats?.paid_count ?? 0}
-            </span>
-            <p className="text-[11px] text-muted">Successfully collected &amp; active</p>
-          </Card>
-
-          <Card className="flex flex-col gap-1.5 p-4 border-l-4 border-forest-deep bg-surface">
-            <div className="flex items-center justify-between text-muted">
-              <span className="text-body-xs font-semibold uppercase tracking-wider">Total Revenue</span>
-              <Icon name="attach_money" className="text-[20px] text-forest-deep" />
-            </div>
-            <span className="text-headline-md font-bold text-on-surface">
-              ${(((stats?.total_revenue_cents ?? 0) / 100).toFixed(2))}
-            </span>
-            <p className="text-[11px] text-muted">Lifetime platform invoice volume</p>
-          </Card>
-
-          <Card className="flex flex-col gap-1.5 p-4 border-l-4 border-outline-variant bg-surface">
-            <div className="flex items-center justify-between text-muted">
-              <span className="text-body-xs font-semibold uppercase tracking-wider">Total Invoices</span>
-              <Icon name="receipt" className="text-[20px] text-muted" />
-            </div>
-            <span className="text-headline-md font-bold text-on-surface">
-              {stats?.total_count ?? invoicesList.length}
-            </span>
-            <p className="text-[11px] text-muted">Generated across all households</p>
-          </Card>
-        </div>
+        {/* Unified Top Summary Metrics */}
+        {billingQuery.isLoading ? (
+          <StatGridSkeleton count={4} />
+        ) : (
+          <StatGrid count={4}>
+            <StatCard
+              title="Pending Cash"
+              value={stats?.pending_cash_count ?? pendingCashList.length}
+              subtitle="Awaiting in-person cash collection"
+              icon="payments"
+              tone="amber"
+              highlight={
+                <StatHighlight
+                  tone="amber"
+                  icon="pending_actions"
+                  label={`$${((stats?.pending_cash_cents ?? 0) / 100).toFixed(2)} due`}
+                />
+              }
+            />
+            <StatCard
+              title="Paid Invoices"
+              value={stats?.paid_count ?? 0}
+              subtitle="Successfully collected & active"
+              icon="verified"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="check_circle"
+                  label="Settled subscriptions"
+                />
+              }
+            />
+            <StatCard
+              title="Total Revenue"
+              value={`$${((stats?.total_revenue_cents ?? 0) / 100).toFixed(2)}`}
+              subtitle="Lifetime platform invoice volume"
+              icon="attach_money"
+              tone="sage"
+              highlight={
+                <StatHighlight
+                  tone="sage"
+                  icon="trending_up"
+                  label="Cumulative collected"
+                />
+              }
+            />
+            <StatCard
+              title="Total Invoices"
+              value={stats?.total_count ?? invoicesList.length}
+              subtitle="Generated across all households"
+              icon="receipt_long"
+              tone="forest"
+              highlight={
+                <StatHighlight
+                  tone="forest"
+                  icon="history_edu"
+                  label="Full ledger history"
+                />
+              }
+            />
+          </StatGrid>
+        )}
 
         {/* Actionable Pending Cash Settlements Queue */}
         {pendingCashList.length > 0 && (

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonTable } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
@@ -152,24 +153,25 @@ export function RefundPolicyPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Refunds"
+          titleSize="headline"
           description="Enforce household refund terms, review disputed charges, issue partial credits, and maintain tenant satisfaction."
         />
 
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* Tab Switcher */}
-        <div className="flex border-b border-surface-container">
+        {/* Soft Tactile Submodule Pill Bar */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
           <button
             type="button"
             onClick={() => setActiveTab('requests')}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-label-lg font-bold transition-colors ${
+            className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
               activeTab === 'requests'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-secondary text-on-secondary shadow-xs'
+                : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
             }`}
           >
             <Icon name="receipt_long" className="text-[18px]" />
@@ -181,10 +183,10 @@ export function RefundPolicyPage() {
           <button
             type="button"
             onClick={() => setActiveTab('policy')}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-label-lg font-bold transition-colors ${
+            className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
               activeTab === 'policy'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
+                ? 'bg-secondary text-on-secondary shadow-xs'
+                : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
             }`}
           >
             <Icon name="description" className="text-[18px]" />
@@ -194,56 +196,69 @@ export function RefundPolicyPage() {
 
         {activeTab === 'requests' && (
           <div className="flex flex-col gap-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
-              <Card className="flex flex-col gap-2 p-4">
-                <span className="flex items-center justify-between">
-                  <span className="text-body-sm text-muted">Total Disbursed</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-forest-soft text-secondary">
-                    <Icon name="payments" className="text-[18px]" />
-                  </span>
-                </span>
-                <span className="text-headline-md font-bold text-on-surface">
-                  ${((stats?.total_refunded_cents ?? 0) / 100).toFixed(2)}
-                </span>
-              </Card>
-
-              <Card className="flex flex-col gap-2 p-4">
-                <span className="flex items-center justify-between">
-                  <span className="text-body-sm text-muted">Pending Action</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-coral-soft text-error">
-                    <Icon name="hourglass_top" className="text-[18px]" />
-                  </span>
-                </span>
-                <span className="text-headline-md font-bold text-on-surface">
-                  {stats?.pending_count ?? 0}
-                </span>
-              </Card>
-
-              <Card className="flex flex-col gap-2 p-4">
-                <span className="flex items-center justify-between">
-                  <span className="text-body-sm text-muted">Approved Refunds</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sage-soft text-primary">
-                    <Icon name="verified" className="text-[18px]" />
-                  </span>
-                </span>
-                <span className="text-headline-md font-bold text-on-surface">
-                  {stats?.approved_count ?? 0}
-                </span>
-              </Card>
-
-              <Card className="flex flex-col gap-2 p-4">
-                <span className="flex items-center justify-between">
-                  <span className="text-body-sm text-muted">Avg Processing</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container text-muted">
-                    <Icon name="speed" className="text-[18px]" />
-                  </span>
-                </span>
-                <span className="text-headline-md font-bold text-on-surface">
-                  {stats?.avg_turnaround_hours ?? 14} hrs
-                </span>
-              </Card>
-            </div>
+            {/* Unified KPI Cards */}
+            {refundsQuery.isLoading ? (
+              <StatGridSkeleton count={4} />
+            ) : (
+              <StatGrid count={4}>
+                <StatCard
+                  title="Total Disbursed"
+                  value={`$${((stats?.total_refunded_cents ?? 0) / 100).toFixed(2)}`}
+                  subtitle="Cumulative refunded volume"
+                  icon="payments"
+                  tone="forest"
+                  highlight={
+                    <StatHighlight
+                      tone="forest"
+                      icon="account_balance_wallet"
+                      label="Issued to households"
+                    />
+                  }
+                />
+                <StatCard
+                  title="Pending Action"
+                  value={stats?.pending_count ?? 0}
+                  subtitle="Awaiting operator review"
+                  icon="hourglass_top"
+                  tone={stats?.pending_count ? 'coral' : 'amber'}
+                  highlight={
+                    <StatHighlight
+                      tone={stats?.pending_count ? 'coral' : 'amber'}
+                      icon="pending_actions"
+                      label={stats?.pending_count ? 'Needs decision' : 'Queue clear'}
+                    />
+                  }
+                />
+                <StatCard
+                  title="Approved Refunds"
+                  value={stats?.approved_count ?? 0}
+                  subtitle="Settled refund claims"
+                  icon="verified"
+                  tone="sage"
+                  highlight={
+                    <StatHighlight
+                      tone="sage"
+                      icon="check_circle"
+                      label="Processed within SLA"
+                    />
+                  }
+                />
+                <StatCard
+                  title="Avg Processing"
+                  value={`${stats?.avg_turnaround_hours ?? 14} hrs`}
+                  subtitle="Average operator turnaround"
+                  icon="speed"
+                  tone="forest"
+                  highlight={
+                    <StatHighlight
+                      tone="forest"
+                      icon="schedule"
+                      label="Target < 24 hrs"
+                    />
+                  }
+                />
+              </StatGrid>
+            )}
 
             {/* SaaS Policy Refund Calculator & Eligibility Evaluator */}
             <Card className="flex flex-col gap-3 p-4 bg-forest-soft/30 border border-secondary/20">

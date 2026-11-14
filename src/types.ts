@@ -3,6 +3,7 @@ export interface AuthUser {
   name: string;
   email: string;
   phone: string | null;
+  avatar_url?: string | null;
   email_verified: boolean;
   phone_verified: boolean;
   is_platform_admin: boolean;

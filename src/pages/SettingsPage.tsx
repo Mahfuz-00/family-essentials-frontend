@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
@@ -8,6 +8,8 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { api, apiError } from '@/lib/api';
 import { getCurrencySign } from '@/lib/money';
@@ -31,6 +33,72 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+
+  // Profile & Password edit state (unified with AdminProfilePage)
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [profileName, setProfileName] = useState(user?.name ?? '');
+  const [profileEmail, setProfileEmail] = useState(user?.email ?? '');
+  const [profilePhone, setProfilePhone] = useState(user?.phone ?? '');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatar_url ?? null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name ?? '');
+      setProfileEmail(user.email ?? '');
+      setProfilePhone(user.phone ?? '');
+      setAvatarUrl(user.avatar_url ?? null);
+    }
+  }, [user]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const resp = await api.patch<{ data: AuthUser }>('/v1/auth/me', {
+        name: profileName,
+        email: profileEmail,
+        phone: profilePhone.trim() ? profilePhone.trim() : null,
+        avatar_url: avatarUrl,
+      });
+      return resp.data.data;
+    },
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      setNotice('Personal profile and photo saved successfully.');
+      setError(null);
+    },
+    onError: (e) => setError(apiError(e)),
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: async () => {
+      const resp = await api.post<{ message: string }>('/v1/auth/me/password', {
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+      return resp.data;
+    },
+    onSuccess: (res) => {
+      setNotice(res.message || 'Password updated successfully.');
+      setError(null);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (e) => setError(apiError(e)),
+  });
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAvatarUrl(typeof reader.result === 'string' ? reader.result : null);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const tenant = useQuery({
     queryKey: ['tenant'],
@@ -142,7 +210,7 @@ export function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 max-w-4xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Settings"
           description="Your personal profile, how family alerts reach you, and your shared household workspace."
@@ -152,86 +220,225 @@ export function SettingsPage() {
         {notice && <Alert tone="success">{notice}</Alert>}
         {error && <Alert tone="error">{error}</Alert>}
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-outline-variant/30 gap-2 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-              activeTab === 'profile'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
-            }`}
-          >
-            <Icon name="person" className="text-[18px]" />
-            Profile &amp; Security
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('alerts')}
-            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-              activeTab === 'alerts'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
-            }`}
-          >
-            <Icon name="notifications" className="text-[18px]" />
-            Alerts &amp; Reachability
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('workspace')}
-            className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-all ${
-              activeTab === 'workspace'
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-muted hover:text-on-surface'
-            }`}
-          >
-            <Icon name="cottage" className="text-[18px]" />
-            Household Workspace &amp; Data Vault
-          </button>
+        {/* Soft Tactile Submodule Pill Bar */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
+          {[
+            { key: 'profile', label: 'Profile & Security', icon: 'person' },
+            { key: 'alerts', label: 'Alerts & Reachability', icon: 'notifications' },
+            { key: 'workspace', label: 'Household Workspace & Data Vault', icon: 'cottage' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as SettingsTab)}
+                className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
+                  isActive
+                    ? 'bg-secondary text-on-secondary shadow-xs'
+                    : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
+                }`}
+              >
+                <Icon name={tab.icon} className="text-[18px]" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB 1: PROFILE & SECURITY */}
         {activeTab === 'profile' && (
-          <Card className="p-6">
-            <div className="flex items-center gap-4 border-b border-outline-variant/20 pb-5">
-              <Avatar name={user?.name ?? 'User'} size="lg" />
-              <div className="flex min-w-0 flex-col">
-                <h2 className="truncate text-headline-sm text-on-surface">{user?.name}</h2>
-                <span className="truncate text-body-sm text-muted">{user?.email}</span>
-              </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="flex flex-col gap-6 lg:col-span-2">
+              <Card className="flex flex-col gap-5 p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/20 pb-5">
+                  <div className="flex items-center gap-4">
+                    <Avatar name={profileName || user?.name || 'User'} src={avatarUrl} size="lg" />
+                    <div className="flex min-w-0 flex-col">
+                      <h2 className="truncate text-headline-sm font-bold text-on-surface">
+                        {profileName || user?.name}
+                      </h2>
+                      <span className="truncate text-body-sm text-muted">{profileEmail || user?.email}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Icon name="photo_camera" className="text-[16px]" />
+                      Upload Photo
+                    </Button>
+                    {avatarUrl && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setAvatarUrl(null)}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    updateProfileMutation.mutate();
+                  }}
+                  className="flex flex-col gap-4"
+                >
+                  <div>
+                    <Label htmlFor="user-name">Full Name</Label>
+                    <Input
+                      id="user-name"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="user-email">Email Address</Label>
+                      <Input
+                        id="user-email"
+                        type="email"
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="user-phone">Phone Number</Label>
+                      <Input
+                        id="user-phone"
+                        type="tel"
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        placeholder="+1 (555) 019-2834"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button type="submit" variant="primary" disabled={updateProfileMutation.isPending}>
+                      <Icon name="save" className="text-[18px]" />
+                      {updateProfileMutation.isPending ? 'Saving…' : 'Save Profile Changes'}
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+
+              <Card className="flex flex-col gap-5 p-6">
+                <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
+                    <Icon name="lock" className="text-[22px]" />
+                  </span>
+                  <div>
+                    <h2 className="text-base font-bold text-on-surface">Authentication &amp; Password</h2>
+                    <p className="text-xs text-muted">Update your account password to keep your household workspace secure</p>
+                  </div>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newPassword !== confirmPassword) {
+                      setError('New passwords do not match.');
+                      return;
+                    }
+                    updatePasswordMutation.mutate();
+                  }}
+                  className="flex flex-col gap-4"
+                >
+                  <div>
+                    <Label htmlFor="user-current-pw">Current Password</Label>
+                    <Input
+                      id="user-current-pw"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                      placeholder="••••••••••••"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="user-new-pw">New Password</Label>
+                      <Input
+                        id="user-new-pw"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        placeholder="Min. 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="user-confirm-pw">Confirm New Password</Label>
+                      <Input
+                        id="user-confirm-pw"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Repeat new password"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <Button type="submit" variant="outline" disabled={updatePasswordMutation.isPending}>
+                      <Icon name="key" className="text-[18px]" />
+                      {updatePasswordMutation.isPending ? 'Updating…' : 'Update Password'}
+                    </Button>
+                  </div>
+                </form>
+              </Card>
             </div>
 
-            <div className="mt-5 flex flex-col gap-3">
-              <SettingRow
-                label="Email Address"
-                value={user?.email ?? '—'}
-                verified={user?.email_verified ?? false}
-                verifiedLabel="Verified"
-                unverifiedLabel="Not verified"
-                action={
-                  <Link to="/verify-email" className="text-body-md font-semibold text-secondary hover:underline">
-                    Verify →
-                  </Link>
-                }
-              />
-              <SettingRow
-                label="Phone Number"
-                value={user?.phone ?? 'No number on file'}
-                verified={user?.phone_verified ?? false}
-                verifiedLabel="Verified"
-                unverifiedLabel="Not verified"
-                action={
-                  <Link to="/verify-phone" className="text-body-md font-semibold text-secondary hover:underline">
-                    {user?.phone_verified ? 'Change →' : 'Verify →'}
-                  </Link>
-                }
-              />
+            <div className="flex flex-col gap-6">
+              <Card className="flex flex-col gap-3 p-5">
+                <span className="text-label-sm font-bold uppercase tracking-wider text-muted">
+                  Verification Status
+                </span>
+                <SettingRow
+                  label="Email Address"
+                  value={user?.email ?? '—'}
+                  verified={user?.email_verified ?? false}
+                  verifiedLabel="Verified"
+                  unverifiedLabel="Not verified"
+                  action={
+                    <Link to="/verify-email" className="text-body-md font-semibold text-secondary hover:underline">
+                      Verify →
+                    </Link>
+                  }
+                />
+                <SettingRow
+                  label="Phone Number"
+                  value={user?.phone ?? 'No number on file'}
+                  verified={user?.phone_verified ?? false}
+                  verifiedLabel="Verified"
+                  unverifiedLabel="Not verified"
+                  action={
+                    <Link to="/verify-phone" className="text-body-md font-semibold text-secondary hover:underline">
+                      {user?.phone_verified ? 'Change →' : 'Verify →'}
+                    </Link>
+                  }
+                />
+              </Card>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* TAB 2: ALERTS & REACHABILITY */}
