@@ -235,12 +235,12 @@ export function PaymentGatewayConfigPage() {
             {/* Global Environment & Mode Card — Redesigned Soft Tactile Alignment */}
             <Card className="flex flex-col gap-6 p-6 bg-surface">
               {/* Card Header */}
-              <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-start sm:items-center gap-3.5">
+              <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-5 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex min-w-0 flex-1 items-start sm:items-center gap-3.5">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
                     <Icon name="tune" className="text-[22px]" />
                   </span>
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     <h3 className="text-title-md font-bold text-on-surface">
                       Payment Gateways &amp; Environment Controls
                     </h3>
@@ -250,23 +250,22 @@ export function PaymentGatewayConfigPage() {
                   </div>
                 </div>
 
-                {/* Right Toolbar: Equal-height Provider Counter + Segmented Mode Switcher */}
-                <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
-                  <div className="inline-flex h-10 items-center gap-2.5 rounded-xl bg-canvas px-3.5 text-xs shadow-[var(--shadow-inset-sm)]">
-                    <span className="font-bold uppercase tracking-wider text-muted text-[11px]">Providers</span>
-                    <span className="h-3.5 w-px bg-outline-variant/40" />
-                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      {liveCount} Live
+                {/* Single-Line Unified Toolbar: Providers Counter + Set All Sandbox / Set All Live */}
+                <div className="flex shrink-0 flex-nowrap items-center gap-2.5 overflow-x-auto whitespace-nowrap">
+                  <div className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl bg-canvas px-3.5 text-xs shadow-[var(--shadow-inset-sm)]">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Providers:</span>
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-bold text-emerald-700">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                      <span>{liveCount} Live</span>
                     </span>
                     <span className="text-muted">·</span>
-                    <span className="inline-flex items-center gap-1.5 font-bold text-amber-700">
-                      <span className="h-2 w-2 rounded-full bg-amber-500" />
-                      {sandboxCount} Sandbox
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-bold text-amber-700">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                      <span>{sandboxCount} Sandbox</span>
                     </span>
                   </div>
 
-                  <div className="inline-flex h-10 items-center gap-1 rounded-xl bg-canvas p-1 text-xs shadow-[var(--shadow-inset)]">
+                  <div className="inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-xl bg-canvas p-1 text-xs shadow-[var(--shadow-inset)]">
                     <button
                       type="button"
                       onClick={() => {
@@ -280,7 +279,7 @@ export function PaymentGatewayConfigPage() {
                           return { ...prev, mode: 'sandbox', gateways: updated };
                         });
                       }}
-                      className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 font-bold transition-all ${
+                      className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 font-bold transition-all ${
                         currentSettings.mode === 'sandbox'
                           ? 'bg-amber-500 text-white shadow-xs'
                           : 'text-on-surface-variant hover:text-on-surface'
@@ -288,7 +287,7 @@ export function PaymentGatewayConfigPage() {
                       title="Set all gateways to Sandbox / Test mode"
                     >
                       <Icon name="science" className="text-[15px]" />
-                      Set All Sandbox
+                      <span>Set All Sandbox</span>
                     </button>
                     <button
                       type="button"
@@ -303,7 +302,7 @@ export function PaymentGatewayConfigPage() {
                           return { ...prev, mode: 'live', gateways: updated };
                         });
                       }}
-                      className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 font-bold transition-all ${
+                      className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 font-bold transition-all ${
                         currentSettings.mode === 'live'
                           ? 'bg-secondary text-on-secondary shadow-xs'
                           : 'text-on-surface-variant hover:text-on-surface'
@@ -311,7 +310,7 @@ export function PaymentGatewayConfigPage() {
                       title="Set all gateways to Live / Production mode"
                     >
                       <Icon name="verified" className="text-[15px]" />
-                      Set All Live
+                      <span>Set All Live</span>
                     </button>
                   </div>
                 </div>
