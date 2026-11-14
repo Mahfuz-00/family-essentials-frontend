@@ -32,7 +32,6 @@ const highlightTones: Record<HighlightTone, { base: string; dot: string }> = {
 export function StatHighlight({
   children,
   label,
-  icon,
   tone = 'success',
   pulse = false,
 }: {
@@ -50,14 +49,10 @@ export function StatHighlight({
         t.base,
       )}
     >
-      {icon ? (
-        <Icon name={icon} className="text-[13px] shrink-0" />
-      ) : (
-        <span className="relative flex h-1.5 w-1.5 shrink-0">
-          {pulse && <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', t.dot)} />}
-          <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', t.dot)} />
-        </span>
-      )}
+      <span className="relative flex h-1.5 w-1.5 shrink-0">
+        {pulse && <span className={cn('absolute inline-flex h-full w-full animate-ping rounded-full opacity-75', t.dot)} />}
+        <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', t.dot)} />
+      </span>
       <span className="truncate">{children ?? label}</span>
     </span>
   );
@@ -76,7 +71,6 @@ const shell =
 export function StatCard({
   title,
   value,
-  subtitle,
   icon,
   tone = 'forest',
   highlight,
@@ -99,21 +93,16 @@ export function StatCard({
       </span>
 
       <div className="my-3 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex flex-col gap-0.5">
-          <span
-            className={cn(
-              'min-w-0 truncate font-extrabold leading-tight tracking-tight text-on-surface',
-              'text-[clamp(1.125rem,1.6vw,1.5rem)]',
-              valueClassName,
-            )}
-            title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
-          >
-            {value}
-          </span>
-          {subtitle && (
-            <span className="truncate text-[11px] text-muted">{subtitle}</span>
+        <span
+          className={cn(
+            'min-w-0 truncate font-extrabold leading-tight tracking-tight text-on-surface',
+            'text-[clamp(1.125rem,1.6vw,1.5rem)]',
+            valueClassName,
           )}
-        </div>
+          title={typeof value === 'string' || typeof value === 'number' ? String(value) : undefined}
+        >
+          {value}
+        </span>
         <span
           className={cn(
             'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-[var(--shadow-inset-sm)] transition-transform duration-300 group-hover:scale-105',

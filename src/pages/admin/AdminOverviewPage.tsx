@@ -3,9 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
@@ -126,46 +124,57 @@ export function AdminOverviewPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-pulse">
-          <PageHeader
-            title="Overview"
-            titleSize="headline"
-            description="Cross-tenant telemetry and lifecycle health across every provisioned household."
-          />
+        <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto animate-pulse">
+          {/* Header Hero Skeleton */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
+            <div className="space-y-2">
+              <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
+              <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-36 rounded-xl bg-forest-soft/50" />
+              <div className="h-10 w-36 rounded-xl bg-forest-soft/50" />
+            </div>
+          </div>
 
+          {/* 4 Pulse Cards Skeleton — same anatomy as StatCard */}
           <StatGridSkeleton count={4} />
 
-          <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-7" />
-            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-5" />
-          </section>
-
-          <div className="h-28 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1" />
+          {/* Main Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+          </div>
         </div>
       </AppLayout>
     );
   }
 
+  const suspendedCount = data?.by_status?.suspended ?? 0;
+  const activeCount = data?.by_status?.active ?? 0;
+
   return (
     <AppLayout>
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto">
         <PageHeader
           title="Overview"
           titleSize="headline"
-          description="Cross-tenant telemetry and lifecycle health across every provisioned household."
+          description="Cross-tenant telemetry, subscription distribution, and lifecycle health across every provisioned household."
           actions={
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Link to="/admin/analytics">
-                <Button variant="outline">
-                  <Icon name="analytics" className="text-[18px]" />
-                  Platform Analytics
-                </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/admin/analytics"
+                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all hover:bg-forest-soft active:shadow-[var(--shadow-inset-sm)]"
+              >
+                <Icon name="analytics" className="text-[18px]" />
+                Platform Analytics
               </Link>
-              <Link to="/admin/tenants">
-                <Button variant="primary">
-                  <Icon name="apartment" className="text-[18px]" />
-                  Tenant Console
-                </Button>
+              <Link
+                to="/admin/tenants"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all hover:brightness-110"
+              >
+                <Icon name="apartment" className="text-[18px]" />
+                Tenant Console
               </Link>
             </div>
           }
@@ -186,109 +195,159 @@ export function AdminOverviewPage() {
           />
         )}
 
+        {/* 1. Platform Overview summary — unified StatCards matching Tenant Dashboard 1:1 */}
         <StatGrid count={4}>
           <StatCard
+            to="/admin/tenants"
             title="Total Active Tenants"
             value={metrics.isError ? '—' : (data?.total_tenants ?? 0)}
-            subtitle="Provisioned household workspaces"
             icon="apartment"
             tone="forest"
-            highlight={
-              <StatHighlight
-                tone="forest"
-                icon="verified"
-                label={`${data?.by_status?.active ?? 0} active · ${data?.by_status?.trial ?? 0} trial`}
-              />
-            }
+            highlight={<StatHighlight tone="success">{activeCount} Active</StatHighlight>}
           />
           <StatCard
+            to="/admin/tenants"
             title="Active Members"
             value={metrics.isError ? '—' : (data?.active_members ?? 0)}
-            subtitle="Total household seats in use"
             icon="group"
-            tone="sage"
-            highlight={
-              <StatHighlight
-                tone="sage"
-                icon="people"
-                label="Across all active workspaces"
-              />
-            }
+            tone="forest"
+            highlight={<StatHighlight tone="success">Active Seats</StatHighlight>}
           />
           <StatCard
+            to="/admin/analytics"
             title="Onboarded This Month"
             value={tenants.isError ? '—' : onboardedThisMonth}
-            subtitle="New workspaces created this month"
             icon="trending_up"
-            tone="forest"
-            highlight={
-              <StatHighlight
-                tone="forest"
-                icon="calendar_month"
-                label="Current monthly cohort"
-              />
-            }
+            tone="sage"
+            highlight={<StatHighlight tone="primary">This Month</StatHighlight>}
           />
           <StatCard
+            to="/admin/tenants"
             title="Avg Members / Tenant"
             value={tenants.isError ? '—' : avgMembers}
-            subtitle="Average family size per workspace"
             icon="diversity_3"
-            tone="amber"
+            tone={suspendedCount > 0 ? 'coral' : 'forest'}
             highlight={
-              <StatHighlight
-                tone="amber"
-                icon="home"
-                label={`${data?.by_status?.suspended ?? 0} suspended`}
-              />
+              suspendedCount > 0 ? (
+                <StatHighlight tone="danger" pulse>
+                  {suspendedCount} Suspended
+                </StatHighlight>
+              ) : (
+                <StatHighlight tone="success">All Healthy</StatHighlight>
+              )
             }
           />
         </StatGrid>
 
-        <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-          {/* Monthly provisioning */}
-          <Card className="flex flex-col gap-4 p-5 lg:col-span-7">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-headline-sm text-on-surface">Tenant provisioning by month</h2>
-              <p className="text-body-sm text-muted">
-                Counted from each workspace's creation date. No revenue axis: no billing data is stored.
-              </p>
+        {/* 2. Side-by-Side Dual Engine matching Tenant Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          {/* Engine A: Monthly Provisioning & Lifecycle */}
+          <Card className="p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                  <Icon name="trending_up" className="text-[20px]" />
+                </span>
+                <div>
+                  <h2 className="text-title-md font-bold text-on-surface">Tenant Provisioning &amp; Lifecycle</h2>
+                  <p className="text-xs text-muted">New workspaces created over the last six months</p>
+                </div>
+              </div>
+              <Link
+                to="/admin/tenants"
+                className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all"
+              >
+                View Workspaces &rarr;
+              </Link>
             </div>
 
             {monthly.every((month) => month.count === 0) ? (
-              <p className="rounded-xl bg-canvas px-4 py-8 text-center text-body-sm text-muted">
+              <p className="text-sm text-muted italic py-6 text-center bg-canvas rounded-2xl shadow-[var(--shadow-inset-sm)]">
                 No workspaces provisioned in the last six months.
               </p>
             ) : (
-              <div className="flex h-44 items-end gap-3" role="img" aria-label="New tenants per month">
+              <div
+                className="flex h-44 items-end gap-3 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]"
+                role="img"
+                aria-label="New tenants per month"
+              >
                 {monthly.map((month) => (
-                  <span key={month.key} className="flex flex-1 flex-col items-center gap-2">
-                    <span className="text-label-sm text-on-surface">{month.count}</span>
+                  <span key={month.key} className="flex flex-1 flex-col items-center gap-2 h-full justify-end">
+                    <span className="text-label-sm font-bold text-on-surface">{month.count}</span>
                     <span
-                      className="w-full rounded-t-lg bg-secondary/80"
-                      style={{ height: `${Math.max(4, (month.count / peak) * 100)}%` }}
+                      className="w-full rounded-t-lg bg-secondary/85 transition-all"
+                      style={{ height: `${Math.max(8, (month.count / peak) * 100)}%` }}
                     />
                     <span className="text-label-sm text-muted">{month.label}</span>
                   </span>
                 ))}
               </div>
             )}
+
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-muted uppercase tracking-wider">Lifecycle Breakdown</span>
+              <div className="grid grid-cols-3 gap-3">
+                {(['active', 'trial', 'suspended'] as const).map((status) => (
+                  <div
+                    key={status}
+                    className="p-3.5 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex items-center justify-between"
+                  >
+                    <Badge
+                      tone={
+                        status === 'suspended'
+                          ? 'danger'
+                          : status === 'active'
+                            ? 'success'
+                            : 'warning'
+                      }
+                    >
+                      {status}
+                    </Badge>
+                    <span className="text-base font-extrabold text-on-surface">
+                      {data?.by_status?.[status] ?? 0}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+              <Link to="/admin/audit-logs" className="text-xs font-medium text-muted hover:text-on-surface">
+                Open Security Audit Ledger &rarr;
+              </Link>
+              <Link to="/admin/tenants" className="text-xs font-semibold text-secondary hover:underline">
+                Provision New Workspace &rarr;
+              </Link>
+            </div>
           </Card>
 
-          {/* Tier donut */}
-          <Card className="flex flex-col gap-4 p-5 lg:col-span-5">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-headline-sm text-on-surface">Subscription tiers</h2>
-              <p className="text-body-sm text-muted">Share of provisioned workspaces by tier.</p>
+          {/* Engine B: Subscription Tiers & Revenue Operations */}
+          <Card className="p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                  <Icon name="receipt_long" className="text-[20px]" />
+                </span>
+                <div>
+                  <h2 className="text-title-md font-bold text-on-surface">Subscription Tiers &amp; Billing</h2>
+                  <p className="text-xs text-muted">Share of provisioned household workspaces by plan tier</p>
+                </div>
+              </div>
+              <Link
+                to="/admin/billing"
+                className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all"
+              >
+                Open Invoices &rarr;
+              </Link>
             </div>
 
             {tierSegments.length === 0 ? (
-              <p className="rounded-xl bg-canvas px-4 py-8 text-center text-body-sm text-muted">
+              <p className="text-sm text-muted italic py-6 text-center bg-canvas rounded-2xl shadow-[var(--shadow-inset-sm)]">
                 No subscription data yet.
               </p>
             ) : (
-              <div className="flex flex-wrap items-center gap-6">
-                <svg viewBox="0 0 42 42" className="h-36 w-36 -rotate-90" role="img" aria-label="Tier distribution">
+              <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)]">
+                <svg viewBox="0 0 42 42" className="h-32 w-32 -rotate-90 shrink-0" role="img" aria-label="Tier distribution">
                   {tierSegments.map((segment, index) => {
                     const offset = tierSegments
                       .slice(0, index)
@@ -308,7 +367,7 @@ export function AdminOverviewPage() {
                       />
                     );
                   })}
-                  <circle cx="21" cy="21" r="10" fill="var(--color-surface)" />
+                  <circle cx="21" cy="21" r="10" fill="var(--color-canvas)" />
                 </svg>
 
                 <ul className="flex flex-1 flex-col gap-2">
@@ -319,50 +378,49 @@ export function AdminOverviewPage() {
                           className="h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: segment.color }}
                         />
-                        <span className="text-body-md text-on-surface">{segment.tier}</span>
+                        <span className="text-sm font-semibold capitalize text-on-surface">{segment.tier}</span>
                       </span>
-                      <span className="text-label-md text-muted">
-                        {segment.count} · {segment.percent}%
+                      <span className="text-xs font-bold text-muted">
+                        {segment.count} ({segment.percent}%)
                       </span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+
+            <div className="grid grid-cols-2 gap-3.5">
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Payment Gateways</span>
+                <span className="text-base font-extrabold text-on-surface">
+                  Stripe, bKash &amp; Cash
+                </span>
+                <Link to="/admin/payment-gateways" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
+                  Configure Gateways &rarr;
+                </Link>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">System Health</span>
+                <span className="text-base font-extrabold text-on-surface">
+                  Checks &amp; Backups
+                </span>
+                <Link to="/admin/health" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
+                  Inspect Operations &rarr;
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+              <Link to="/admin/refunds" className="text-xs font-medium text-muted hover:text-on-surface">
+                Manage Refund Requests &rarr;
+              </Link>
+              <Link to="/admin/analytics" className="text-xs font-semibold text-secondary hover:underline">
+                View Full MRR Analytics &rarr;
+              </Link>
+            </div>
           </Card>
-        </section>
-
-        <Card className="p-5">
-          <h2 className="text-headline-sm text-on-surface">Lifecycle breakdown</h2>
-          <p className="text-body-sm text-muted">Households by workspace state.</p>
-
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {Object.entries(data?.by_status ?? {}).map(([status, total]) => (
-              <li
-                key={status}
-                className="flex items-center gap-3 rounded-xl bg-canvas px-4 py-3"
-              >
-                <Badge tone={status === 'suspended' ? 'danger' : status === 'active' ? 'success' : 'warning'}>
-                  {status}
-                </Badge>
-                <span className="text-label-lg text-on-surface">{total}</span>
-              </li>
-            ))}
-            {Object.keys(data?.by_status ?? {}).length === 0 && (
-              <li className="rounded-xl bg-canvas px-4 py-6 text-center text-body-sm text-muted">
-                No tenants provisioned yet.
-              </li>
-            )}
-          </ul>
-        </Card>
-
-        <Alert tone="info">
-          Tenant suspension and provisioning are audited into the security ledger — see{' '}
-          <Link to="/admin/audit-logs" className="font-semibold text-secondary hover:underline">
-            Audit & Security Logs
-          </Link>
-          .
-        </Alert>
+        </div>
       </div>
     </AppLayout>
   );
