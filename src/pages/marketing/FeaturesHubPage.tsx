@@ -96,7 +96,7 @@ export function FeaturesHubPage() {
           <div className="mt-6 flex justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold gap-2">
+                <Button variant="surface" size="xl" className="font-bold gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -104,7 +104,7 @@ export function FeaturesHubPage() {
               </Link>
             ) : (
               <Link to="/register">
-                <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
+                <Button variant="surface" size="xl" className="font-bold">
                   Get Started Free
                 </Button>
               </Link>

@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
+import { GatewayPingDrawer, type GatewayPingFeedback } from '@/components/GatewayPingDrawer';
 import { Icon } from '@/components/Icon';
+import { SandboxPaymentDrawer } from '@/components/SandboxPaymentDrawer';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,24 @@ const currencies = [
 
 /** Area key for the payment settings query; mutations invalidate the area. */
 const PAYMENT_SETTINGS_KEY = ['platform', 'settings', 'payment'] as const;
+
+/**
+ * Gateways with a `sandbox-payment` endpoint on the platform API. Nagad has a
+ * credential editor but no sandbox checkout driver yet, so it gets no button.
+ */
+const sandboxPaymentGateways = new Set([
+  'stripe',
+  'paypal',
+  'razorpay',
+  'sslcommerz',
+  'bkash',
+  'paystack',
+  'mollie',
+  'paddle',
+  'mock',
+]);
+
+const supportsSandboxPayment = (gateway: string): boolean => sandboxPaymentGateways.has(gateway);
 
 type EditorMode = 'sandbox' | 'live';
 type CategoryFilter = 'all' | 'global' | 'south-asia' | 'africa' | 'offline' | 'sandbox';
@@ -203,6 +223,47 @@ const gatewayMeta: GatewayMeta[] = [
     ],
   },
   {
+    key: 'paddle',
+    saveName: 'Paddle',
+    title: 'Paddle (Merchant of Record)',
+    description: 'Global cards, PayPal, Apple Pay & Google Pay via Paddle',
+    icon: 'shopping_cart',
+    iconClassName: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-300',
+    category: 'global',
+    kind: 'digital',
+    pingLabel: 'Ping Paddle API',
+    fields: [
+      { name: 'api_key', label: 'API Key', placeholder: 'pdl_sdbx_apikey_…', secret: true },
+      { name: 'webhook_secret', label: 'Webhook Signing Secret', placeholder: 'pdl_ntfset_…', secret: true },
+      {
+        name: 'price_id',
+        label: 'Product ID',
+        placeholder: 'pro_…',
+        secret: true,
+      },
+      {
+        name: 'test_price_id',
+        label: 'Price ID',
+        placeholder: 'pri_…',
+        secret: true,
+      },
+      {
+        name: 'client_token',
+        label: 'Client-side Token',
+        placeholder: 'test_…',
+        secret: true,
+      },
+      {
+        // Plain text: the sandbox drawer hands this URL to Paddle as the
+        // post-checkout destination, so the operator must read it back.
+        name: 'default_payment_link',
+        label: 'Default Payment Link',
+        placeholder: 'https://example.com/checkout',
+        secret: false,
+      },
+    ],
+  },
+  {
     key: 'bank_transfer',
     saveName: 'Bank Transfer',
     title: 'Direct Bank Transfer / Wire',
@@ -243,6 +304,7 @@ const legacyCredentialFields: Record<string, string[]> = {
   nagad: ['merchant_id', 'public_key', 'private_key'],
   paystack: ['public_key', 'secret_key'],
   mollie: ['api_key', 'webhook_url'],
+  paddle: ['api_key', 'webhook_secret', 'price_id', 'test_price_id', 'client_token', 'default_payment_link'],
 };
 
 /**
@@ -325,13 +387,15 @@ export function PaymentGatewayConfigPage() {
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [editorModes, setEditorModes] = useState<Record<string, EditorMode>>({});
   const [cardSave, setCardSave] = useState<Record<string, CardSaveState>>({});
-  const [testFeedback, setTestFeedback] = useState<{
-    gateway: string;
-    mode?: EditorMode;
-    status: string;
-    message: string;
-  } | null>(null);
+  /** Cards with unsaved edits; Ping/Sandbox payment persist those first. */
+  const [dirtyGateways, setDirtyGateways] = useState<Record<string, boolean>>({});
+  const [testFeedback, setTestFeedback] = useState<GatewayPingFeedback | null>(null);
   const [testingGateway, setTestingGateway] = useState<string | null>(null);
+  /** The gateway whose ping drawer is open, if any. */
+  const [pingDrawer, setPingDrawer] = useState<{ gateway: string; gatewayName: string; mode?: EditorMode } | null>(
+    null,
+  );
+  const [sandboxPaymentFor, setSandboxPaymentFor] = useState<{ key: string; name: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -358,11 +422,15 @@ export function PaymentGatewayConfigPage() {
   const gatewayConfig = (gateway: string): PaymentGatewayCredentials =>
     currentSettings?.gateways[gateway] ?? { enabled: false };
 
+  const markDirty = (gateway: string) =>
+    setDirtyGateways((prev) => ({ ...prev, [gateway]: true }));
+
   const updateGatewayField = <K extends keyof PaymentGatewayCredentials>(
     gateway: string,
     field: K,
     value: PaymentGatewayCredentials[K],
   ) => {
+    markDirty(gateway);
     handleUpdate((prev) => ({
       ...prev,
       gateways: {
@@ -373,6 +441,7 @@ export function PaymentGatewayConfigPage() {
   };
 
   const updateCredential = (gateway: string, mode: EditorMode, field: string, value: string) => {
+    markDirty(gateway);
     handleUpdate((prev) => {
       const existing = prev.gateways[gateway] ?? { enabled: false };
       return {
@@ -439,6 +508,7 @@ export function PaymentGatewayConfigPage() {
         }));
       }
       setCardSave((prev) => ({ ...prev, [gateway]: { state: 'saved' } }));
+      setDirtyGateways((prev) => ({ ...prev, [gateway]: false }));
       setError(null);
       queryClient.invalidateQueries({ queryKey: PAYMENT_SETTINGS_KEY });
     },
@@ -492,10 +562,19 @@ export function PaymentGatewayConfigPage() {
     return payload;
   };
 
-  const saveGateway = (gateway: string) => {
-    if (!currentSettings) return;
+  /** Persist a card, resolving with the saved gateway so callers can wait for it. */
+  const persistGateway = async (gateway: string) => {
+    if (!currentSettings) {
+      throw new Error('Payment settings are not loaded yet.');
+    }
+
     setCardSave((prev) => ({ ...prev, [gateway]: { state: 'saving' } }));
-    saveGatewayMutation.mutate({ gateway, payload: buildGatewayPayload(gateway) });
+
+    return saveGatewayMutation.mutateAsync({ gateway, payload: buildGatewayPayload(gateway) });
+  };
+
+  const saveGateway = (gateway: string) => {
+    void persistGateway(gateway).catch(() => undefined);
   };
 
   const runTest = async (gateway: string, mode?: EditorMode) => {
@@ -512,13 +591,15 @@ export function PaymentGatewayConfigPage() {
         mode,
         status: result.status,
         message: result.message ?? 'Gateway responded.',
+        latency_ms: result.latency_ms,
       });
       if (mode) {
         applyLastTest(gateway, mode, { ...result, at: result.at ?? new Date().toISOString() });
       }
       queryClient.invalidateQueries({ queryKey: PAYMENT_SETTINGS_KEY });
     } catch (err) {
-      setTestFeedback({ gateway, mode, status: 'error', message: apiError(err) });
+      const status = (err as { response?: { data?: { status?: string } } })?.response?.data?.status;
+      setTestFeedback({ gateway, mode, status: status ?? 'error', message: apiError(err) });
     } finally {
       setTestingGateway(null);
     }
@@ -584,6 +665,28 @@ export function PaymentGatewayConfigPage() {
     </label>
   );
 
+  /**
+   * Corner check: the API decides whether the credential set for the mode being
+   * edited holds every required field, so the console never re-implements that
+   * rule. Offline cards own no credential sets and never show it.
+   */
+  const renderConfiguredCheck = (meta: GatewayMeta) => {
+    if (meta.kind !== 'digital') return null;
+    const mode = editorModeFor(meta.key);
+    if (!gatewayConfig(meta.key).configured?.[mode]) return null;
+
+    return (
+      <span
+        role="img"
+        title={`${modeLabels[mode]} credentials configured`}
+        aria-label={`${meta.saveName} ${modeLabels[mode].toLowerCase()} credentials configured`}
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-400/30"
+      >
+        <Icon name="check" className="text-[14px]" />
+      </span>
+    );
+  };
+
   const renderLastTestBadge = (gateway: string, mode?: EditorMode) => {
     if (!mode) return null;
     const result = currentSettings?.gateways[gateway]?.last_test?.[mode];
@@ -621,18 +724,61 @@ export function PaymentGatewayConfigPage() {
     return null;
   };
 
+  /** Save/saved status on its own right-aligned line, above a card's buttons. */
+  const renderCardStatusLine = (gateway: string) => {
+    const status = renderCardStatus(gateway);
+    if (!status) return null;
+    return <div className="flex justify-end">{status}</div>;
+  };
+
   const renderCardSaveError = (gateway: string) => {
     const state = cardSave[gateway];
     if (state?.state !== 'error' || !state.message) return null;
     return <Alert tone="error">{state.message}</Alert>;
   };
 
+  /**
+   * Opens the ping drawer, saves the card first so the probe uses the credentials
+   * currently on screen, then pings that environment.
+   */
+  const openPing = async (gateway: string, gatewayName: string) => {
+    const mode = pingMode(gateway);
+    setPingDrawer({ gateway, gatewayName, mode });
+    setTestFeedback(null);
+    setTestingGateway(gateway);
+
+    try {
+      if (dirtyGateways[gateway]) {
+        await persistGateway(gateway);
+      }
+      await runTest(gateway, mode);
+    } catch (err) {
+      setTestingGateway(null);
+      setTestFeedback({
+        gateway,
+        mode,
+        status: 'error',
+        message: `Could not save the card first: ${apiError(err)}`,
+      });
+    }
+  };
+
+  /** Save the card, then start a sandbox payment with the just-saved credentials. */
+  const openSandboxPayment = async (gateway: string, gatewayName: string) => {
+    try {
+      if (dirtyGateways[gateway]) {
+        await persistGateway(gateway);
+      }
+      setSandboxPaymentFor({ key: gateway, name: gatewayName });
+    } catch {
+      // The card shows the save error; do not create a session from stale values.
+    }
+  };
+
   const renderCardActions = (meta: GatewayMeta) => {
     const saving = cardSave[meta.key]?.state === 'saving';
-    const mode = pingMode(meta.key);
     return (
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {renderCardStatus(meta.key)}
         <Button size="sm" variant="soft" disabled={saving} onClick={() => saveGateway(meta.key)}>
           <Icon name="save" className="text-[16px]" />
           {saving ? `Saving ${meta.saveName}…` : `Save ${meta.saveName}`}
@@ -640,28 +786,43 @@ export function PaymentGatewayConfigPage() {
         <Button
           size="sm"
           variant="outline"
+          aria-haspopup="dialog"
           disabled={testingGateway === meta.key}
-          onClick={() => runTest(meta.key, mode)}
+          onClick={() => void openPing(meta.key, meta.saveName)}
         >
           <Icon name="bolt" className="text-[16px]" />
           {testingGateway === meta.key ? 'Testing…' : meta.pingLabel}
         </Button>
+        {meta.kind === 'digital' && supportsSandboxPayment(meta.key) && (
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label={`Sandbox payment for ${meta.saveName}`}
+            onClick={() => void openSandboxPayment(meta.key, meta.saveName)}
+          >
+            <Icon name="science" className="text-[16px]" />
+            Sandbox payment
+          </Button>
+        )}
       </div>
     );
   };
 
   const renderCardFooter = (meta: GatewayMeta, mode?: EditorMode) => (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {renderLastTestBadge(meta.key, mode)}
-        {mode && (
-          <span className="text-[11px] text-muted">
-            Client mode:{' '}
-            {clientModeOf(currentSettings?.gateways[meta.key]) === 'sandbox' ? 'Sandbox (test)' : 'Live (production)'}
-          </span>
-        )}
+    <div className="flex flex-col gap-2 border-t border-outline-variant/20 pt-3">
+      {renderCardStatusLine(meta.key)}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {renderLastTestBadge(meta.key, mode)}
+          {mode && (
+            <span className="text-[11px] text-muted">
+              Client mode:{' '}
+              {clientModeOf(currentSettings?.gateways[meta.key]) === 'sandbox' ? 'Sandbox (test)' : 'Live (production)'}
+            </span>
+          )}
+        </div>
+        {renderCardActions(meta)}
       </div>
-      {renderCardActions(meta)}
     </div>
   );
 
@@ -684,7 +845,7 @@ export function PaymentGatewayConfigPage() {
             id={inputId}
             rows={2}
             value={value}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => onChange(event.target.value.replace(/•/g, ''))}
             placeholder={field.placeholder}
             className="w-full rounded-xl border border-outline-variant/50 bg-surface p-3 text-body-sm text-on-surface focus:border-secondary focus:outline-none"
           />
@@ -692,23 +853,29 @@ export function PaymentGatewayConfigPage() {
       );
     }
 
+    // Every key/ID field gets a reveal control; only multiline instructions skip it.
+    const secret = field.secret ?? true;
+
     const input = (
       <Input
         id={inputId}
-        type={field.secret && !revealed ? 'password' : 'text'}
+        type={secret && !revealed ? 'password' : 'text'}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(event.target.value.replace(/•/g, ''))}
+        onFocus={(event) => {
+          if (value.includes('•')) event.currentTarget.select();
+        }}
         placeholder={field.placeholder}
         autoComplete="off"
         spellCheck={false}
-        className={field.secret ? 'pr-11 font-mono text-sm' : undefined}
+        className={secret ? 'pr-11 font-mono text-sm' : undefined}
       />
     );
 
     return (
       <div key={field.name} className="min-w-0">
         <Label htmlFor={inputId}>{field.label}</Label>
-        {field.secret ? (
+        {secret ? (
           <div className="relative">
             {input}
             <button
@@ -809,9 +976,10 @@ export function PaymentGatewayConfigPage() {
                 <p className="text-body-xs text-muted">{meta.description}</p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {currentSettings?.active_gateway === meta.key && <Badge tone="success">Primary Active</Badge>}
               {renderClientModeToggle(meta)}
+              {renderConfiguredCheck(meta)}
             </div>
           </div>
 
@@ -906,24 +1074,32 @@ export function PaymentGatewayConfigPage() {
 
         {renderCardSaveError('cash')}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-3">
-          <Button size="sm" variant="outline" disabled={testingGateway === 'cash'} onClick={() => runTest('cash')}>
-            <Icon name="bolt" className="text-[16px]" />
-            {testingGateway === 'cash' ? 'Testing…' : 'Test Cash Payment Configuration'}
-          </Button>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {renderCardStatus('cash')}
-            <Link to="/admin/billing">
-              <Button size="sm" variant="outline">
-                <Icon name="receipt_long" className="text-[16px]" />
-                Open Cash Settlement Queue &rarr;
-              </Button>
-            </Link>
-            <Button size="sm" variant="soft" disabled={saving} onClick={() => saveGateway('cash')}>
-              <Icon name="save" className="text-[16px]" />
-              {saving ? 'Saving Cash…' : 'Save Cash'}
+        <div className="flex flex-col gap-2 border-t border-outline-variant/20 pt-3">
+          {renderCardStatusLine('cash')}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              aria-haspopup="dialog"
+              disabled={testingGateway === 'cash'}
+              onClick={() => void openPing('cash', 'Cash Payment')}
+            >
+              <Icon name="bolt" className="text-[16px]" />
+              {testingGateway === 'cash' ? 'Testing…' : 'Test Cash Payment Configuration'}
             </Button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/admin/billing">
+                <Button size="sm" variant="outline">
+                  <Icon name="receipt_long" className="text-[16px]" />
+                  Open Cash Settlement Queue &rarr;
+                </Button>
+              </Link>
+              <Button size="sm" variant="soft" disabled={saving} onClick={() => saveGateway('cash')}>
+                <Icon name="save" className="text-[16px]" />
+                {saving ? 'Saving Cash…' : 'Save Cash'}
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -971,26 +1147,38 @@ export function PaymentGatewayConfigPage() {
 
         {renderCardSaveError('mock')}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/20 pt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {renderLastTestBadge('mock', pingMode('mock'))}
-            <span className="text-[11px] text-muted">Latency: ~120ms simulated response</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {renderCardStatus('mock')}
-            <Button size="sm" variant="soft" disabled={saving} onClick={() => saveGateway('mock')}>
-              <Icon name="save" className="text-[16px]" />
-              {saving ? 'Saving Mock Simulator…' : 'Save Mock Simulator'}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={testingGateway === 'mock'}
-              onClick={() => runTest('mock', pingMode('mock'))}
-            >
-              <Icon name="play_arrow" className="text-[16px]" />
-              {testingGateway === 'mock' ? 'Running…' : 'Run Sandbox Simulation'}
-            </Button>
+        <div className="flex flex-col gap-2 border-t border-outline-variant/20 pt-3">
+          {renderCardStatusLine('mock')}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {renderLastTestBadge('mock', pingMode('mock'))}
+              <span className="text-[11px] text-muted">Latency: ~120ms simulated response</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="soft" disabled={saving} onClick={() => saveGateway('mock')}>
+                <Icon name="save" className="text-[16px]" />
+                {saving ? 'Saving Mock Simulator…' : 'Save Mock Simulator'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                aria-haspopup="dialog"
+                disabled={testingGateway === 'mock'}
+                onClick={() => void openPing('mock', 'Mock Simulator')}
+              >
+                <Icon name="play_arrow" className="text-[16px]" />
+                {testingGateway === 'mock' ? 'Running…' : 'Run Sandbox Simulation'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                aria-label="Sandbox payment for Mock Simulator"
+                onClick={() => void openSandboxPayment('mock', 'Mock Simulator')}
+              >
+                <Icon name="science" className="text-[16px]" />
+                Sandbox payment
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -1000,6 +1188,12 @@ export function PaymentGatewayConfigPage() {
   const digitalGatewayCount = currentSettings
     ? Object.keys(currentSettings.gateways).filter((key) => isDigitalGateway(key)).length
     : 0;
+  /**
+   * Every provider the filter pills enumerate: the `gatewayMeta` cards plus the
+   * two hand-rendered ones (cash and the internal mock simulator), so adding a
+   * gateway to `gatewayMeta` keeps the "All Providers" count honest.
+   */
+  const providerCount = gatewayMeta.length + 2;
   const sandboxCount = currentSettings
     ? Object.entries(currentSettings.gateways).filter(
         ([key, config]) => isDigitalGateway(key) && clientModeOf(config) === 'sandbox',
@@ -1083,8 +1277,8 @@ export function PaymentGatewayConfigPage() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-1.5 text-xs">
+                <div className="flex shrink-0 flex-nowrap items-center gap-2.5">
+                  <div className="flex items-center gap-2 whitespace-nowrap rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-1.5 text-xs">
                     <span className="font-semibold text-muted">Providers:</span>
                     <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
                       <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
@@ -1097,7 +1291,7 @@ export function PaymentGatewayConfigPage() {
                     </span>
                   </div>
 
-                  <div className="flex rounded-xl border border-outline-variant/40 bg-surface-container-low p-1 text-xs">
+                  <div className="flex shrink-0 whitespace-nowrap rounded-xl border border-outline-variant/40 bg-surface-container-low p-1 text-xs">
                     <button
                       type="button"
                       aria-pressed={currentSettings.mode === 'sandbox'}
@@ -1177,6 +1371,7 @@ export function PaymentGatewayConfigPage() {
                     <option value="nagad">Nagad (Bangladesh Digital MFS)</option>
                     <option value="paystack">Paystack (Africa / Cards / MoMo)</option>
                     <option value="mollie">Mollie (Europe / SEPA / iDEAL)</option>
+                    <option value="paddle">Paddle (Merchant of Record)</option>
                     <option value="bank_transfer">Direct Bank Transfer / Wire</option>
                     <option value="cash">Cash Payment (In-Person / Physical Collection)</option>
                     <option value="mock">Internal Sandbox Payment Simulator (Mock)</option>
@@ -1295,7 +1490,7 @@ export function PaymentGatewayConfigPage() {
             <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
               {(
                 [
-                  { id: 'all', label: 'All Providers (11)', icon: 'apps' },
+                  { id: 'all', label: `All Providers (${providerCount})`, icon: 'apps' },
                   { id: 'global', label: 'Cards & Global', icon: 'public' },
                   { id: 'south-asia', label: 'South Asia & Bangladesh', icon: 'Qr_code_2' },
                   { id: 'africa', label: 'Africa (Paystack)', icon: 'payments' },
@@ -1333,20 +1528,6 @@ export function PaymentGatewayConfigPage() {
               {(categoryFilter === 'all' || categoryFilter === 'sandbox') && renderMockCard()}
             </div>
 
-            {/* Test Connection Result Alert */}
-            {testFeedback && (
-              <Alert tone={testFeedback.status === 'connected' ? 'success' : 'error'}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Icon name={testFeedback.status === 'connected' ? 'verified' : 'error'} className="text-[18px]" />
-                  <span className="font-bold">
-                    {testFeedback.gateway.toUpperCase()}
-                    {testFeedback.mode ? ` · ${modeLabels[testFeedback.mode]}` : ''}
-                  </span>
-                  <span className="font-semibold">{testFeedback.message}</span>
-                </div>
-              </Alert>
-            )}
-
             {/* Save Global Settings bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-4">
               <p className="max-w-xl text-[11px] text-muted">
@@ -1361,6 +1542,25 @@ export function PaymentGatewayConfigPage() {
           </div>
         )}
       </div>
+
+      <GatewayPingDrawer
+        open={pingDrawer !== null}
+        gatewayName={pingDrawer?.gatewayName ?? ''}
+        mode={pingDrawer?.mode}
+        testing={testingGateway !== null && testingGateway === pingDrawer?.gateway}
+        feedback={testFeedback && testFeedback.gateway === pingDrawer?.gateway ? testFeedback : null}
+        onClose={() => {
+          setPingDrawer(null);
+          setTestFeedback(null);
+        }}
+      />
+
+      <SandboxPaymentDrawer
+        open={sandboxPaymentFor !== null}
+        gateway={sandboxPaymentFor?.key ?? ''}
+        gatewayName={sandboxPaymentFor?.name ?? ''}
+        onClose={() => setSandboxPaymentFor(null)}
+      />
     </AppLayout>
   );
 }

@@ -1,18 +1,40 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Icon } from '@/components/Icon';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import type { MarketingBlogPost } from '@/types';
 import { PhoneSoftwareSimulation } from '@/components/marketing/PhoneSoftwareSimulation';
 import { MarketingLayout } from './marketing/MarketingLayout';
 import { FEATURES, SOLUTIONS } from './marketing/marketingData';
+import { DEFAULT_BLOG_POSTS } from './marketing/blogData';
 
 export function MarketingPage() {
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = Boolean(token);
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const blogQuery = useQuery({
+    queryKey: ['public-blog-posts'],
+    queryFn: async () => {
+      try {
+        const res = await api.get<{ data: MarketingBlogPost[] }>('/v1/marketing/blog');
+        return res.data?.data?.length ? res.data.data : DEFAULT_BLOG_POSTS;
+      } catch {
+        return DEFAULT_BLOG_POSTS;
+      }
+    },
+    placeholderData: DEFAULT_BLOG_POSTS,
+  });
+
+  const latestBlogPosts = (blogQuery.data ?? DEFAULT_BLOG_POSTS)
+    .filter((post) => post.is_published !== false)
+    .slice(0, 3);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -400,6 +422,87 @@ export function MarketingPage() {
       </section>
 
       {/* -------------------------------------------------------------
+          SECTION: HOUSEHOLD FUNCTIONALITY JOURNAL & BLOG
+      -------------------------------------------------------------- */}
+      <section className="border-t border-outline-variant/20 bg-canvas px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                Household Functionality Blog
+              </span>
+              <h2 className="mt-1 text-xl sm:text-2xl lg:text-3xl font-extrabold text-on-surface">
+                How to Improve Household Functionality
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                Research-backed guides and domestic systems playbooks for eliminating the invisible mental load,
+                preventing dropped errands, and automating repeatable home routines.
+              </p>
+            </div>
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-xs font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all hover:bg-forest-soft shrink-0"
+            >
+              <Icon name="menu_book" className="text-[18px]" />
+              <span>Explore All Blog Guides</span>
+              <Icon name="arrow_forward" className="text-[14px]" />
+            </Link>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {latestBlogPosts.map((post) => (
+              <Card
+                key={post.slug}
+                className="clay-card-interactive flex flex-col justify-between p-6"
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                      <Icon name={post.icon || 'article'} className="text-[20px]" />
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Badge tone="primary">{post.category}</Badge>
+                      <span className="text-[11px] font-semibold text-muted">
+                        {post.read_time_minutes} min
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/blog/$slug"
+                    params={{ slug: post.slug }}
+                    className="group block"
+                  >
+                    <h3 className="text-base font-extrabold leading-snug text-on-surface transition-colors group-hover:text-secondary">
+                      {post.title}
+                    </h3>
+                  </Link>
+
+                  <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-3">
+                    {post.summary}
+                  </p>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between border-t border-outline-variant/20 pt-3.5">
+                  <span className="text-[11px] font-semibold text-muted">
+                    By {post.author_name}
+                  </span>
+                  <Link
+                    to="/blog/$slug"
+                    params={{ slug: post.slug }}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline"
+                  >
+                    <span>Read Article</span>
+                    <Icon name="arrow_forward" className="text-[14px]" />
+                  </Link>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
           FAQ SECTION (Accordion & Knowledge Base)
       -------------------------------------------------------------- */}
       <section className="border-t border-outline-variant/20 bg-canvas px-4 py-20 sm:px-6 lg:px-8">
@@ -461,7 +564,7 @@ export function MarketingPage() {
           <div className="mt-7 flex justify-center gap-3.5">
             {isAuthenticated ? (
               <Link to="/dashboard">
-                <Button size="xl" className="bg-surface text-white hover:bg-canvas font-bold shadow-e2 gap-2">
+                <Button variant="surface" size="xl" className="font-bold shadow-e2 gap-2">
                   <Icon name="cottage" className="text-[20px]" />
                   <span>Open Household Dashboard</span>
                   <Icon name="arrow_forward" className="text-[16px]" />
@@ -469,7 +572,7 @@ export function MarketingPage() {
               </Link>
             ) : (
               <Link to="/register">
-                <Button size="xl" className="bg-surface text-white hover:bg-canvas font-bold shadow-e2">
+                <Button variant="surface" size="xl" className="font-bold shadow-e2">
                   Create Free Family Workspace
                 </Button>
               </Link>

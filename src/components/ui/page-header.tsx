@@ -48,8 +48,8 @@ export function PageHeader({
 
         <h1
           className={cn(
-            'tracking-tight text-on-surface',
-            titleSize === 'display' ? 'text-display-lg' : 'text-headline-lg',
+            'font-extrabold tracking-tight text-on-surface',
+            titleSize === 'display' ? 'text-[1.625rem] leading-[2.125rem]' : 'text-[1.625rem] leading-[2.125rem]',
           )}
         >
           {title}

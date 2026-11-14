@@ -124,9 +124,9 @@ export function AdminOverviewPage() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto animate-pulse">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-pulse">
           {/* Header Hero Skeleton */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-outline-variant/30 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
               <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
@@ -142,8 +142,8 @@ export function AdminOverviewPage() {
 
           {/* Main Grid Skeleton */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
-            <div className="h-80 rounded-2xl border border-outline-variant/30 bg-surface p-6 shadow-e1" />
+            <div className="h-80 rounded-[1.25rem] bg-surface p-6 shadow-e1" />
+            <div className="h-80 rounded-[1.25rem] bg-surface p-6 shadow-e1" />
           </div>
         </div>
       </AppLayout>
@@ -152,10 +152,11 @@ export function AdminOverviewPage() {
 
   const suspendedCount = data?.by_status?.suspended ?? 0;
   const activeCount = data?.by_status?.active ?? 0;
+  const totalTenantsCount = data?.total_tenants ?? tenantList.length;
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-8 p-6 max-w-7xl mx-auto">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Overview"
           titleSize="headline"
@@ -164,14 +165,14 @@ export function AdminOverviewPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 to="/admin/analytics"
-                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all hover:bg-forest-soft active:shadow-[var(--shadow-inset-sm)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all duration-300 ease-[var(--spring-easing)] hover:-translate-y-0.5 hover:bg-forest-soft active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]"
               >
                 <Icon name="analytics" className="text-[18px]" />
                 Platform Analytics
               </Link>
               <Link
                 to="/admin/tenants"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all hover:brightness-110"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all duration-300 ease-[var(--spring-easing)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
               >
                 <Icon name="apartment" className="text-[18px]" />
                 Tenant Console
@@ -242,7 +243,10 @@ export function AdminOverviewPage() {
         {/* 2. Side-by-Side Dual Engine matching Tenant Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* Engine A: Monthly Provisioning & Lifecycle */}
-          <Card className="p-6 flex flex-col gap-5">
+          <Card
+            className="stagger-item p-6 flex flex-col gap-5"
+            style={{ '--sibling-index': 4 } as React.CSSProperties}
+          >
             <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
@@ -267,52 +271,105 @@ export function AdminOverviewPage() {
               </p>
             ) : (
               <div
-                className="flex h-44 items-end gap-3 rounded-2xl bg-canvas p-4 shadow-[var(--shadow-inset-sm)]"
+                className="relative flex h-44 items-end gap-3 overflow-hidden rounded-2xl bg-canvas px-4 pt-6 pb-3.5 shadow-[var(--shadow-inset-sm)]"
                 role="img"
                 aria-label="New tenants per month"
               >
-                {monthly.map((month) => (
-                  <span key={month.key} className="flex flex-1 flex-col items-center gap-2 h-full justify-end">
-                    <span className="text-label-sm font-bold text-on-surface">{month.count}</span>
+                {/* Subtle tactile chart gridlines */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-4 top-6 bottom-9 flex flex-col justify-between"
+                >
+                  <div className="border-b border-dashed border-outline-variant/25" />
+                  <div className="border-b border-dashed border-outline-variant/25" />
+                  <div className="border-b border-outline-variant/30" />
+                </div>
+
+                {monthly.map((month, idx) => {
+                  const isActiveMonth = month.count > 0;
+                  const barHeightPercent = isActiveMonth
+                    ? Math.max(18, Math.round((month.count / peak) * 100))
+                    : 6;
+                  return (
                     <span
-                      className="w-full rounded-t-lg bg-secondary/85 transition-all"
-                      style={{ height: `${Math.max(8, (month.count / peak) * 100)}%` }}
-                    />
-                    <span className="text-label-sm text-muted">{month.label}</span>
-                  </span>
-                ))}
+                      key={month.key}
+                      className="group/bar relative z-10 flex flex-1 flex-col items-center gap-2 h-full justify-end"
+                    >
+                      <span
+                        className={`text-label-sm font-bold tabular-nums transition-transform duration-300 group-hover/bar:-translate-y-0.5 ${
+                          isActiveMonth ? 'text-secondary' : 'text-muted/70'
+                        }`}
+                      >
+                        {month.count}
+                      </span>
+                      <span
+                        className={`animate-bar-y w-full max-w-[44px] rounded-t-xl transition-all duration-300 ${
+                          isActiveMonth
+                            ? 'bg-gradient-to-t from-primary to-secondary shadow-[0_4px_12px_-2px_rgba(55,104,71,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] group-hover/bar:brightness-110'
+                            : 'bg-outline-variant/40'
+                        }`}
+                        style={
+                          {
+                            height: `${barHeightPercent}%`,
+                            '--bar-index': idx,
+                          } as React.CSSProperties
+                        }
+                      />
+                      <span className="text-label-sm font-medium text-muted">{month.label}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
 
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-bold text-muted uppercase tracking-wider">Lifecycle Breakdown</span>
               <div className="grid grid-cols-3 gap-3">
-                {(['active', 'trial', 'suspended'] as const).map((status) => (
-                  <div
-                    key={status}
-                    className="p-3.5 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex items-center justify-between"
-                  >
-                    <Badge
-                      tone={
-                        status === 'suspended'
-                          ? 'danger'
-                          : status === 'active'
-                            ? 'success'
-                            : 'warning'
-                      }
+                {(['active', 'trial', 'suspended'] as const).map((status) => {
+                  const statusCount = data?.by_status?.[status] ?? 0;
+                  const statusRatio =
+                    totalTenantsCount > 0 ? Math.min(100, Math.round((statusCount / totalTenantsCount) * 100)) : 0;
+                  return (
+                    <div
+                      key={status}
+                      className="p-3.5 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-2"
                     >
-                      {status}
-                    </Badge>
-                    <span className="text-base font-extrabold text-on-surface">
-                      {data?.by_status?.[status] ?? 0}
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          tone={
+                            status === 'suspended'
+                              ? 'danger'
+                              : status === 'active'
+                                ? 'success'
+                                : 'warning'
+                          }
+                        >
+                          {status}
+                        </Badge>
+                        <span className="text-base font-extrabold text-on-surface tabular-nums">
+                          {statusCount}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                        <div
+                          className={`animate-bar-x h-full rounded-full ${
+                            status === 'suspended'
+                              ? 'bg-error'
+                              : status === 'active'
+                                ? 'bg-secondary'
+                                : 'bg-warning'
+                          }`}
+                          style={{ width: `${Math.max(statusCount > 0 ? 12 : 0, statusRatio)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
-              <Link to="/admin/audit-logs" className="text-xs font-medium text-muted hover:text-on-surface">
+              <Link to="/admin/audit-logs" className="text-xs font-medium text-muted hover:text-on-surface transition-colors">
                 Open Security Audit Ledger &rarr;
               </Link>
               <Link to="/admin/tenants" className="text-xs font-semibold text-secondary hover:underline">
@@ -322,7 +379,10 @@ export function AdminOverviewPage() {
           </Card>
 
           {/* Engine B: Subscription Tiers & Revenue Operations */}
-          <Card className="p-6 flex flex-col gap-5">
+          <Card
+            className="stagger-item p-6 flex flex-col gap-5"
+            style={{ '--sibling-index': 5 } as React.CSSProperties}
+          >
             <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
@@ -347,42 +407,72 @@ export function AdminOverviewPage() {
               </p>
             ) : (
               <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)]">
-                <svg viewBox="0 0 42 42" className="h-32 w-32 -rotate-90 shrink-0" role="img" aria-label="Tier distribution">
-                  {tierSegments.map((segment, index) => {
-                    const offset = tierSegments
-                      .slice(0, index)
-                      .reduce((sum, previous) => sum + previous.percent, 0);
+                <div className="relative flex h-32 w-32 shrink-0 items-center justify-center">
+                  <svg viewBox="0 0 42 42" className="h-32 w-32 -rotate-90" role="img" aria-label="Tier distribution">
+                    <circle
+                      cx="21"
+                      cy="21"
+                      r="15.9155"
+                      fill="transparent"
+                      stroke="var(--color-surface-container)"
+                      strokeWidth="5.5"
+                    />
+                    {tierSegments.map((segment, index) => {
+                      const offset = tierSegments
+                        .slice(0, index)
+                        .reduce((sum, previous) => sum + previous.percent, 0);
 
-                    return (
-                      <circle
-                        key={segment.tier}
-                        cx="21"
-                        cy="21"
-                        r="15.9155"
-                        fill="transparent"
-                        stroke={segment.color}
-                        strokeWidth="6"
-                        strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
-                        strokeDashoffset={-offset}
-                      />
-                    );
-                  })}
-                  <circle cx="21" cy="21" r="10" fill="var(--color-canvas)" />
-                </svg>
-
-                <ul className="flex flex-1 flex-col gap-2">
-                  {tierSegments.map((segment) => (
-                    <li key={segment.tier} className="flex items-center justify-between gap-3">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: segment.color }}
+                      return (
+                        <circle
+                          key={segment.tier}
+                          cx="21"
+                          cy="21"
+                          r="15.9155"
+                          fill="transparent"
+                          stroke={segment.color}
+                          strokeWidth="5.5"
+                          strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
+                          strokeDashoffset={-offset}
+                          className="animate-ring-segment transition-all duration-500"
                         />
-                        <span className="text-sm font-semibold capitalize text-on-surface">{segment.tier}</span>
-                      </span>
-                      <span className="text-xs font-bold text-muted">
-                        {segment.count} ({segment.percent}%)
-                      </span>
+                      );
+                    })}
+                  </svg>
+                  {/* Tactile raised clay center medallion */}
+                  <div className="pointer-events-none absolute flex h-16 w-16 flex-col items-center justify-center rounded-full bg-surface shadow-[var(--shadow-clay-sm)]">
+                    <span className="text-sm font-extrabold leading-none text-on-surface tabular-nums">
+                      {totalTenantsCount}
+                    </span>
+                    <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted">
+                      Total
+                    </span>
+                  </div>
+                </div>
+
+                <ul className="flex flex-1 flex-col gap-2.5 min-w-[180px]">
+                  {tierSegments.map((segment) => (
+                    <li key={segment.tier} className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shadow-2xs"
+                            style={{ backgroundColor: segment.color }}
+                          />
+                          <span className="text-sm font-semibold capitalize text-on-surface">{segment.tier}</span>
+                        </span>
+                        <span className="text-xs font-bold text-muted tabular-nums">
+                          {segment.count} ({segment.percent}%)
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                        <div
+                          className="animate-bar-x h-full rounded-full"
+                          style={{
+                            width: `${Math.max(8, segment.percent)}%`,
+                            backgroundColor: segment.color,
+                          }}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -412,7 +502,7 @@ export function AdminOverviewPage() {
             </div>
 
             <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
-              <Link to="/admin/refunds" className="text-xs font-medium text-muted hover:text-on-surface">
+              <Link to="/admin/refunds" className="text-xs font-medium text-muted hover:text-on-surface transition-colors">
                 Manage Refund Requests &rarr;
               </Link>
               <Link to="/admin/analytics" className="text-xs font-semibold text-secondary hover:underline">

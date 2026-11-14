@@ -218,7 +218,7 @@ export function AboutPage() {
             <div className="mt-7 flex justify-center">
               {isAuthenticated ? (
                 <Link to="/dashboard">
-                  <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold gap-2">
+                  <Button variant="surface" size="xl" className="font-bold gap-2">
                     <Icon name="cottage" className="text-[20px]" />
                     <span>Open Household Dashboard</span>
                     <Icon name="arrow_forward" className="text-[16px]" />
@@ -226,7 +226,7 @@ export function AboutPage() {
                 </Link>
               ) : (
                 <Link to="/register">
-                  <Button size="xl" className="bg-surface text-secondary hover:bg-canvas font-bold">
+                  <Button variant="surface" size="xl" className="font-bold">
                     Join FairShare
                   </Button>
                 </Link>

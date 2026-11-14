@@ -20,21 +20,21 @@
 @theme {
   --font-sans: 'Plus Jakarta Sans', 'Anek Bangla', 'Hind Siliguri', 'Noto Sans Bengali', 'BengaliTakaBold', ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces and ink */
+  /* Surfaces and ink — Pure Warm Sage & Alabaster Cream tonal hierarchy (zero cold purple tint) */
   --color-canvas: #f6f5ef;
   --color-surface: #ffffff;
-  --color-surface-bright: #fbf8ff;
+  --color-surface-bright: #faf9f5;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f4f2ff;
-  --color-surface-container: #edecff;
-  --color-surface-container-high: #e6e6ff;
-  --color-surface-container-highest: #e0e0fc;
-  --color-inverse-surface: #2d2f44;
-  --color-inverse-on-surface: #f1efff;
-  --color-on-surface: #181a2e;
+  --color-surface-container-low: #f2f1ea;
+  --color-surface-container: #eae9e0;
+  --color-surface-container-high: #e2e1d7;
+  --color-surface-container-highest: #dad9ce;
+  --color-inverse-surface: #232925;
+  --color-inverse-on-surface: #f4f3ed;
+  --color-on-surface: #181c19;
   --color-on-surface-variant: #434844;
-  --color-ink: #181a2e;
-  --color-muted: #6c757d;
+  --color-ink: #181c19;
+  --color-muted: #646b66;
   --color-outline: #737873;
   --color-outline-variant: #c3c8c2;
 
@@ -131,15 +131,34 @@
      Overriding these earlier made every pill and input render at 24px. */
 
   /* Elevation — "Soft Sage Clay": dual light/shadow depth tinted with the
-     primary sage, never black. e1/e2 are the clay resting/hover levels so every
-     surface that already uses them picks up the soft UI treatment. */
-  --shadow-e1: 6px 6px 16px -2px rgba(77, 96, 84, 0.10), -5px -5px 14px -2px rgba(255, 255, 255, 0.95);
-  --shadow-e2: 10px 10px 24px -4px rgba(77, 96, 84, 0.14), -7px -7px 18px -3px rgba(255, 255, 255, 1);
-  --shadow-clay-sm: 3px 3px 8px rgba(77, 96, 84, 0.09), -3px -3px 8px rgba(255, 255, 255, 0.95);
-  --shadow-inset: inset 3px 3px 7px rgba(77, 96, 84, 0.12), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
-  --shadow-inset-sm: inset 2px 2px 4px rgba(77, 96, 84, 0.10), inset -2px -2px 4px rgba(255, 255, 255, 0.9);
-  --shadow-e3: 0 12px 28px -4px rgba(74, 124, 89, 0.18), 0 4px 10px -2px rgba(43, 45, 66, 0.06);
-  --shadow-e4: 0 -10px 30px 0 rgba(43, 45, 66, 0.08);
+     primary sage, never black, paired with a top-edge specular rim highlight
+     so cards feel like hand-molded matte ceramic / warm paper. */
+  --shadow-e1: 0 1px 0 0 rgba(255, 255, 255, 0.95) inset, 6px 8px 20px -3px rgba(55, 104, 71, 0.08), -5px -5px 14px -2px rgba(255, 255, 255, 0.92), 0 1px 3px 0 rgba(24, 28, 25, 0.03);
+  --shadow-e2: 0 1px 0 0 rgba(255, 255, 255, 1) inset, 12px 14px 28px -4px rgba(55, 104, 71, 0.13), -7px -7px 18px -3px rgba(255, 255, 255, 0.98), 0 4px 10px -2px rgba(24, 28, 25, 0.05);
+  --shadow-clay-sm: 0 1px 0 0 rgba(255, 255, 255, 0.9) inset, 3px 4px 10px -1px rgba(77, 96, 84, 0.10), -3px -3px 8px rgba(255, 255, 255, 0.95);
+  --shadow-inset: inset 3px 3px 7px rgba(77, 96, 84, 0.11), inset -3px -3px 7px rgba(255, 255, 255, 0.95);
+  --shadow-inset-sm: inset 2px 2px 5px rgba(77, 96, 84, 0.09), inset -2px -2px 5px rgba(255, 255, 255, 0.92);
+  --shadow-e3: 0 14px 32px -4px rgba(55, 104, 71, 0.16), 0 4px 12px -2px rgba(24, 28, 25, 0.06);
+  --shadow-e4: 0 -10px 30px 0 rgba(24, 28, 25, 0.08);
+}
+
+:root {
+  /* Physics-based spring and bounce easing curves (with cubic-bezier fallback) */
+  --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-easing: linear(
+    0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017,
+    1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%,
+    1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%,
+    0.997 69.8%, 1.003 76.9%, 1.004 83.8%, 1
+  );
+  --bounce-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --bounce-easing: linear(
+    0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141 11.4%, 0.25, 0.391, 0.563, 0.765,
+    1, 0.891 40.9%, 0.848, 0.813, 0.785, 0.766, 0.754, 0.75, 0.754, 0.766, 0.785,
+    0.813, 0.848, 0.891 68.2%, 1 72.7%, 0.973, 0.953, 0.941, 0.938, 0.941, 0.953,
+    0.973, 1, 0.988, 0.984, 0.988, 1
+  );
+  --smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html,
@@ -151,8 +170,13 @@ body,
 body {
   margin: 0;
   background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(at 12% 8%, rgba(182, 237, 194, 0.16) 0px, transparent 48%),
+    radial-gradient(at 88% 92%, rgba(210, 232, 216, 0.22) 0px, transparent 52%);
+  background-attachment: fixed;
   color: var(--color-on-surface);
   font-family: var(--font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: weight;
@@ -204,11 +228,34 @@ body {
   background-image: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
 }
 
+/* Tactile card surface with subtle upper-edge sheen */
+.clay-card {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfcfa 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow-e1);
+  transition:
+    transform 420ms var(--spring-easing),
+    box-shadow 320ms var(--smooth-out),
+    border-color 240ms ease;
+}
+
+.clay-card-interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-e2);
+  border-color: rgba(182, 237, 194, 0.65);
+}
+
+.clay-card-interactive:active {
+  transform: translateY(0px) scale(0.992);
+  box-shadow: var(--shadow-clay-sm);
+}
+
 /* Body swap transition inside the persistent shell. */
 @keyframes bodyFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -219,7 +266,81 @@ body {
 /* `backwards` (not `both`) so no transform lingers after the animation —
    a persistent transform would trap position:fixed modals inside the body. */
 .animate-body-in {
-  animation: bodyFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: bodyFadeIn 0.34s var(--smooth-out) backwards;
+}
+
+/* Staggered sibling cascade (`--sibling-index` fallback + modern `sibling-index()`) */
+@keyframes staggerReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.stagger-item {
+  --delay: calc(var(--sibling-index, 0) * 55ms);
+  --delay: calc(sibling-index() * 55ms);
+  animation: staggerReveal 0.48s var(--spring-easing) var(--delay, 0ms) backwards;
+}
+
+/* Entry animation using modern @starting-style for dynamically mounted elements */
+.entry-reveal {
+  transition:
+    opacity 0.35s var(--smooth-out),
+    transform 0.45s var(--spring-easing),
+    display 0.35s allow-discrete;
+  opacity: 1;
+  transform: translateY(0);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* Animated Bar & Progress growth */
+@keyframes barGrowY {
+  from {
+    transform: scaleY(0.08);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes barGrowX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ringSweep {
+  from {
+    stroke-dashoffset: 100;
+    opacity: 0.2;
+  }
+}
+
+.animate-bar-y {
+  transform-origin: bottom;
+  animation: barGrowY 0.68s var(--spring-easing) calc(var(--bar-index, 0) * 65ms) backwards;
+}
+
+.animate-bar-x {
+  transform-origin: left;
+  animation: barGrowX 0.75s var(--spring-easing) 120ms backwards;
+}
+
+.animate-ring-segment {
+  animation: ringSweep 0.85s var(--smooth-out) backwards;
 }
 
 /* Focus is architecture: visible, offset, consistent. */
@@ -229,8 +350,34 @@ body {
   border-radius: 0.5rem;
 }
 
+/* High-contrast text selection across light surfaces and dark forest-green banners */
+::selection {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-surface);
+}
+
+.bg-secondary::selection,
+.bg-secondary *::selection,
+.bg-primary::selection,
+.bg-primary *::selection,
+.clay-btn-primary::selection,
+.clay-btn-primary *::selection {
+  background-color: #ffffff;
+  color: var(--color-secondary);
+}
+
+.bg-secondary .bg-surface::selection,
+.bg-secondary .bg-surface *::selection,
+.bg-secondary .bg-canvas::selection,
+.bg-secondary .bg-canvas *::selection,
+.bg-secondary .bg-white::selection,
+.bg-secondary .bg-white *::selection {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-surface);
+}
+
 /* ---------------------------------------------------------------------------
-   Motion Graphics & Animations
+   Motion Graphics & Ambient Animations
 --------------------------------------------------------------------------- */
 @keyframes float {
   0%, 100% {
@@ -307,13 +454,41 @@ body {
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Respect user motion preferences case-by-case: soften spatial motion into
+   gentle opacity cross-fades while preserving essential feedback indicators. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pulse-ring,
+  .animate-shimmer {
+    animation: none;
+  }
+
+  .animate-body-in,
+  .stagger-item,
+  .animate-fade-in-up,
+  .animate-bar-y,
+  .animate-bar-x,
+  .animate-ring-segment {
+    animation-duration: 150ms;
+    animation-timing-function: ease-out;
+    transform: none !important;
+  }
+
+  .clay-card-interactive:hover,
+  .clay-card-interactive:active {
+    transform: none;
+  }
+
+  .entry-reveal {
+    transition: opacity 150ms ease-out;
+    @starting-style {
+      opacity: 0;
+      transform: none;
+    }
   }
 }
