@@ -710,10 +710,28 @@ export interface FinancialOverview {
 
 /* ---------------------------------------------------- platform administration --- */
 
+/** Outcome of a gateway connectivity ping for one credential set. */
+export type GatewayTestStatus = 'connected' | 'error' | 'unconfigured';
+
+export interface GatewayTestResult {
+  status: GatewayTestStatus;
+  latency_ms?: number;
+  message?: string;
+  at?: string;
+}
+
+/** Per-environment credential sets. Secrets come back masked from the API. */
+export interface GatewayCredentialSets {
+  sandbox?: Record<string, string>;
+  live?: Record<string, string>;
+}
+
 export interface PaymentGatewayCredentials {
   enabled: boolean;
   sandbox?: boolean;
   mode?: 'sandbox' | 'live';
+  credentials?: GatewayCredentialSets;
+  last_test?: { sandbox?: GatewayTestResult; live?: GatewayTestResult };
   publishable_key?: string;
   secret_key?: string;
   webhook_secret?: string;

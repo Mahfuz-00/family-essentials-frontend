@@ -181,18 +181,6 @@ export function TenantsPage() {
           title="Tenants"
           titleSize="headline"
           description="Provision, suspend and inspect every client household workspace. Each tenant is isolated at the database row level."
-          actions={
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button variant="outline" disabled={exporting} onClick={() => void exportCsv()}>
-                <Icon name="download" className="text-[18px]" />
-                {exporting ? 'Exporting…' : 'Export CSV'}
-              </Button>
-              <Button variant="primary" onClick={() => setProvisionOpen(true)}>
-                <Icon name="add_circle" className="text-[18px]" />
-                Provision Tenant
-              </Button>
-            </div>
-          }
         />
 
         {error && <Alert>{error}</Alert>}
