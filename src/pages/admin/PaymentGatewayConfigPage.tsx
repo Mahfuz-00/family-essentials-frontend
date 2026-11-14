@@ -114,11 +114,11 @@ export function PaymentGatewayConfigPage() {
   const renderEnvToggle = (gateway: string) => {
     const isSandbox = currentSettings?.gateways[gateway]?.sandbox ?? true;
     return (
-      <div className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-low p-0.5 text-xs font-semibold">
+      <div className="inline-flex items-center gap-0.5 rounded-xl bg-canvas p-1 text-xs font-semibold shadow-[var(--shadow-inset)]">
         <button
           type="button"
           onClick={() => updateGatewayField(gateway, 'sandbox', true)}
-          className={`rounded px-2.5 py-0.5 transition-all ${
+          className={`cursor-pointer rounded-lg px-2.5 py-1 transition-all ${
             isSandbox
               ? 'bg-amber-500 text-white shadow-xs font-bold'
               : 'text-muted hover:text-on-surface'
@@ -130,9 +130,9 @@ export function PaymentGatewayConfigPage() {
         <button
           type="button"
           onClick={() => updateGatewayField(gateway, 'sandbox', false)}
-          className={`rounded px-2.5 py-0.5 transition-all ${
+          className={`cursor-pointer rounded-lg px-2.5 py-1 transition-all ${
             !isSandbox
-              ? 'bg-emerald-600 text-white shadow-xs font-bold'
+              ? 'bg-secondary text-on-secondary shadow-xs font-bold'
               : 'text-muted hover:text-on-surface'
           }`}
           title={`Switch ${gateway} to Live / Production mode`}
@@ -232,31 +232,41 @@ export function PaymentGatewayConfigPage() {
               />
             </StatGrid>
 
-            {/* Global Environment & Mode Card */}
-            <Card className="flex flex-col gap-5 p-6 bg-surface">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-headline-sm font-bold text-on-surface">Payment Gateways &amp; Environment Controls</h3>
-                  <p className="text-xs text-muted">
-                    Configure your platform billing mode, primary default gateway, and individual Sandbox vs Live settings per provider.
-                  </p>
+            {/* Global Environment & Mode Card — Redesigned Soft Tactile Alignment */}
+            <Card className="flex flex-col gap-6 p-6 bg-surface">
+              {/* Card Header */}
+              <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                    <Icon name="tune" className="text-[22px]" />
+                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <h3 className="text-title-md font-bold text-on-surface">
+                      Payment Gateways &amp; Environment Controls
+                    </h3>
+                    <p className="text-body-sm text-muted">
+                      Configure your platform billing mode, primary default gateway, and individual Sandbox vs Live settings per provider.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-1.5 text-xs">
-                    <span className="font-semibold text-muted">Providers:</span>
-                    <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
-                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                {/* Right Toolbar: Equal-height Provider Counter + Segmented Mode Switcher */}
+                <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
+                  <div className="inline-flex h-10 items-center gap-2.5 rounded-xl bg-canvas px-3.5 text-xs shadow-[var(--shadow-inset-sm)]">
+                    <span className="font-bold uppercase tracking-wider text-muted text-[11px]">Providers</span>
+                    <span className="h-3.5 w-px bg-outline-variant/40" />
+                    <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       {liveCount} Live
                     </span>
                     <span className="text-muted">·</span>
-                    <span className="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400">
-                      <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+                    <span className="inline-flex items-center gap-1.5 font-bold text-amber-700">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
                       {sandboxCount} Sandbox
                     </span>
                   </div>
 
-                  <div className="flex rounded-xl border border-outline-variant/40 bg-surface-container-low p-1 text-xs">
+                  <div className="inline-flex h-10 items-center gap-1 rounded-xl bg-canvas p-1 text-xs shadow-[var(--shadow-inset)]">
                     <button
                       type="button"
                       onClick={() => {
@@ -270,14 +280,14 @@ export function PaymentGatewayConfigPage() {
                           return { ...prev, mode: 'sandbox', gateways: updated };
                         });
                       }}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold transition-all ${
+                      className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 font-bold transition-all ${
                         currentSettings.mode === 'sandbox'
-                          ? 'bg-amber-500 text-white shadow-sm'
-                          : 'text-muted hover:text-on-surface'
+                          ? 'bg-amber-500 text-white shadow-xs'
+                          : 'text-on-surface-variant hover:text-on-surface'
                       }`}
                       title="Set all gateways to Sandbox / Test mode"
                     >
-                      <Icon name="science" className="text-[16px]" />
+                      <Icon name="science" className="text-[15px]" />
                       Set All Sandbox
                     </button>
                     <button
@@ -293,30 +303,38 @@ export function PaymentGatewayConfigPage() {
                           return { ...prev, mode: 'live', gateways: updated };
                         });
                       }}
-                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold transition-all ${
+                      className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 font-bold transition-all ${
                         currentSettings.mode === 'live'
-                          ? 'bg-emerald-600 text-white shadow-sm'
-                          : 'text-muted hover:text-on-surface'
+                          ? 'bg-secondary text-on-secondary shadow-xs'
+                          : 'text-on-surface-variant hover:text-on-surface'
                       }`}
                       title="Set all gateways to Live / Production mode"
                     >
-                      <Icon name="verified" className="text-[16px]" />
+                      <Icon name="verified" className="text-[15px]" />
                       Set All Live
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Informational banner explaining individual sandbox operation */}
-              <div className="flex items-center gap-2.5 rounded-xl border border-outline-variant/30 bg-sage-soft/40 p-3 text-xs text-on-surface">
-                <Icon name="info" className="text-[18px] text-secondary shrink-0" />
-                <p>
-                  <strong className="font-semibold text-secondary">Individual Gateway Environments:</strong> Each payment gateway can be individually set to <strong>Sandbox (Test Mode)</strong> or <strong>Live (Production)</strong>. You can process real customer checkouts with <strong>Stripe (Live)</strong> while simultaneously testing local providers like <strong>bKash</strong>, <strong>Razorpay</strong>, or <strong>Nagad</strong> in <strong>Sandbox</strong>.
+              {/* Informational Callout Banner */}
+              <div className="flex items-start sm:items-center gap-3.5 rounded-2xl bg-forest-soft/50 border border-secondary/15 px-4 py-3.5 text-xs text-on-surface">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface text-secondary shadow-xs">
+                  <Icon name="info" className="text-[18px]" />
+                </span>
+                <p className="leading-relaxed text-on-surface-variant">
+                  <strong className="font-bold text-secondary">Individual Gateway Environments:</strong>{' '}
+                  Each payment gateway can be individually set to <strong className="text-on-surface">Sandbox (Test Mode)</strong> or{' '}
+                  <strong className="text-on-surface">Live (Production)</strong>. You can process real customer checkouts with{' '}
+                  <strong className="text-on-surface">Stripe (Live)</strong> while simultaneously testing local providers like{' '}
+                  <strong className="text-on-surface">bKash</strong>, <strong className="text-on-surface">Razorpay</strong>, or{' '}
+                  <strong className="text-on-surface">Nagad</strong> in <strong className="text-on-surface">Sandbox</strong>.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-3 border-t border-outline-variant/20 pt-4">
-                <div>
+              {/* 3-Column Aligned Configuration Controls */}
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 items-end">
+                <div className="flex flex-col">
                   <Label htmlFor="active-gateway">Primary Default Payment Gateway</Label>
                   <Select
                     id="active-gateway"
@@ -342,7 +360,7 @@ export function PaymentGatewayConfigPage() {
                   </Select>
                 </div>
 
-                <div>
+                <div className="flex flex-col">
                   <Label htmlFor="platform-currency">Platform Operating Currency</Label>
                   <Select
                     id="platform-currency"
@@ -362,33 +380,65 @@ export function PaymentGatewayConfigPage() {
                   </Select>
                 </div>
 
-                <div>
+                <div className="flex flex-col">
                   <Label htmlFor="webhook-url">Unified Webhook Callback Endpoint</Label>
-                  <Input
-                    id="webhook-url"
-                    value={currentSettings.webhook_url}
-                    readOnly
-                    className="bg-surface-container-low font-mono text-xs text-muted"
-                  />
+                  <div className="relative flex items-center">
+                    <Input
+                      id="webhook-url"
+                      value={currentSettings.webhook_url}
+                      readOnly
+                      className="pr-10 font-mono text-xs text-muted"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(currentSettings.webhook_url);
+                        setNotice('Webhook endpoint copied to clipboard.');
+                      }}
+                      title="Copy webhook endpoint"
+                      className="absolute right-2.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-sage-soft hover:text-secondary"
+                    >
+                      <Icon name="content_copy" className="text-[15px]" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 border-t border-outline-variant/20 pt-3">
-                <input
-                  type="checkbox"
-                  id="auto-billing"
-                  checked={currentSettings.auto_billing_enabled}
-                  onChange={(e) =>
-                    handleUpdate((prev) => ({
-                      ...prev,
-                      auto_billing_enabled: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 cursor-pointer accent-secondary"
-                />
-                <Label htmlFor="auto-billing" className="cursor-pointer text-body-md font-medium text-on-surface">
-                  Enable automated monthly and annual recurring subscription renewals
-                </Label>
+              {/* Automated Recurring Billing Toggle Row (Soft Tactile Switch matching SettingsPage) */}
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-canvas px-4 py-3.5 shadow-[var(--shadow-inset-sm)]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface text-secondary shadow-xs">
+                    <Icon name="autorenew" className="text-[18px]" />
+                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <label
+                      htmlFor="auto-billing"
+                      className="cursor-pointer text-sm font-bold text-on-surface leading-snug"
+                    >
+                      Enable automated monthly and annual recurring subscription renewals
+                    </label>
+                    <span className="text-xs text-muted">
+                      Automatically charge active household payment methods at the end of each billing cycle.
+                    </span>
+                  </div>
+                </div>
+
+                <label className="flex shrink-0 cursor-pointer items-center">
+                  <span className="sr-only">Enable automated recurring renewals</span>
+                  <input
+                    type="checkbox"
+                    id="auto-billing"
+                    className="peer sr-only"
+                    checked={currentSettings.auto_billing_enabled}
+                    onChange={(e) =>
+                      handleUpdate((prev) => ({
+                        ...prev,
+                        auto_billing_enabled: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span className="relative block h-6 w-11 rounded-full bg-outline-variant/70 transition-colors peer-checked:bg-secondary after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5" />
+                </label>
               </div>
             </Card>
 
