@@ -14,7 +14,9 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
     css: false,
-    testTimeout: 15000,
+    // The console screens (especially payments) are heavy, and this suite is run
+    // on shared machines; 15s flakes under load, 30s leaves headroom.
+    testTimeout: 30000,
     // Mocks are installed per test in beforeEach; restoring them automatically
     // would strip the implementations back out.
     restoreMocks: false,

@@ -81,9 +81,10 @@ export function EmailConfigPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Email Setup"
+          titleSize="headline"
           description="Manage transactional email infrastructure, SMTP / cloud mail providers, and outgoing household notification templates."
         />
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/stores/auth';
 import { FEATURES, SOLUTIONS } from './marketingData';
+import { DEFAULT_BLOG_POSTS } from './blogData';
 
 export function MarketingLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,6 +20,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
     '/features': 'Features',
     '/solutions': 'Solutions',
     '/pricing': 'Pricing',
+    '/blog': 'Household Functionality Blog',
     '/about': 'About Us',
     '/faq': 'FAQ',
     '/contact': 'Contact',
@@ -27,8 +29,9 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
   const featureTitle = FEATURES.find((feature) => location.pathname === `/features/${feature.slug}`)?.name;
   const solutionTitle = SOLUTIONS.find((solution) => location.pathname === `/solutions/${solution.slug}`)?.title;
+  const blogTitle = DEFAULT_BLOG_POSTS.find((post) => location.pathname === `/blog/${post.slug}`)?.title;
 
-  useDocumentTitle(featureTitle ?? solutionTitle ?? staticTitles[location.pathname]);
+  useDocumentTitle(featureTitle ?? solutionTitle ?? blogTitle ?? staticTitles[location.pathname]);
 
   const token = useAuthStore((state) => state.token);
   const isAuthenticated = Boolean(token);
@@ -50,7 +53,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-canvas text-on-surface antialiased selection:bg-secondary/20 selection:text-secondary">
+    <div className="min-h-screen flex flex-col bg-canvas text-on-surface antialiased">
       {/* -------------------------------------------------------------
           1. STICKY / GLASSMORPHIC NAVIGATION BAR (Softrly Style)
       -------------------------------------------------------------- */}
@@ -220,6 +223,13 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <Link
+              to="/blog"
+              className="rounded-xl px-3.5 py-2 text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
+            >
+              Blog
+            </Link>
+
+            <Link
               to="/about"
               className="rounded-xl px-3.5 py-2 text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-sage-soft hover:text-on-surface"
             >
@@ -345,6 +355,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   className="rounded-xl px-3 py-2 text-body-md font-semibold text-on-surface hover:bg-sage-soft"
                 >
                   Pricing
+                </Link>
+                <Link
+                  to="/blog"
+                  className="rounded-xl px-3 py-2 text-body-md font-semibold text-on-surface hover:bg-sage-soft"
+                >
+                  Household Functionality Blog
                 </Link>
                 <Link
                   to="/about"
@@ -489,6 +505,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 <li>
                   <Link to="/pricing" className="text-body-sm text-on-surface-variant hover:text-secondary">
                     Transparent Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/blog" className="text-body-sm text-on-surface-variant hover:text-secondary">
+                    Household Functionality Blog
                   </Link>
                 </li>
                 <li>

@@ -3,12 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
-import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { QueryError } from '@/components/ui/query-error';
-import { StatGridSkeleton } from '@/components/ui/stat-card';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api } from '@/lib/api';
 import type { Paginated, PlatformMetrics, Tenant } from '@/types';
 
@@ -120,96 +119,65 @@ export function AdminOverviewPage() {
             10,
         ) / 10;
 
-  const cards: {
-    label: string;
-    value: string | number;
-    icon: string;
-    tone: string;
-    footer: { label: string; value: number }[] | null;
-  }[] = [
-    {
-      label: 'Total Active Tenants',
-      value: metrics.isError ? '—' : (data?.total_tenants ?? 0),
-      icon: 'apartment',
-      tone: 'bg-forest-soft text-secondary',
-      footer: [
-        { label: 'Active', value: data?.by_status?.active ?? 0 },
-        { label: 'Trial', value: data?.by_status?.trial ?? 0 },
-        { label: 'Suspended', value: data?.by_status?.suspended ?? 0 },
-      ],
-    },
-    {
-      label: 'Active Members',
-      value: metrics.isError ? '—' : (data?.active_members ?? 0),
-      icon: 'group',
-      tone: 'bg-sage-soft text-primary',
-      footer: null,
-    },
-    {
-      label: 'Onboarded This Month',
-      value: tenants.isError ? '—' : onboardedThisMonth,
-      icon: 'trending_up',
-      tone: 'bg-sage-soft text-secondary',
-      footer: null,
-    },
-    {
-      label: 'Avg Members / Tenant',
-      value: tenants.isError ? '—' : avgMembers,
-      icon: 'diversity_3',
-      tone: 'bg-coral-soft text-tertiary',
-      footer: null,
-    },
-  ];
-
   const isLoading = metrics.isLoading || tenants.isLoading;
 
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col gap-6 animate-pulse">
-          <PageHeader
-            eyebrow={
-              <>
-                <span className="h-2 w-2 rounded-full bg-success" />
-                Platform Admin · All tenants
-              </>
-            }
-            title="Overview & MRR"
-            description="Cross-tenant telemetry and lifecycle health across every provisioned household."
-          />
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 animate-pulse">
+          {/* Header Hero Skeleton */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="h-8 w-64 rounded-xl bg-forest-soft/60" />
+              <div className="h-4 w-96 rounded-lg bg-forest-soft/40" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-36 rounded-xl bg-forest-soft/50" />
+              <div className="h-10 w-36 rounded-xl bg-forest-soft/50" />
+            </div>
+          </div>
 
+          {/* 4 Pulse Cards Skeleton — same anatomy as StatCard */}
           <StatGridSkeleton count={4} />
 
-          <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-7" />
-            <div className="h-72 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1 lg:col-span-5" />
-          </section>
-
-          <div className="h-28 rounded-[1.25rem] border border-white/70 bg-surface shadow-e1" />
+          {/* Main Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-80 rounded-[1.25rem] bg-surface p-6 shadow-e1" />
+            <div className="h-80 rounded-[1.25rem] bg-surface p-6 shadow-e1" />
+          </div>
         </div>
       </AppLayout>
     );
   }
 
+  const suspendedCount = data?.by_status?.suspended ?? 0;
+  const activeCount = data?.by_status?.active ?? 0;
+  const totalTenantsCount = data?.total_tenants ?? tenantList.length;
+
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          eyebrow={
-            <>
-              <span className="h-2 w-2 rounded-full bg-success" />
-              Platform Admin · All tenants
-            </>
-          }
-          title="Overview & MRR"
-          description="Cross-tenant telemetry and lifecycle health across every provisioned household."
+          title="Overview"
+          titleSize="headline"
+          description="Cross-tenant telemetry, subscription distribution, and lifecycle health across every provisioned household."
           actions={
-            <Link to="/admin/tenants" className="inline-flex">
-              <span className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl bg-secondary px-4 text-label-lg font-semibold text-on-secondary shadow-e1 transition-all hover:bg-primary active:scale-[0.97]">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/admin/analytics"
+                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all duration-300 ease-[var(--spring-easing)] hover:-translate-y-0.5 hover:bg-forest-soft active:translate-y-0 active:shadow-[var(--shadow-inset-sm)]"
+              >
+                <Icon name="analytics" className="text-[18px]" />
+                Platform Analytics
+              </Link>
+              <Link
+                to="/admin/tenants"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all duration-300 ease-[var(--spring-easing)] hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+              >
                 <Icon name="apartment" className="text-[18px]" />
-                Tenant console
-              </span>
-            </Link>
+                Tenant Console
+              </Link>
+            </div>
           }
         />
 
@@ -228,148 +196,321 @@ export function AdminOverviewPage() {
           />
         )}
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => (
-            <Card key={card.label} className="flex flex-col gap-3 p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-label-sm uppercase tracking-wider text-muted">{card.label}</span>
-                <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${card.tone}`}>
-                  <Icon name={card.icon} className="text-[20px]" />
-                </span>
-              </div>
-              <span className="text-display-lg font-bold text-on-surface">{card.value}</span>
-              {card.footer && (
-                <span className="flex items-center justify-between border-t border-canvas pt-3">
-                  {card.footer.map((item) => (
-                    <span key={item.label} className="flex flex-col">
-                      <span className="text-body-sm text-muted">{item.label}</span>
-                      <span className="text-label-lg text-on-surface">{item.value}</span>
-                    </span>
-                  ))}
-                </span>
-              )}
-            </Card>
-          ))}
-        </section>
+        {/* 1. Platform Overview summary — unified StatCards matching Tenant Dashboard 1:1 */}
+        <StatGrid count={4}>
+          <StatCard
+            to="/admin/tenants"
+            title="Total Active Tenants"
+            value={metrics.isError ? '—' : (data?.total_tenants ?? 0)}
+            icon="apartment"
+            tone="forest"
+            highlight={<StatHighlight tone="success">{activeCount} Active</StatHighlight>}
+          />
+          <StatCard
+            to="/admin/tenants"
+            title="Active Members"
+            value={metrics.isError ? '—' : (data?.active_members ?? 0)}
+            icon="group"
+            tone="forest"
+            highlight={<StatHighlight tone="success">Active Seats</StatHighlight>}
+          />
+          <StatCard
+            to="/admin/analytics"
+            title="Onboarded This Month"
+            value={tenants.isError ? '—' : onboardedThisMonth}
+            icon="trending_up"
+            tone="sage"
+            highlight={<StatHighlight tone="primary">This Month</StatHighlight>}
+          />
+          <StatCard
+            to="/admin/tenants"
+            title="Avg Members / Tenant"
+            value={tenants.isError ? '—' : avgMembers}
+            icon="diversity_3"
+            tone={suspendedCount > 0 ? 'coral' : 'forest'}
+            highlight={
+              suspendedCount > 0 ? (
+                <StatHighlight tone="danger" pulse>
+                  {suspendedCount} Suspended
+                </StatHighlight>
+              ) : (
+                <StatHighlight tone="success">All Healthy</StatHighlight>
+              )
+            }
+          />
+        </StatGrid>
 
-        <section className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-          {/* Monthly provisioning */}
-          <Card className="flex flex-col gap-4 p-5 lg:col-span-7">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-headline-sm text-on-surface">Tenant provisioning by month</h2>
-              <p className="text-body-sm text-muted">
-                Counted from each workspace's creation date. No revenue axis: no billing data is stored.
-              </p>
+        {/* 2. Side-by-Side Dual Engine matching Tenant Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          {/* Engine A: Monthly Provisioning & Lifecycle */}
+          <Card
+            className="stagger-item p-6 flex flex-col gap-5"
+            style={{ '--sibling-index': 4 } as React.CSSProperties}
+          >
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                  <Icon name="trending_up" className="text-[20px]" />
+                </span>
+                <div>
+                  <h2 className="text-title-md font-bold text-on-surface">Tenant Provisioning &amp; Lifecycle</h2>
+                  <p className="text-xs text-muted">New workspaces created over the last six months</p>
+                </div>
+              </div>
+              <Link
+                to="/admin/tenants"
+                className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all"
+              >
+                View Workspaces &rarr;
+              </Link>
             </div>
 
             {monthly.every((month) => month.count === 0) ? (
-              <p className="rounded-xl bg-canvas px-4 py-8 text-center text-body-sm text-muted">
+              <p className="text-sm text-muted italic py-6 text-center bg-canvas rounded-2xl shadow-[var(--shadow-inset-sm)]">
                 No workspaces provisioned in the last six months.
               </p>
             ) : (
-              <div className="flex h-44 items-end gap-3" role="img" aria-label="New tenants per month">
-                {monthly.map((month) => (
-                  <span key={month.key} className="flex flex-1 flex-col items-center gap-2">
-                    <span className="text-label-sm text-on-surface">{month.count}</span>
+              <div
+                className="relative flex h-44 items-end gap-3 overflow-hidden rounded-2xl bg-canvas px-4 pt-6 pb-3.5 shadow-[var(--shadow-inset-sm)]"
+                role="img"
+                aria-label="New tenants per month"
+              >
+                {/* Subtle tactile chart gridlines */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-4 top-6 bottom-9 flex flex-col justify-between"
+                >
+                  <div className="border-b border-dashed border-outline-variant/25" />
+                  <div className="border-b border-dashed border-outline-variant/25" />
+                  <div className="border-b border-outline-variant/30" />
+                </div>
+
+                {monthly.map((month, idx) => {
+                  const isActiveMonth = month.count > 0;
+                  const barHeightPercent = isActiveMonth
+                    ? Math.max(18, Math.round((month.count / peak) * 100))
+                    : 6;
+                  return (
                     <span
-                      className="w-full rounded-t-lg bg-secondary/80"
-                      style={{ height: `${Math.max(4, (month.count / peak) * 100)}%` }}
-                    />
-                    <span className="text-label-sm text-muted">{month.label}</span>
-                  </span>
-                ))}
+                      key={month.key}
+                      className="group/bar relative z-10 flex flex-1 flex-col items-center gap-2 h-full justify-end"
+                    >
+                      <span
+                        className={`text-label-sm font-bold tabular-nums transition-transform duration-300 group-hover/bar:-translate-y-0.5 ${
+                          isActiveMonth ? 'text-secondary' : 'text-muted/70'
+                        }`}
+                      >
+                        {month.count}
+                      </span>
+                      <span
+                        className={`animate-bar-y w-full max-w-[44px] rounded-t-xl transition-all duration-300 ${
+                          isActiveMonth
+                            ? 'bg-gradient-to-t from-primary to-secondary shadow-[0_4px_12px_-2px_rgba(55,104,71,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] group-hover/bar:brightness-110'
+                            : 'bg-outline-variant/40'
+                        }`}
+                        style={
+                          {
+                            height: `${barHeightPercent}%`,
+                            '--bar-index': idx,
+                          } as React.CSSProperties
+                        }
+                      />
+                      <span className="text-label-sm font-medium text-muted">{month.label}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
+
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-muted uppercase tracking-wider">Lifecycle Breakdown</span>
+              <div className="grid grid-cols-3 gap-3">
+                {(['active', 'trial', 'suspended'] as const).map((status) => {
+                  const statusCount = data?.by_status?.[status] ?? 0;
+                  const statusRatio =
+                    totalTenantsCount > 0 ? Math.min(100, Math.round((statusCount / totalTenantsCount) * 100)) : 0;
+                  return (
+                    <div
+                      key={status}
+                      className="p-3.5 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          tone={
+                            status === 'suspended'
+                              ? 'danger'
+                              : status === 'active'
+                                ? 'success'
+                                : 'warning'
+                          }
+                        >
+                          {status}
+                        </Badge>
+                        <span className="text-base font-extrabold text-on-surface tabular-nums">
+                          {statusCount}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                        <div
+                          className={`animate-bar-x h-full rounded-full ${
+                            status === 'suspended'
+                              ? 'bg-error'
+                              : status === 'active'
+                                ? 'bg-secondary'
+                                : 'bg-warning'
+                          }`}
+                          style={{ width: `${Math.max(statusCount > 0 ? 12 : 0, statusRatio)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+              <Link to="/admin/audit-logs" className="text-xs font-medium text-muted hover:text-on-surface transition-colors">
+                Open Security Audit Ledger &rarr;
+              </Link>
+              <Link to="/admin/tenants" className="text-xs font-semibold text-secondary hover:underline">
+                Provision New Workspace &rarr;
+              </Link>
+            </div>
           </Card>
 
-          {/* Tier donut */}
-          <Card className="flex flex-col gap-4 p-5 lg:col-span-5">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-headline-sm text-on-surface">Subscription tiers</h2>
-              <p className="text-body-sm text-muted">Share of provisioned workspaces by tier.</p>
+          {/* Engine B: Subscription Tiers & Revenue Operations */}
+          <Card
+            className="stagger-item p-6 flex flex-col gap-5"
+            style={{ '--sibling-index': 5 } as React.CSSProperties}
+          >
+            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                  <Icon name="receipt_long" className="text-[20px]" />
+                </span>
+                <div>
+                  <h2 className="text-title-md font-bold text-on-surface">Subscription Tiers &amp; Billing</h2>
+                  <p className="text-xs text-muted">Share of provisioned household workspaces by plan tier</p>
+                </div>
+              </div>
+              <Link
+                to="/admin/billing"
+                className="rounded-xl bg-sage-soft px-3 py-1.5 text-xs font-semibold text-secondary shadow-[var(--shadow-clay-sm)] hover:bg-forest-soft transition-all"
+              >
+                Open Invoices &rarr;
+              </Link>
             </div>
 
             {tierSegments.length === 0 ? (
-              <p className="rounded-xl bg-canvas px-4 py-8 text-center text-body-sm text-muted">
+              <p className="text-sm text-muted italic py-6 text-center bg-canvas rounded-2xl shadow-[var(--shadow-inset-sm)]">
                 No subscription data yet.
               </p>
             ) : (
-              <div className="flex flex-wrap items-center gap-6">
-                <svg viewBox="0 0 42 42" className="h-36 w-36 -rotate-90" role="img" aria-label="Tier distribution">
-                  {tierSegments.map((segment, index) => {
-                    const offset = tierSegments
-                      .slice(0, index)
-                      .reduce((sum, previous) => sum + previous.percent, 0);
+              <div className="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)]">
+                <div className="relative flex h-32 w-32 shrink-0 items-center justify-center">
+                  <svg viewBox="0 0 42 42" className="h-32 w-32 -rotate-90" role="img" aria-label="Tier distribution">
+                    <circle
+                      cx="21"
+                      cy="21"
+                      r="15.9155"
+                      fill="transparent"
+                      stroke="var(--color-surface-container)"
+                      strokeWidth="5.5"
+                    />
+                    {tierSegments.map((segment, index) => {
+                      const offset = tierSegments
+                        .slice(0, index)
+                        .reduce((sum, previous) => sum + previous.percent, 0);
 
-                    return (
-                      <circle
-                        key={segment.tier}
-                        cx="21"
-                        cy="21"
-                        r="15.9155"
-                        fill="transparent"
-                        stroke={segment.color}
-                        strokeWidth="6"
-                        strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
-                        strokeDashoffset={-offset}
-                      />
-                    );
-                  })}
-                  <circle cx="21" cy="21" r="10" fill="var(--color-surface)" />
-                </svg>
-
-                <ul className="flex flex-1 flex-col gap-2">
-                  {tierSegments.map((segment) => (
-                    <li key={segment.tier} className="flex items-center justify-between gap-3">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: segment.color }}
+                      return (
+                        <circle
+                          key={segment.tier}
+                          cx="21"
+                          cy="21"
+                          r="15.9155"
+                          fill="transparent"
+                          stroke={segment.color}
+                          strokeWidth="5.5"
+                          strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
+                          strokeDashoffset={-offset}
+                          className="animate-ring-segment transition-all duration-500"
                         />
-                        <span className="text-body-md text-on-surface">{segment.tier}</span>
-                      </span>
-                      <span className="text-label-md text-muted">
-                        {segment.count} · {segment.percent}%
-                      </span>
+                      );
+                    })}
+                  </svg>
+                  {/* Tactile raised clay center medallion */}
+                  <div className="pointer-events-none absolute flex h-16 w-16 flex-col items-center justify-center rounded-full bg-surface shadow-[var(--shadow-clay-sm)]">
+                    <span className="text-sm font-extrabold leading-none text-on-surface tabular-nums">
+                      {totalTenantsCount}
+                    </span>
+                    <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted">
+                      Total
+                    </span>
+                  </div>
+                </div>
+
+                <ul className="flex flex-1 flex-col gap-2.5 min-w-[180px]">
+                  {tierSegments.map((segment) => (
+                    <li key={segment.tier} className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shadow-2xs"
+                            style={{ backgroundColor: segment.color }}
+                          />
+                          <span className="text-sm font-semibold capitalize text-on-surface">{segment.tier}</span>
+                        </span>
+                        <span className="text-xs font-bold text-muted tabular-nums">
+                          {segment.count} ({segment.percent}%)
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                        <div
+                          className="animate-bar-x h-full rounded-full"
+                          style={{
+                            width: `${Math.max(8, segment.percent)}%`,
+                            backgroundColor: segment.color,
+                          }}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+
+            <div className="grid grid-cols-2 gap-3.5">
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Payment Gateways</span>
+                <span className="text-base font-extrabold text-on-surface">
+                  Stripe, bKash &amp; Cash
+                </span>
+                <Link to="/admin/payment-gateways" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
+                  Configure Gateways &rarr;
+                </Link>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-canvas shadow-[var(--shadow-inset-sm)] flex flex-col gap-1">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider">System Health</span>
+                <span className="text-base font-extrabold text-on-surface">
+                  Checks &amp; Backups
+                </span>
+                <Link to="/admin/health" className="inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline mt-1">
+                  Inspect Operations &rarr;
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+              <Link to="/admin/refunds" className="text-xs font-medium text-muted hover:text-on-surface transition-colors">
+                Manage Refund Requests &rarr;
+              </Link>
+              <Link to="/admin/analytics" className="text-xs font-semibold text-secondary hover:underline">
+                View Full MRR Analytics &rarr;
+              </Link>
+            </div>
           </Card>
-        </section>
-
-        <Card className="p-5">
-          <h2 className="text-headline-sm text-on-surface">Lifecycle breakdown</h2>
-          <p className="text-body-sm text-muted">Households by workspace state.</p>
-
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {Object.entries(data?.by_status ?? {}).map(([status, total]) => (
-              <li
-                key={status}
-                className="flex items-center gap-3 rounded-xl bg-canvas px-4 py-3"
-              >
-                <Badge tone={status === 'suspended' ? 'danger' : status === 'active' ? 'success' : 'warning'}>
-                  {status}
-                </Badge>
-                <span className="text-label-lg text-on-surface">{total}</span>
-              </li>
-            ))}
-            {Object.keys(data?.by_status ?? {}).length === 0 && (
-              <li className="rounded-xl bg-canvas px-4 py-6 text-center text-body-sm text-muted">
-                No tenants provisioned yet.
-              </li>
-            )}
-          </ul>
-        </Card>
-
-        <Alert tone="info">
-          Tenant suspension and provisioning are audited into the security ledger — see{' '}
-          <Link to="/admin/audit-logs" className="font-semibold text-secondary hover:underline">
-            Audit & Security Logs
-          </Link>
-          .
-        </Alert>
+        </div>
       </div>
     </AppLayout>
   );

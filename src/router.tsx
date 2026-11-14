@@ -16,6 +16,8 @@ import { PricingPage } from '@/pages/marketing/PricingPage';
 import { SolutionDetailPage } from '@/pages/marketing/SolutionDetailPage';
 import { SolutionsHubPage } from '@/pages/marketing/SolutionsHubPage';
 import { PublicRefundPolicyPage } from '@/pages/marketing/PublicRefundPolicyPage';
+import { BlogHubPage } from '@/pages/marketing/BlogHubPage';
+import { BlogPostPage } from '@/pages/marketing/BlogPostPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { MoneyPage } from '@/pages/MoneyPage';
 import { PantryPage } from '@/pages/PantryPage';
@@ -45,6 +47,7 @@ import { EmailConfigPage } from '@/pages/admin/EmailConfigPage';
 import { PlatformFeedbackPage } from '@/pages/admin/FeedbackInboxPage';
 import { HealthPage } from '@/pages/admin/HealthPage';
 import { PaymentGatewayConfigPage } from '@/pages/admin/PaymentGatewayConfigPage';
+import { SandboxPaymentResultPage } from '@/pages/SandboxPaymentResultPage';
 import { PlatformAnalyticsPage } from '@/pages/admin/PlatformAnalyticsPage';
 import { RefundPolicyPage } from '@/pages/admin/RefundPolicyPage';
 import { TenantsPage } from '@/pages/admin/TenantsPage';
@@ -161,6 +164,18 @@ const contactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contact',
   component: ContactPage,
+});
+
+const blogHubRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blog',
+  component: BlogHubPage,
+});
+
+const blogPostRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blog/$slug',
+  component: BlogPostPage,
 });
 
 const loginRoute = createRoute({
@@ -431,6 +446,18 @@ const adminPaymentGatewayRoute = createRoute({
   component: PaymentGatewayConfigPage,
 });
 
+/**
+ * Provider return page for a sandbox payment. It is intentionally outside the
+ * app shell and unauthenticated: the unguessable token in the path is the
+ * capability that reveals the display-only invoice, so the provider's redirect
+ * works even in a fresh browser context.
+ */
+const sandboxPaymentResultRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/sandbox/payment-result/$token',
+  component: SandboxPaymentResultPage,
+});
+
 const adminEmailConfigRoute = createRoute({
   getParentRoute: () => appShellRoute,
   path: '/admin/email-config',
@@ -518,6 +545,8 @@ export const routeTree = rootRoute.addChildren([
   refundPolicyRoute,
   faqRoute,
   contactRoute,
+  blogHubRoute,
+  blogPostRoute,
   loginRoute,
   registerRoute,
   forgotPasswordRoute,
@@ -526,6 +555,7 @@ export const routeTree = rootRoute.addChildren([
   verifyPhoneRoute,
   geofenceConsoleRoute,
   adminLoginRoute,
+  sandboxPaymentResultRoute,
 ]);
 
 export const router = createRouter({

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { Select } from '@/components/ui/select';
 import { SkeletonPanel } from '@/components/ui/skeleton';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { api, apiError } from '@/lib/api';
 import type { Incident, IncidentSeverity, IncidentStatus, MaintenanceModeStatus, OpsHealth, OpsStatus } from '@/types';
 
@@ -147,18 +148,13 @@ export function HealthPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
-          eyebrow={
-            <>
-              <Icon name="monitor_heart" className="text-[16px]" />
-              Platform Admin · Operations
-            </>
-          }
           title="System Health"
+          titleSize="headline"
           description="Measured checks, queue failures and the operator incident log."
           actions={
-            <Button variant="outline" size="lg" onClick={refresh}>
+            <Button variant="outline" onClick={refresh}>
               <Icon name="refresh" className="text-[16px]" />
               Re-check now
             </Button>
@@ -173,7 +169,7 @@ export function HealthPage() {
         {health.isLoading ? (
           <div className="flex flex-col gap-5">
             <SkeletonPanel className="h-28" />
-            <SkeletonPanel className="h-48" />
+            <StatGridSkeleton count={4} />
             <SkeletonPanel className="h-64" />
           </div>
         ) : (
@@ -235,27 +231,50 @@ export function HealthPage() {
           )
         )}
 
-        {/* Checks */}
-        <section
-          aria-label="Health checks"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          {(report?.checks ?? []).map((check) => (
-            <Card key={check.key} className="flex flex-col gap-2 p-4">
-              <span className="flex items-center justify-between gap-2">
-                <span className="text-label-md font-bold text-on-surface">{check.label}</span>
-                <Badge tone={statusTone[check.status]}>{check.status}</Badge>
-              </span>
-              {check.value !== undefined && (
-                <span className="text-headline-md font-bold text-on-surface">
-                  {check.value}
-                  {check.unit && <span className="text-body-sm font-normal text-muted"> {check.unit}</span>}
-                </span>
-              )}
-              <span className="text-body-sm text-muted">{check.message}</span>
-            </Card>
-          ))}
-        </section>
+        {/* Unified Health Checks StatGrid */}
+        {(report?.checks ?? []).length > 0 && (
+          <StatGrid count={4}>
+            {(report?.checks ?? []).map((check) => {
+              const tone =
+                check.status === 'ok'
+                  ? 'forest'
+                  : check.status === 'warn'
+                    ? 'amber'
+                    : 'coral';
+              const icon =
+                check.key === 'database'
+                  ? 'database'
+                  : check.key === 'cache'
+                    ? 'bolt'
+                    : check.key === 'queue'
+                      ? 'layers'
+                      : check.key === 'storage'
+                        ? 'hard_drive'
+                        : 'monitor_heart';
+              return (
+                <StatCard
+                  key={check.key}
+                  title={check.label}
+                  value={
+                    check.value !== undefined
+                      ? `${check.value}${check.unit ? ` ${check.unit}` : ''}`
+                      : statusLabel[check.status]
+                  }
+                  subtitle={check.message}
+                  icon={icon}
+                  tone={tone}
+                  highlight={
+                    <StatHighlight
+                      tone={tone}
+                      icon={check.status === 'ok' ? 'check_circle' : 'warning'}
+                      label={`Status: ${check.status.toUpperCase()}`}
+                    />
+                  }
+                />
+              );
+            })}
+          </StatGrid>
+        )}
 
         {/* Runtime detail */}
         {report?.checks.find((check) => check.key === 'runtime')?.details && (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
@@ -11,12 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonPanel } from '@/components/ui/skeleton';
-import { StatGridSkeleton } from '@/components/ui/stat-card';
+import { StatCard, StatGrid, StatGridSkeleton, StatHighlight } from '@/components/ui/stat-card';
 import { Select } from '@/components/ui/select';
 import { Table, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiError } from '@/lib/api';
 import type {
   MarketingAnnouncement,
+  MarketingBlogPost,
   MarketingLead,
   MarketingOverview,
   MarketingPromotion,
@@ -24,7 +26,7 @@ import type {
   ReferralProgramSettings,
 } from '@/types';
 
-type TabKey = 'overview' | 'promotions' | 'announcements' | 'leads' | 'referrals';
+type TabKey = 'overview' | 'blog' | 'promotions' | 'announcements' | 'leads' | 'referrals';
 
 export function MarketingPage() {
   const queryClient = useQueryClient();
@@ -40,6 +42,27 @@ export function MarketingPage() {
   // Modals
   const [createPromoOpen, setCreatePromoOpen] = useState(false);
   const [createBannerOpen, setCreateBannerOpen] = useState(false);
+  const [blogModalOpen, setBlogModalOpen] = useState(false);
+  const [editingBlogId, setEditingBlogId] = useState<number | null>(null);
+
+  const [blogForm, setBlogForm] = useState({
+    title: '',
+    slug: '',
+    category: 'Household Functionality',
+    read_time_minutes: 6,
+    author_name: 'Dr. Maya Lin',
+    author_role: 'Domestic Systems Researcher',
+    icon: 'cottage',
+    summary: '',
+    key_takeaways_text: '',
+    sections: [
+      { heading: '1. Identify the Operational Bottleneck', body: '' },
+      { heading: '2. Implement Single Named Ownership', body: '' },
+    ],
+    action_checklist_text: '',
+    is_featured: false,
+    is_published: true,
+  });
 
   // Forms
   const [promoForm, setPromoForm] = useState({
@@ -102,6 +125,127 @@ export function MarketingPage() {
     queryKey: ['platform', 'marketing', 'referrals'],
     queryFn: async () =>
       (await api.get<{ data: ReferralProgramSettings }>('/v1/platform/marketing/referrals')).data.data,
+  });
+
+  const blogQuery = useQuery({
+    queryKey: ['platform', 'marketing', 'blog'],
+    queryFn: async () =>
+      (await api.get<{ data: MarketingBlogPost[] }>('/v1/platform/marketing/blog')).data.data,
+  });
+
+  const openNewBlogModal = () => {
+    setEditingBlogId(null);
+    setBlogForm({
+      title: '',
+      slug: '',
+      category: 'Household Functionality',
+      read_time_minutes: 6,
+      author_name: 'Dr. Maya Lin',
+      author_role: 'Domestic Systems Researcher',
+      icon: 'cottage',
+      summary: '',
+      key_takeaways_text:
+        'Replace multi-owner requests with single named ownership.\nAnchor checklists to store locations rather than clock alarms.',
+      sections: [
+        {
+          heading: '1. Diagnose the Household Bottleneck',
+          body: 'Explain how invisible mental load or fragmented group chats create friction in everyday domestic routines.',
+        },
+        {
+          heading: '2. Build a Repeatable System',
+          body: 'Walk through the step-by-step operational habit that eliminates ambiguity for every family member.',
+        },
+      ],
+      action_checklist_text:
+        'Assign one clear owner to every open household errand.\nPin your top 3 grocery and pharmacy stops as saved places.',
+      is_featured: false,
+      is_published: true,
+    });
+    setBlogModalOpen(true);
+  };
+
+  const openEditBlogModal = (post: MarketingBlogPost) => {
+    setEditingBlogId(post.id);
+    setBlogForm({
+      title: post.title,
+      slug: post.slug,
+      category: post.category,
+      read_time_minutes: post.read_time_minutes,
+      author_name: post.author_name,
+      author_role: post.author_role,
+      icon: post.icon || 'cottage',
+      summary: post.summary,
+      key_takeaways_text: (post.key_takeaways ?? []).join('\n'),
+      sections:
+        post.sections && post.sections.length > 0
+          ? post.sections
+          : [{ heading: 'Overview', body: post.summary }],
+      action_checklist_text: (post.action_checklist ?? []).join('\n'),
+      is_featured: post.is_featured,
+      is_published: post.is_published,
+    });
+    setBlogModalOpen(true);
+  };
+
+  const saveBlogMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        title: blogForm.title,
+        slug: blogForm.slug,
+        category: blogForm.category,
+        read_time_minutes: blogForm.read_time_minutes,
+        author_name: blogForm.author_name,
+        author_role: blogForm.author_role,
+        icon: blogForm.icon,
+        summary: blogForm.summary,
+        key_takeaways: blogForm.key_takeaways_text
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        sections: blogForm.sections.filter((s) => s.heading.trim() && s.body.trim()),
+        action_checklist: blogForm.action_checklist_text
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        is_featured: blogForm.is_featured,
+        is_published: blogForm.is_published,
+      };
+      if (editingBlogId) {
+        return api.patch(`/v1/platform/marketing/blog/${editingBlogId}`, payload);
+      }
+      return api.post('/v1/platform/marketing/blog', payload);
+    },
+    onSuccess: () => {
+      setNotice(
+        editingBlogId
+          ? 'Blog article updated and synced to public website.'
+          : 'New blog article published to public website!',
+      );
+      setBlogModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['platform', 'marketing', 'blog'] });
+      queryClient.invalidateQueries({ queryKey: ['public-blog-posts'] });
+    },
+    onError: (err) => setError(apiError(err)),
+  });
+
+  const toggleBlogMutation = useMutation({
+    mutationFn: async (id: number) => api.post(`/v1/platform/marketing/blog/${id}/toggle`),
+    onSuccess: () => {
+      setNotice('Blog post publication status updated.');
+      queryClient.invalidateQueries({ queryKey: ['platform', 'marketing', 'blog'] });
+      queryClient.invalidateQueries({ queryKey: ['public-blog-posts'] });
+    },
+    onError: (err) => setError(apiError(err)),
+  });
+
+  const deleteBlogMutation = useMutation({
+    mutationFn: async (id: number) => api.delete(`/v1/platform/marketing/blog/${id}`),
+    onSuccess: () => {
+      setNotice('Blog post removed.');
+      queryClient.invalidateQueries({ queryKey: ['platform', 'marketing', 'blog'] });
+      queryClient.invalidateQueries({ queryKey: ['public-blog-posts'] });
+    },
+    onError: (err) => setError(apiError(err)),
   });
 
   // Mutations
@@ -210,45 +354,73 @@ export function MarketingPage() {
   const announcements = announcementsQuery.data ?? [];
   const leads = leadsQuery.data?.data ?? [];
   const referrals = referralsQuery.data;
+  const blogPosts = blogQuery.data ?? [];
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Marketing"
-          description="Manage promotional coupons, broadcast announcement banners, inbound waitlist leads, and the household referral reward program."
+          titleSize="headline"
+          description="Publish website blog articles on household functionality, manage promotional coupons, broadcast banners, and track inbound leads."
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/blog"
+                className="inline-flex items-center gap-2 rounded-xl bg-sage-soft px-4 py-2.5 text-label-md font-bold text-secondary shadow-[var(--shadow-clay-sm)] transition-all hover:bg-forest-soft"
+              >
+                <Icon name="open_in_new" className="text-[18px]" />
+                View Live Website Blog
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('blog');
+                  openNewBlogModal();
+                }}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-br from-secondary to-primary px-4 py-2.5 text-label-md font-bold text-on-primary shadow-[0_6px_14px_-4px_rgba(55,104,71,0.45)] transition-all hover:brightness-110"
+              >
+                <Icon name="edit_note" className="text-[18px]" />
+                Write Blog Article
+              </button>
+            </div>
+          }
         />
 
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
 
-        {/* Tab navigation */}
-        <div className="flex flex-wrap border-b border-surface-container">
+        {/* Soft Tactile Submodule Pill Bar */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-white/80 bg-surface p-1.5 shadow-e1">
           {[
             { key: 'overview', label: 'Growth KPIs', icon: 'trending_up' },
+            { key: 'blog', label: `Website Blog (${blogPosts.length})`, icon: 'article' },
             { key: 'promotions', label: 'Promo Codes & Vouchers', icon: 'local_offer' },
             { key: 'announcements', label: 'Announcements & Banners', icon: 'campaign' },
             { key: 'leads', label: 'Leads & Waitlist', icon: 'contacts' },
             { key: 'referrals', label: 'Referral Program', icon: 'loyalty' },
-          ].map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => {
-                setActiveTab(t.key as TabKey);
-                setError(null);
-                setNotice(null);
-              }}
-              className={`flex items-center gap-2 border-b-2 px-5 py-3 text-label-md font-bold transition-colors ${
-                activeTab === t.key
-                  ? 'border-secondary text-secondary'
-                  : 'border-transparent text-muted hover:text-on-surface'
-              }`}
-            >
-              <Icon name={t.icon} className="text-[18px]" />
-              {t.label}
-            </button>
-          ))}
+          ].map((t) => {
+            const isActive = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setActiveTab(t.key as TabKey);
+                  setError(null);
+                  setNotice(null);
+                }}
+                className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-label-md font-bold transition-all ${
+                  isActive
+                    ? 'bg-secondary text-on-secondary shadow-xs'
+                    : 'text-on-surface-variant hover:bg-sage-soft/60 hover:text-on-surface'
+                }`}
+              >
+                <Icon name={t.icon} className="text-[18px]" />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* TAB 1: OVERVIEW */}
@@ -263,45 +435,64 @@ export function MarketingPage() {
             )}
             {overview && (
               <>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Total Inbound Leads</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.total_leads.toLocaleString()}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.new_leads} new · {overview.converted_leads} converted ({overview.lead_conversion_rate}%)
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Active Promo Codes</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.active_promotions}
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.total_redemptions.toLocaleString()} total redemptions
-                    </span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Active Announcements</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.active_announcements}
-                    </span>
-                    <span className="text-body-xs text-muted">Live across dashboards</span>
-                  </Card>
-
-                  <Card className="flex flex-col gap-1 p-5">
-                    <span className="text-body-sm text-muted">Banner Click-Through Rate</span>
-                    <span className="text-headline-lg font-extrabold text-on-surface">
-                      {overview.banner_ctr_percent}%
-                    </span>
-                    <span className="text-body-xs text-muted">
-                      {overview.total_clicks} clicks / {overview.total_impressions.toLocaleString()} views
-                    </span>
-                  </Card>
-                </div>
+                <StatGrid count={4}>
+                  <StatCard
+                    title="Total Inbound Leads"
+                    value={overview.total_leads.toLocaleString()}
+                    subtitle={`${overview.new_leads} new · ${overview.converted_leads} converted`}
+                    icon="contacts"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="trending_up"
+                        label={`${overview.lead_conversion_rate}% conversion rate`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Active Promo Codes"
+                    value={overview.active_promotions}
+                    subtitle="Live discount vouchers"
+                    icon="local_offer"
+                    tone="sage"
+                    highlight={
+                      <StatHighlight
+                        tone="sage"
+                        icon="redeem"
+                        label={`${overview.total_redemptions.toLocaleString()} total redemptions`}
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Active Announcements"
+                    value={overview.active_announcements}
+                    subtitle="Broadcast banners running"
+                    icon="campaign"
+                    tone="amber"
+                    highlight={
+                      <StatHighlight
+                        tone="amber"
+                        icon="visibility"
+                        label="Live across dashboards"
+                      />
+                    }
+                  />
+                  <StatCard
+                    title="Banner Click-Through Rate"
+                    value={`${overview.banner_ctr_percent}%`}
+                    subtitle={`${overview.total_clicks} clicks / ${overview.total_impressions.toLocaleString()} views`}
+                    icon="ads_click"
+                    tone="forest"
+                    highlight={
+                      <StatHighlight
+                        tone="forest"
+                        icon="insights"
+                        label="Client engagement"
+                      />
+                    }
+                  />
+                </StatGrid>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <Card className="flex flex-col gap-4 p-6">
@@ -384,6 +575,116 @@ export function MarketingPage() {
                   </Card>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {/* TAB: WEBSITE BLOG & ARTICLES */}
+        {activeTab === 'blog' && (
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  Household Functionality Blog Publisher
+                </h3>
+                <p className="text-body-sm text-muted">
+                  Articles published here appear live on the public website at{' '}
+                  <Link to="/blog" className="font-semibold text-secondary hover:underline">
+                    /blog
+                  </Link>{' '}
+                  and on the homepage.
+                </p>
+              </div>
+              <Button onClick={openNewBlogModal}>
+                <Icon name="add" className="text-[18px]" />
+                Publish New Article
+              </Button>
+            </div>
+
+            {blogQuery.isLoading ? (
+              <SkeletonPanel className="h-64" />
+            ) : blogPosts.length === 0 ? (
+              <Card className="p-10 text-center text-muted">
+                No blog articles created yet. Click &ldquo;Publish New Article&rdquo; to write your first guide.
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                {blogPosts.map((post) => (
+                  <Card key={post.id} className="flex flex-col justify-between gap-4 p-6">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge tone="primary">{post.category}</Badge>
+                          {post.is_featured && <Badge tone="warning">Featured Pillar</Badge>}
+                        </div>
+                        <Badge tone={post.is_published ? 'success' : 'neutral'}>
+                          {post.is_published ? 'Published on Website' : 'Draft'}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-forest-soft text-secondary shadow-[var(--shadow-inset-sm)]">
+                          <Icon name={post.icon || 'article'} className="text-[20px]" />
+                        </span>
+                        <div>
+                          <h4 className="text-base font-extrabold text-on-surface leading-snug">
+                            {post.title}
+                          </h4>
+                          <span className="text-xs text-muted">
+                            By {post.author_name} ({post.author_role}) · {post.read_time_minutes} min read
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-on-surface-variant leading-relaxed">
+                        {post.summary}
+                      </p>
+
+                      <div className="rounded-2xl bg-canvas p-3 text-xs text-muted shadow-[var(--shadow-inset-sm)] flex items-center justify-between">
+                        <span>
+                          {(post.sections ?? []).length} sections · {(post.action_checklist ?? []).length} checklist actions
+                        </span>
+                        <Link
+                          to="/blog/$slug"
+                          params={{ slug: post.slug }}
+                          className="font-bold text-secondary hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Preview on Website</span>
+                          <Icon name="open_in_new" className="text-[13px]" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-outline-variant/20 pt-3.5">
+                      <span className="font-mono text-[11px] text-muted">/blog/{post.slug}</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="soft"
+                          size="sm"
+                          onClick={() => openEditBlogModal(post)}
+                        >
+                          <Icon name="edit" className="text-[15px]" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleBlogMutation.mutate(post.id)}
+                        >
+                          {post.is_published ? 'Unpublish' : 'Publish'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteBlogMutation.mutate(post.id)}
+                        >
+                          <Icon name="delete" className="text-[15px] text-error" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -968,6 +1269,227 @@ export function MarketingPage() {
                   <option value="paying_only">Paying Members Only</option>
                 </Select>
               </div>
+            </div>
+          </div>
+        </Modal>
+
+        {/* MODAL: CREATE / EDIT BLOG ARTICLE */}
+        <Modal
+          open={blogModalOpen}
+          onClose={() => setBlogModalOpen(false)}
+          title={editingBlogId ? 'Edit Website Blog Article' : 'Publish New Website Blog Article'}
+          description="Write and publish educational guides on improving household functionality directly to /blog."
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setBlogModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                disabled={!blogForm.title.trim() || !blogForm.summary.trim() || saveBlogMutation.isPending}
+                onClick={() => saveBlogMutation.mutate()}
+              >
+                {saveBlogMutation.isPending
+                  ? 'Saving…'
+                  : editingBlogId
+                    ? 'Save & Update Website'
+                    : 'Publish to Website'}
+              </Button>
+            </div>
+          }
+        >
+          <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
+            <div>
+              <Label htmlFor="blog-title">Article Headline</Label>
+              <Input
+                id="blog-title"
+                placeholder="e.g. How to Improve Household Functionality in 10 Minutes a Week"
+                value={blogForm.title}
+                onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="blog-category">Category</Label>
+                <Select
+                  id="blog-category"
+                  value={blogForm.category}
+                  onChange={(e) => setBlogForm({ ...blogForm, category: e.target.value })}
+                >
+                  <option value="Household Functionality">Household Functionality</option>
+                  <option value="Accountability & Roles">Accountability &amp; Roles</option>
+                  <option value="Smart Geofencing">Smart Geofencing</option>
+                  <option value="Pantry & Staples">Pantry &amp; Staples</option>
+                  <option value="Household Finance">Household Finance</option>
+                  <option value="Automation & Routines">Automation &amp; Routines</option>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="blog-readtime">Read Time (Minutes)</Label>
+                <Input
+                  id="blog-readtime"
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={blogForm.read_time_minutes}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, read_time_minutes: Number(e.target.value) || 5 })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="blog-icon">Material Icon</Label>
+                <Select
+                  id="blog-icon"
+                  value={blogForm.icon}
+                  onChange={(e) => setBlogForm({ ...blogForm, icon: e.target.value })}
+                >
+                  <option value="cottage">cottage (Home)</option>
+                  <option value="view_kanban">view_kanban (Errands)</option>
+                  <option value="pin_drop">pin_drop (Geofencing)</option>
+                  <option value="kitchen">kitchen (Pantry)</option>
+                  <option value="account_balance_wallet">account_balance_wallet (Finance)</option>
+                  <option value="event_repeat">event_repeat (Recurring)</option>
+                  <option value="menu_book">menu_book (Guide)</option>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="blog-author">Author Name</Label>
+                <Input
+                  id="blog-author"
+                  value={blogForm.author_name}
+                  onChange={(e) => setBlogForm({ ...blogForm, author_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="blog-role">Author Role / Credential</Label>
+                <Input
+                  id="blog-role"
+                  value={blogForm.author_role}
+                  onChange={(e) => setBlogForm({ ...blogForm, author_role: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="blog-summary">Executive Summary (Shown on Cards &amp; Hero)</Label>
+              <textarea
+                id="blog-summary"
+                rows={2}
+                value={blogForm.summary}
+                onChange={(e) => setBlogForm({ ...blogForm, summary: e.target.value })}
+                className="w-full rounded-xl bg-canvas p-3 text-xs text-on-surface shadow-[var(--shadow-inset-sm)] focus:outline-none focus:ring-2 focus:ring-secondary/40"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="blog-takeaways">Key Takeaways (One per line)</Label>
+              <textarea
+                id="blog-takeaways"
+                rows={3}
+                value={blogForm.key_takeaways_text}
+                onChange={(e) => setBlogForm({ ...blogForm, key_takeaways_text: e.target.value })}
+                className="w-full rounded-xl bg-canvas p-3 text-xs text-on-surface shadow-[var(--shadow-inset-sm)] focus:outline-none focus:ring-2 focus:ring-secondary/40"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <Label>Article Sections</Label>
+                <Button
+                  variant="soft"
+                  size="sm"
+                  onClick={() =>
+                    setBlogForm({
+                      ...blogForm,
+                      sections: [
+                        ...blogForm.sections,
+                        { heading: `${blogForm.sections.length + 1}. Next Step`, body: '' },
+                      ],
+                    })
+                  }
+                >
+                  + Add Section
+                </Button>
+              </div>
+              {blogForm.sections.map((sec, idx) => (
+                <div key={idx} className="rounded-2xl bg-canvas p-3.5 shadow-[var(--shadow-inset-sm)] flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Input
+                      value={sec.heading}
+                      placeholder="Section Heading"
+                      onChange={(e) => {
+                        const updated = [...blogForm.sections];
+                        updated[idx] = { ...updated[idx], heading: e.target.value };
+                        setBlogForm({ ...blogForm, sections: updated });
+                      }}
+                    />
+                    {blogForm.sections.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBlogForm({
+                            ...blogForm,
+                            sections: blogForm.sections.filter((_, i) => i !== idx),
+                          })
+                        }
+                        className="text-xs font-bold text-error hover:underline px-2"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={sec.body}
+                    placeholder="Section paragraph copy…"
+                    onChange={(e) => {
+                      const updated = [...blogForm.sections];
+                      updated[idx] = { ...updated[idx], body: e.target.value };
+                      setBlogForm({ ...blogForm, sections: updated });
+                    }}
+                    className="w-full rounded-xl bg-surface p-2.5 text-xs text-on-surface shadow-[var(--shadow-clay-sm)] focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <Label htmlFor="blog-checklist">Interactive Action Checklist (One item per line)</Label>
+              <textarea
+                id="blog-checklist"
+                rows={3}
+                value={blogForm.action_checklist_text}
+                onChange={(e) => setBlogForm({ ...blogForm, action_checklist_text: e.target.value })}
+                className="w-full rounded-xl bg-canvas p-3 text-xs text-on-surface shadow-[var(--shadow-inset-sm)] focus:outline-none focus:ring-2 focus:ring-secondary/40"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6 pt-1">
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-on-surface">
+                <input
+                  type="checkbox"
+                  checked={blogForm.is_published}
+                  onChange={(e) => setBlogForm({ ...blogForm, is_published: e.target.checked })}
+                  className="h-4 w-4 accent-secondary"
+                />
+                <span>Publish Immediately on Website</span>
+              </label>
+
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-on-surface">
+                <input
+                  type="checkbox"
+                  checked={blogForm.is_featured}
+                  onChange={(e) => setBlogForm({ ...blogForm, is_featured: e.target.checked })}
+                  className="h-4 w-4 accent-secondary"
+                />
+                <span>Set as Featured Pillar Guide on /blog</span>
+              </label>
             </div>
           </div>
         </Modal>

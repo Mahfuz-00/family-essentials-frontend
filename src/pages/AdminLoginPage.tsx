@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AuthLayout } from '@/components/AuthLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -57,137 +58,80 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-full flex-col justify-between overflow-hidden bg-canvas">
-      <span className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-      <span className="pointer-events-none absolute -bottom-24 left-10 h-80 w-80 rounded-full bg-secondary/5 blur-3xl" />
-
-      <header className="relative flex items-center justify-between gap-4 border-b border-[rgba(43,45,66,0.08)] bg-surface/70 px-8 py-5 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-primary text-on-secondary">
-            <Icon name="shield" filled className="text-[22px]" />
+    <AuthLayout
+      isPlatformAdmin
+      title="Platform Admin"
+      subtitle="Sign in to the landlord operations console. Authorized administrators only."
+    >
+      <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-4 py-2.5">
+          <Icon name="gpp_maybe" className="text-[18px] text-tertiary shrink-0" />
+          <span className="text-body-sm text-on-surface">
+            Strict zero-trust zone · cross-tenant access is audited
           </span>
-          <div className="flex flex-col">
-            <span className="flex items-center gap-2">
-              <span className="text-headline-sm font-bold text-on-surface">FairShare</span>
-              <span className="rounded-full bg-sage-soft px-2 py-0.5 text-label-sm uppercase tracking-wider text-on-surface-variant">
-                Platform Admin
-              </span>
-            </span>
-            <span className="text-label-sm text-muted">Multi-tenant landlord governance console</span>
-          </div>
         </div>
 
-        <span className="hidden items-center gap-2 rounded-full bg-forest-soft px-3 py-1.5 text-label-sm text-secondary md:flex">
-          <span className="h-2 w-2 rounded-full bg-success" />
-          Row-level security enforced
-        </span>
-      </header>
+        {error && <Alert>{error}</Alert>}
 
-      <main className="relative flex flex-1 items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[480px]">
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 px-4 py-2.5">
-            <Icon name="gpp_maybe" className="text-[18px] text-tertiary" />
-            <span className="text-body-sm text-on-surface">
-              Strict zero-trust zone · cross-tenant access is audited
-            </span>
-          </div>
+        <div>
+          <Label htmlFor="admin-email">Admin work email</Label>
+          <Input
+            id="admin-email"
+            type="email"
+            autoComplete="email"
+            placeholder="platform@familyessentials.app"
+            aria-invalid={errors.email ? 'true' : undefined}
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="mt-1.5 text-body-sm text-error">{errors.email.message}</p>
+          )}
+        </div>
 
-          <div className="rounded-3xl border border-[rgba(43,45,66,0.05)] bg-surface p-8 shadow-e2">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-forest-soft text-secondary">
-                <Icon name="shield" filled className="text-[28px]" />
-              </span>
-              <span className="text-label-sm uppercase tracking-[0.12em] text-muted">
-                Platform Admin Console
-              </span>
-              <h1 className="text-headline-lg text-on-surface">Sign in to the landlord console</h1>
-              <p className="text-body-sm text-muted">
-                Authorized platform administrators only. Household accounts are rejected here.
-              </p>
-            </div>
-
-            <form className="mt-7 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-              {error && <Alert>{error}</Alert>}
-
-              <div>
-                <Label htmlFor="admin-email">Admin work email</Label>
-                <Input
-                  id="admin-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="platform@familyessentials.app"
-                  aria-invalid={errors.email ? 'true' : undefined}
-                  {...register('email')}
-                />
-                {errors.email && (
-                  <p className="mt-1.5 text-body-sm text-error">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="admin-password">Master password</Label>
-                <div className="relative">
-                  <Input
-                    id="admin-password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    aria-invalid={errors.password ? 'true' : undefined}
-                    className="pr-10"
-                    {...register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide text' : 'Show text'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors cursor-pointer p-1"
-                  >
-                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="mt-1.5 text-body-sm text-error">{errors.password.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" size="xl" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? 'Signing in…' : 'Sign in to landlord console'}
-              </Button>
-            </form>
-
-            <div className="mt-6 flex items-center gap-3">
-              <span className="h-px flex-1 bg-forest-soft" />
-              <span className="text-label-sm uppercase tracking-wider text-muted">or</span>
-              <span className="h-px flex-1 bg-forest-soft" />
-            </div>
-
-            <Link
-              to="/login"
-              className="mt-4 flex items-center justify-center gap-1.5 text-label-lg font-semibold text-secondary hover:underline"
+        <div>
+          <Label htmlFor="admin-password">Master password</Label>
+          <div className="relative">
+            <Input
+              id="admin-password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              aria-invalid={errors.password ? 'true' : undefined}
+              className="pr-10"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide text' : 'Show text'}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-on-surface transition-colors cursor-pointer p-1"
             >
-              Sign in to a household workspace
-              <Icon name="arrow_forward" className="text-[16px]" />
-            </Link>
+              <Icon name={showPassword ? 'visibility_off' : 'visibility'} className="text-[20px]" />
+            </button>
           </div>
-
-          <p className="mt-5 flex flex-wrap items-center justify-center gap-3 text-label-sm text-muted">
-            <span className="flex items-center gap-1.5">
-              <Icon name="lock" className="text-[14px]" />
-              Session tokens are per-device
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Icon name="dns" className="text-[14px]" />
-              PostgreSQL row-level isolation
-            </span>
-          </p>
+          {errors.password && (
+            <p className="mt-1.5 text-body-sm text-error">{errors.password.message}</p>
+          )}
         </div>
-      </main>
 
-      <footer className="relative border-t border-[rgba(43,45,66,0.08)] bg-surface px-8 py-5">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-label-sm text-muted">
-          <span>FairShare · Landlord platform v2.4</span>
-          <span>Need help? Contact the platform SRE team.</span>
+        <Button type="submit" size="lg" disabled={isSubmitting}>
+          {isSubmitting ? 'Signing in…' : 'Sign in to landlord console'}
+        </Button>
+
+        <div className="flex items-center justify-between text-body-md">
+          <Link to="/login" className="font-semibold text-secondary hover:underline">
+            Household sign-in
+          </Link>
+          <Link to="/forgot-password" className="font-semibold text-secondary hover:underline">
+            Forgot password?
+          </Link>
         </div>
-      </footer>
-    </div>
+
+        <div className="border-t border-outline-variant/20 pt-4 text-center">
+          <Link to="/landing" className="text-body-sm text-muted transition-colors hover:text-secondary hover:underline">
+            ← Explore FairShare Overview
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

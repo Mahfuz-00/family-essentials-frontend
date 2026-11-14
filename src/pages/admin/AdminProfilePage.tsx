@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/AppLayout';
 import { Icon } from '@/components/Icon';
 import { Alert } from '@/components/ui/alert';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,6 +19,7 @@ interface ProfileData {
   name: string;
   email: string;
   phone: string | null;
+  avatar_url?: string | null;
   email_verified: boolean;
   phone_verified: boolean;
   is_platform_admin: boolean;
@@ -30,10 +32,12 @@ interface ProfileData {
 export function AdminProfilePage() {
   const queryClient = useQueryClient();
   const setAuthUser = useAuthStore((state) => state.setUser);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Password state
@@ -55,6 +59,7 @@ export function AdminProfilePage() {
         setName(data.name);
         setEmail(data.email);
         setPhone(data.phone ?? '');
+        setAvatarUrl(data.avatar_url ?? null);
         setIsLoaded(true);
       }
       return data;
@@ -62,7 +67,7 @@ export function AdminProfilePage() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (payload: { name: string; email: string; phone: string | null }) => {
+    mutationFn: async (payload: { name: string; email: string; phone: string | null; avatar_url?: string | null }) => {
       const resp = await api.patch<{ message: string; data: ProfileData }>('/v1/auth/me', payload);
       return resp.data;
     },
@@ -77,6 +82,17 @@ export function AdminProfilePage() {
       setNotice(null);
     },
   });
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : null;
+      setAvatarUrl(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const updatePasswordMutation = useMutation({
     mutationFn: async (payload: { current_password: string; password: string; password_confirmation: string }) => {
@@ -104,6 +120,7 @@ export function AdminProfilePage() {
       name,
       email,
       phone: phone.trim() ? phone.trim() : null,
+      avatar_url: avatarUrl,
     });
   };
 
@@ -133,9 +150,10 @@ export function AdminProfilePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 max-w-5xl">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <PageHeader
           title="Admin Profile"
+          titleSize="headline"
           description="Manage root administrator account details, security credentials, contact preferences, and access permissions."
         />
 
@@ -151,13 +169,41 @@ export function AdminProfilePage() {
           {/* Main Credentials Form */}
           <div className="flex flex-col gap-6 lg:col-span-2">
             <Card className="flex flex-col gap-5 p-6">
-              <div className="flex items-center gap-3 border-b border-outline-variant/20 pb-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon name="badge" className="text-[22px]" />
-                </span>
-                <div>
-                  <h2 className="text-base font-bold text-on-surface">Administrator Details</h2>
-                  <p className="text-xs text-muted">Primary identity information for platform administration</p>
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-outline-variant/20 pb-5">
+                <div className="flex items-center gap-4">
+                  <Avatar name={name || 'Admin'} src={avatarUrl} size="lg" />
+                  <div className="flex min-w-0 flex-col">
+                    <h2 className="truncate text-headline-sm font-bold text-on-surface">{name || 'Administrator'}</h2>
+                    <span className="truncate text-body-sm text-muted">{email}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Icon name="photo_camera" className="text-[16px]" />
+                    Upload Photo
+                  </Button>
+                  {avatarUrl && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setAvatarUrl(null)}
+                    >
+                      Remove
+                    </Button>
+                  )}
                 </div>
               </div>
 

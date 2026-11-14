@@ -3,6 +3,7 @@ export interface AuthUser {
   name: string;
   email: string;
   phone: string | null;
+  avatar_url?: string | null;
   email_verified: boolean;
   phone_verified: boolean;
   is_platform_admin: boolean;
@@ -709,10 +710,82 @@ export interface FinancialOverview {
 
 /* ---------------------------------------------------- platform administration --- */
 
+/** Outcome of a gateway connectivity ping for one credential set. */
+export type GatewayTestStatus = 'connected' | 'error' | 'unconfigured';
+
+export interface GatewayTestResult {
+  status: GatewayTestStatus;
+  latency_ms?: number;
+  message?: string;
+  at?: string;
+}
+
+/** Per-environment credential sets. Secrets come back masked from the API. */
+export interface GatewayCredentialSets {
+  sandbox?: Record<string, string>;
+  live?: Record<string, string>;
+}
+
+/** A display-only invoice for a sandbox payment. Never saved to the billing ledger. */
+export interface SandboxInvoice {
+  invoice_number: string;
+  amount_cents: number;
+  currency: string;
+  tier: string;
+  billing_period: string;
+  payment_method: string;
+  status: 'pending' | 'paid' | 'failed';
+  issued_at: string;
+  paid_at: string | null;
+  reference: string | null;
+  sandbox: true;
+}
+
+/** A one-off sandbox checkout created from the platform console. */
+export interface SandboxPaymentSession {
+  gateway: string;
+  mode: 'sandbox';
+  reference: string;
+  /** Hosted checkout URL; `null` for gateways that settle themselves (`mock`). */
+  url: string | null;
+  /** Where the provider returns the browser after payment (invoice result page). */
+  result_url?: string | null;
+  /**
+   * Paddle client-side token, sent only for `paddle` sessions. The console uses
+   * it to initialise Paddle.js and open the checkout overlay.
+   */
+  client_token?: string | null;
+  amount_cents: number;
+  currency: string;
+  /** True for the internal simulator: no URL, no provider call. */
+  simulated: boolean;
+  /** Generated for the flow and shown in the drawer; never persisted. */
+  invoice?: SandboxInvoice | null;
+}
+
+export type SandboxPaymentStatusValue = 'paid' | 'pending' | 'failed' | 'unknown';
+
+/** Result of one sandbox-payment status poll; never carries a secret. */
+export interface SandboxPaymentStatus {
+  gateway: string;
+  mode: 'sandbox';
+  reference: string;
+  status: SandboxPaymentStatusValue;
+  message?: string;
+  invoice?: SandboxInvoice | null;
+}
+
 export interface PaymentGatewayCredentials {
   enabled: boolean;
   sandbox?: boolean;
   mode?: 'sandbox' | 'live';
+  credentials?: GatewayCredentialSets;
+  last_test?: { sandbox?: GatewayTestResult; live?: GatewayTestResult };
+  /**
+   * Whether each environment holds every required credential, decided by the
+   * API (`GatewayCredentials::isConfigured`). Absent for offline gateways.
+   */
+  configured?: { sandbox?: boolean; live?: boolean };
   publishable_key?: string;
   secret_key?: string;
   webhook_secret?: string;
@@ -752,6 +825,7 @@ export interface PaymentGatewaySettings {
     | 'nagad'
     | 'paystack'
     | 'mollie'
+    | 'paddle'
     | 'bank_transfer'
     | 'mock'
     | 'cash';
@@ -1063,6 +1137,29 @@ export interface ReferralProgramSettings {
   referee_discount_percent: number;
   min_subscription_tier: string;
   terms_markdown: string;
+}
+
+export interface MarketingBlogSection {
+  heading: string;
+  body: string;
+}
+
+export interface MarketingBlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  category: string;
+  read_time_minutes: number;
+  author_name: string;
+  author_role: string;
+  icon: string;
+  is_featured: boolean;
+  is_published: boolean;
+  published_at: string;
+  summary: string;
+  key_takeaways: string[];
+  sections: MarketingBlogSection[];
+  action_checklist: string[];
 }
 
 export interface OcrLineItem {
